@@ -36,20 +36,21 @@ def polygonize(input_img,output_vec):
 def main(argv):
     img=argv[1]
     dem=argv[2]
-    output_img_pass1=argv[3]
-    path_tmp="/home/grizonnetm/temporary"
-    
+    cloud_init=argv[3]
+    cloud_refine=argv[4]
+    path_tmp="/home/grizonnetm/data/Output-CES-Neige/"
     #Pass -1 : generate custom cloud mask
 
     #Pass1 : NDSI threshold
-    condition_pass1= "(((im1b1-im1b4)/(im1b1+im1b4))>0.4 and im1b2>200)"
-    call(["otbcli_BandMath","-il",img,"-out",op.join(path_tmp,"pass1.tif"),"uint8","-ram",str(1024),"-exp",condition_pass1 + "?1:0"])
+    condition_pass1= "(im2b1!=1 and ((im1b1-im1b4)/(im1b1+im1b4))>0.4 and im1b2>200)"
+    call(["otbcli_BandMath","-il",img,cloud_refine,"-out",op.join(path_tmp,"pass1.tif"),"uint8","-ram",str(1024),"-exp",condition_pass1 + "?1:0"])
 
-    #TODO: determine the Zs elevation fraction
-    zs=2719
+    #TODO here we need to update again the could mask
+    #TODO: determine the Zs elevation fraction (done by external c++ code)
+    zs=2719 
     #Pass2
-    condition_pass2= "(im2b1>" + str(zs) + " and ((im1b1-im1b4)/(im1b1+im1b4))>0.15 and im1b2>120)"
-    call(["otbcli_BandMath","-il",img,dem,"-out",op.join(path_tmp,"pass2.tif"),"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
+    condition_pass2= "(im3b1 != 1 and im2b1>" + str(zs) + " and ((im1b1-im1b4)/(im1b1+im1b4))>0.15 and im1b2>120)"
+    call(["otbcli_BandMath","-il",img,dem,cloud_refine,"-out",op.join(path_tmp,"pass2.tif"),"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
 
     #poligonize
     polygonize(op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2_vec.shp"))
@@ -61,6 +62,8 @@ def main(argv):
 
     #Gdal polygonize
     polygonize(op.join(path_tmp,"pass3.tif"),op.join(path_tmp,"pass3_vec.shp"))
+
+    #TODO Final update of the cloud mask
 if __name__ == "__main__":
   if len(sys.argv) < 3 :
     showHelp()

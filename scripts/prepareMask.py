@@ -34,16 +34,16 @@ def main(argv):
     img=argv[1]
     cloud=argv[2]
     output_img=argv[3]
-    path_tmp="/home/grizonnetm/temporary"
+    path_tmp="/home/grizonnetm/data/Output-CES-Neige/"
     
     #Pass -1 extract redband
     call(["gdal_translate","-ot","Int16","-b","2",img,op.join(path_tmp,"red.tif")])
 
     #Pass1 : resample red band
-    call(["gdalwarp","-r","bilinear","-ts",str(1000/8),str(1000/8),op.join(path_tmp,"red.tif"),op.join(path_tmp,"red_warped.tif")])
+    call(["gdalwarp","-r","bilinear","-tr",str(200),str(200),op.join(path_tmp,"red.tif"),op.join(path_tmp,"red_warped.tif")])
 
     #Pass2 : oversample red band
-    call(["gdalwarp","-r","near","-ts",str(1000),str(1000),op.join(path_tmp,"red_warped.tif"),op.join(path_tmp,"red_nn.tif")])
+    call(["gdalwarp","-r","near","-tr",str(20),str(20),op.join(path_tmp,"red_warped.tif"),op.join(path_tmp,"red_nn.tif")])
     
     #Need to extract shadow mask
     condition_shadow= "(im1b1>0 and im2b1>500) or (im1b1 >= 64)"
