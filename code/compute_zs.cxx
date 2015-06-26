@@ -1,20 +1,4 @@
-/*=========================================================================
-
-  Program:   ORFEO Toolbox
-  Language:  C++
-  Date:      $Date$
-  Version:   $Revision$
-
-
-  Copyright (c) Centre National d'Etudes Spatiales. All rights reserved.
-  See OTBCopyright.txt for details.
-
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+#include "compute_zs.h"
 
 #include "otbStreamingHistogramMaskedVectorImageFilter.h"
 #include "otbVectorImage.h"
@@ -24,8 +8,10 @@
 #include "otbObjectList.h"
 #include "itkHistogram.h"
 #include "otbStreamingMinMaxVectorImageFilter.h"
-
-typedef otb::VectorImage<double>               VectorImageType;
+ 
+int compute_zs(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname)
+{
+    typedef otb::VectorImage<double>               VectorImageType;
 typedef otb::Image<double, 2>               MaskImageType;
 typedef otb::ImageFileReader<VectorImageType>               VectorReaderType;
 typedef otb::ImageFileReader<MaskImageType>               MaskReaderType;
@@ -36,12 +22,6 @@ typedef itk::Statistics::Histogram< MeasurementType > Histogram;
 typedef otb::ObjectList< Histogram > HistogramList;
 typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinMaxImageFilterType;
 
-int main(int argc, char * argv [])
-{
-  const char * infname = argv[1];
-  const char * inmasksnowfname = argv[2];
-  const char * inmaskcloudfname = argv[3];
-  //const int maskVal = atoi(argv[4]);
 
   VectorReaderType::Pointer reader = VectorReaderType::New();
   reader->SetFileName(infname);

@@ -21,7 +21,6 @@ output_dir=/home/grizonnetm/data/Output-CES-Neige/
 rm -rf $output_dir
 mkdir -p $output_dir
 
-python prepareMask.py $img $cloud $output_dir/cloud_refine.tif
-python s2snow.py $img $dem $cloud $output_dir/cloud_refine.tif
+python s2snow.py $img $dem $cloud 
 
 exit 0
