@@ -64,10 +64,10 @@ def main(argv):
 
     #TODO here we need to update again the could mask
     #TODO: determine the Zs elevation fraction (done by external c++ code)
-    zs=2719 
+    zs=compute_zs_ext.compute_zs(dem,op.join(path_tmp,"pass1.tif"),cloud_refine) 
 
     #trying to get zs
-    print compute_zs_ext.compute_zs(dem,op.join(path_tmp,"pass1.tif"),cloud_refine)
+    print "computed ZS:", zs
 
     #Pass2
     condition_pass2= "(im3b1 != 1 and im2b1>" + str(zs) + " and ((im1b1-im1b4)/(im1b1+im1b4))>0.15 and im1b2>120)"

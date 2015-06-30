@@ -1,4 +1,5 @@
 #!/bin/bash
+export PYTHONPATH=/home/grizonnetm/etudes/bin/lis/bin/:$PYTHONPATH
 
 #bash runLis.sh /home/grizonnetm/data/CES-Neige/test_CES/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_ORTHO_SURF_CORR_PENTE_CMarocD0000B0000.TIF /home/grizonnetm/data/CES-Neige/test_CES/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif /home/grizonnetm/data/CES-Neige/test_CES/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF
 
