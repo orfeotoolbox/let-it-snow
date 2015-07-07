@@ -23,12 +23,15 @@ import sys
 from subprocess import call
 import os
 import os.path as op
+import json
+from pprint import pprint
+
 import compute_zs_ext
- 
+
 
 def showHelp():
   print "This script is used to compute snow mask using OTB applications"
-  print "Usage: s2snow.py INPUT_IMAGE INPUT_DEM OUTPUT_IMG"
+  print "Usage: s2snow.py param.json"
 
 def polygonize(input_img,output_vec):
     #Gdal polygonize
@@ -36,13 +39,25 @@ def polygonize(input_img,output_vec):
 
 #----------------- MAIN ---------------------------------------------------
 def main(argv):
-    img=argv[1]
-    dem=argv[2]
-    cloud_init=argv[3]
-    
+    parameters=argv[1]
+
     path_tmp="/home/grizonnetm/data/Output-CES-Neige/"
     cloud_refine=op.join(path_tmp,"cloud_refine.tif")
 
+    #load parameters
+    with open(parameters) as json_data_file:
+      data = json.load(json_data_file)
+    #pprint(data)
+    
+    img=data["inputs"]["image"]
+    dem=data["inputs"]["dem"]
+    cloud_init=data["inputs"]["cloud_mask"]
+
+    #rf
+    rRed_darkcloud=data["cloud_mask"]["rRed_darkcloud"]
+    #rRed_backtocloud
+    
+    #sys.exit("Error message")
     #Pass -1 : generate custom cloud mask
     #Pass -1 extract redband
     call(["gdal_translate","-ot","Int16","-b","2",img,op.join(path_tmp,"red.tif")])
@@ -54,7 +69,7 @@ def main(argv):
     call(["gdalwarp","-r","near","-tr",str(20),str(20),op.join(path_tmp,"red_warped.tif"),op.join(path_tmp,"red_nn.tif")])
     
     #Need to extract shadow mask
-    condition_shadow= "(im1b1>0 and im2b1>500) or (im1b1 >= 64)"
+    condition_shadow= "(im1b1>0 and im2b1>" + str(rRed_darkcloud) + ") or (im1b1 >= 64)"
     call(["otbcli_BandMath","-il",cloud_init,op.join(path_tmp,"red_nn.tif"),"-out",cloud_refine,"uint8","-ram",str(1024),"-exp",condition_shadow + "?1:0"])
 
 
@@ -64,7 +79,7 @@ def main(argv):
 
     #TODO here we need to update again the could mask
     #TODO: determine the Zs elevation fraction (done by external c++ code)
-    zs=compute_zs_ext.compute_zs(dem,op.join(path_tmp,"pass1.tif"),cloud_refine) 
+    zs=compute_zs_ext.compute_zs(str(dem),op.join(path_tmp,"pass1.tif"),cloud_refine) 
 
     #trying to get zs
     print "computed ZS:", zs
@@ -85,7 +100,7 @@ def main(argv):
 
     #TODO Final update of the cloud mask
 if __name__ == "__main__":
-  if len(sys.argv) < 3 :
+  if len(sys.argv) < 1 :
     showHelp()
   else:
     main(sys.argv)
