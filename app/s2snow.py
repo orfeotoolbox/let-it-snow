@@ -78,18 +78,20 @@ def main(argv):
     xSize=dataset.RasterXSize
     ySize=dataset.RasterYSize
     
+    #Get geotransform to retrieve resolution
+    geotransform = dataset.GetGeoTransform() 
 
     #resample red band using multiresolution pyramid
     #call(["otbcli_MultiResolutionPyramid","-in",redBand_path,"-out",op.join(path_tmp,"red_warped.tif"),"int16","-sfactor",str(rf)])
-    call(["gdalwarp","-r","bilinear","-ts",str(xSize/rf),str(ySize/rf),op.join(path_tmp,"red.tif"),op.join(path_tmp,"red_warped.tif")])
+    call(["gdalwarp","-r","bilinear","-ts",str(xSize/rf),str(ySize/rf),op.join(path_tmp,"red.tif"),op.join(path_tmp,"red_coarse.tif")])
 
     #oversample red band nn
     #call(["otbcli_RigidTransformResample","-in",op.join(path_tmp,"red_warped_1.tif"),"-out",op.join(path_tmp,"red_nn.tif"),"int16","-transform.type.id.scalex",str(rf),"-transform.type.id.scaley",str(rf),"-interpolator","nn"])
-    call(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(path_tmp,"red_warped.tif"),op.join(path_tmp,"red_nn.tif")])
+    call(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(path_tmp,"red_coarse.tif"),op.join(path_tmp,"red_nn.tif")])
     
     #edit result to set the resolution to 20 -20
-    #TODO need to find a better solution
-    call(["gdal_edit.py","-tr","20","-20",op.join(path_tmp,"red_nn.tif")])
+    #TODO need to find a better solution and also guess the input spacing
+    call(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
     #Extract shadow mask
     condition_shadow= "(im1b1>0 and im2b1>" + str(rRed_darkcloud) + ") or (im1b1 >= " + str(shadow_value) + ")"
     call(["otbcli_BandMath","-il",cloud_init,op.join(path_tmp,"red_nn.tif"),"-out",cloud_refine,"uint8","-ram",str(ram),"-exp",condition_shadow + "?1:0"])
