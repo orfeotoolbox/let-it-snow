@@ -1,0 +1,27 @@
+{
+    "general":{
+        "pout":"/home/grizonnetm/data/Output-CES-Neige",
+        "shadow_value":64,
+        "ram":1024
+        },
+    "inputs":{ 
+        "image":"/home/grizonnetm/data/CES-Neige/Data_Full/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000/SPOT4_HRVIR_XS_20130327_N2A_ORTHO_SURF_CORR_PENTE_CMarocD0000B0000.TIF",
+        "dem":"/home/grizonnetm/data/CES-Neige/Data_Full/SRTM/srtm_superimpose.tif",
+        "cloud_mask":"/home/grizonnetm/data/CES-Neige/Data_Full/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000/MASK/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
+    },
+    "cloud_mask":{
+        "rf":8,
+        "rRed_darkcloud":500,
+        "rRed_backtocloud":100
+    },
+    "snow":{
+        "dz":100,
+        "ndsi_pass1":0.4,
+        "rRed_pass1":200,
+        "ndsi_pass2":0.15,
+        "rRed_pass2":120,
+        "fsnow_lim":0.1,
+        "fsnow_total_lim":0.001
+    }
+}
+
