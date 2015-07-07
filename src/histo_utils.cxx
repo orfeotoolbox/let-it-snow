@@ -87,16 +87,9 @@ typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinM
   Histogram::Pointer histogram2( histograms2->GetNthElement( channel ) );
 
   unsigned int histogramSize1 = histogram1->Size();
-
-  //std::cout << "Histogram size " << histogramSize1 << std::endl;
-  
   
   for( unsigned int bin=0; bin < histogramSize1; bin++ )
     {
-    // std::cout << "Histogram 1 frequency " << histogram1->GetFrequency( bin, 0 ) << std::endl;
-    // std::cout << "Histogram 2 frequency " << histogram2->GetFrequency( bin, 0 ) << std::endl;
-    // std::cout << std::endl;
-
     if ((float) histogram2->GetFrequency( bin, 0 ) / (float) histogram1->GetFrequency( bin, 0 ) > fsnow_lim)
       {
       if (bin >= 2)
@@ -122,7 +115,7 @@ int compute_snow_fraction(const std::string & infname)
   typedef otb::ImageFileReader<MaskImageType>               MaskReaderType;
   typedef otb::StreamingHistogramMaskedVectorImageFilter<VectorImageType, MaskImageType>                SHVIFType;
 
-  const unsigned int nbComp = 2;
+  const unsigned int nbComp = VectorImageType::ImageDimension;
 
   VectorReaderType::Pointer reader = VectorReaderType::New();
   reader->SetFileName(infname);
