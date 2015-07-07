@@ -1,5 +1,6 @@
-#include "compute_zs.h"
+#include "histo_utils.h"
 
+#include "otbStreamingHistogramVectorImageFilter.h"
 #include "otbStreamingHistogramMaskedVectorImageFilter.h"
 #include "otbVectorImage.h"
 #include "otbImage.h"
@@ -9,7 +10,7 @@
 #include "itkHistogram.h"
 #include "otbStreamingMinMaxVectorImageFilter.h"
  
-int compute_zs(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname)
+int compute_zs(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim)
 {
     typedef otb::VectorImage<double>               VectorImageType;
 typedef otb::Image<double, 2>               MaskImageType;
@@ -56,10 +57,10 @@ typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinM
   
   SHVIFType::FilterType::CountVectorType bins( nbComp );
 
-  std::cout << "min " << filter->GetMinimum() << std::endl;
-  std::cout << "max " << filter->GetMaximum() << std::endl;
+  // std::cout << "min " << filter->GetMinimum() << std::endl;
+  // std::cout << "max " << filter->GetMaximum() << std::endl;
 
-  bins[0]=(max[0]-min[0]) / 100;
+  bins[0]=(max[0]-min[0]) / dz;
   
   SHVIFFilter1->GetFilter()->SetNumberOfBins( bins );
   SHVIFFilter1->GetFilter()->SetHistogramMin( min );
@@ -87,21 +88,71 @@ typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinM
 
   unsigned int histogramSize1 = histogram1->Size();
 
-  std::cout << "Histogram size " << histogramSize1 << std::endl;
-
+  //std::cout << "Histogram size " << histogramSize1 << std::endl;
+  
+  
   for( unsigned int bin=0; bin < histogramSize1; bin++ )
     {
-    std::cout << "Histogram 1 frequency " << histogram1->GetFrequency( bin, 0 ) << std::endl;
-    std::cout << "Histogram 2 frequency " << histogram2->GetFrequency( bin, 0 ) << std::endl;
-    std::cout << std::endl;
+    // std::cout << "Histogram 1 frequency " << histogram1->GetFrequency( bin, 0 ) << std::endl;
+    // std::cout << "Histogram 2 frequency " << histogram2->GetFrequency( bin, 0 ) << std::endl;
+    // std::cout << std::endl;
 
-    if ((float) histogram2->GetFrequency( bin, 0 ) / (float) histogram1->GetFrequency( bin, 0 ) > 0.1)
+    if ((float) histogram2->GetFrequency( bin, 0 ) / (float) histogram1->GetFrequency( bin, 0 ) > fsnow_lim)
       {
-      std::cout << "Measurement vector at bin " << bin << " is "
-            << histogram1->GetMeasurementVector(bin-2) << std::endl;
-      return histogram1->GetMeasurementVector(bin-2)[0];
+      if (bin >= 2)
+        {
+        return histogram1->GetMeasurementVector(bin-2)[0];
+        }
+      else
+        {
+        return histogram1->GetMeasurementVector(0)[0];
+        }
       }
     }
 
-  return EXIT_SUCCESS;
+  //Don't find a zs, return -1;
+  return -1;
+}
+
+int compute_snow_fraction(const std::string & infname)
+{
+  typedef otb::VectorImage<unsigned char>               VectorImageType;
+  typedef otb::Image<unsigned char, 2>               MaskImageType;
+  typedef otb::ImageFileReader<VectorImageType>               VectorReaderType;
+  typedef otb::ImageFileReader<MaskImageType>               MaskReaderType;
+  typedef otb::StreamingHistogramMaskedVectorImageFilter<VectorImageType, MaskImageType>                SHVIFType;
+
+  const unsigned int nbComp = 2;
+
+  VectorReaderType::Pointer reader = VectorReaderType::New();
+  reader->SetFileName(infname);
+  reader->UpdateOutputInformation();
+
+  MaskReaderType::Pointer readerMask = MaskReaderType::New();
+  readerMask->SetFileName(infname);
+
+  SHVIFType::Pointer SHVIFFilter = SHVIFType::New();
+  SHVIFFilter->GetFilter()->SetInput(reader->GetOutput());
+
+  VectorImageType::PixelType pixelMin(nbComp);
+  pixelMin[0]=0;
+  pixelMin[1]=0;
+  VectorImageType::PixelType pixelMax(nbComp);
+  pixelMax[0]=1;
+  pixelMax[1]=1;
+
+  SHVIFType::FilterType::CountVectorType bins( nbComp );
+  bins[0]=1;
+  bins[1]=1;
+  SHVIFFilter->GetFilter()->SetNumberOfBins( bins );
+
+  SHVIFFilter->GetFilter()->SetHistogramMin( pixelMin );
+  SHVIFFilter->GetFilter()->SetHistogramMax( pixelMax );
+
+  SHVIFFilter->SetMaskImage(readerMask->GetOutput());
+  SHVIFFilter->SetMaskValue(1);
+
+  SHVIFFilter->Update();
+  
+  return SHVIFFilter->GetHistogramList()->GetNthElement(0)->GetFrequency(0,0);
 }

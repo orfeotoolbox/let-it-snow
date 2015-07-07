@@ -2,9 +2,12 @@ PROJECT(lis)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-include_directories(code)
+include_directories(src)
 
 # Find necessary packages
+
+find_package(PythonInterp REQUIRED)
+
 find_package( PythonLibs 2.7 REQUIRED )
 include_directories( ${PYTHON_INCLUDE_DIRS} )
  
@@ -41,4 +44,10 @@ endif(NOT lis_INSTALL_INCLUDE_DIR)
 
 SET(BUILD_SHARED_LIBS ON)
 
-add_subdirectory(code)
+add_subdirectory(src)
+
+# Add Testing subdirectory
+option(BUILD_TESTING  "Build testing." OFF)
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
