@@ -90,6 +90,13 @@ typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinM
   
   for( unsigned int bin=0; bin < histogramSize1; bin++ )
     {
+    std::cout << "In bin=" << bin << ":" << std::endl;
+    std::cout << "Frequency in histogram1 = " <<  histogram1->GetFrequency( bin, channel ) << std::endl;
+    std::cout << "Measure in histogram1   = " <<  histogram1->GetMeasurementVector(bin)[0] << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "Frequency in histogram2 = " <<  histogram2->GetFrequency( bin, channel ) << std::endl;
+    std::cout << "Measure in histogram2   = " <<  histogram2->GetMeasurementVector(bin)[0] << std::endl;
     if ((float) histogram2->GetFrequency( bin, 0 ) / (float) histogram1->GetFrequency( bin, 0 ) > fsnow_lim)
       {
       if (bin >= 2)
