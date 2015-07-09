@@ -101,11 +101,12 @@ typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinM
       {
       if (bin >= 2)
         {
-        return histogram1->GetMeasurementVector(bin-2)[0];
+	//Return the min valu of the bin (GetMeasurementVector returns the centroid)
+        return histogram1->GetMeasurementVector(bin-2)[0] - dz/2;
         }
       else
         {
-        return histogram1->GetMeasurementVector(0)[0];
+        return histogram1->GetMeasurementVector(0)[0] - dz/2;
         }
       }
     }
