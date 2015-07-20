@@ -4,7 +4,12 @@ todo
 
 ## Code Example
 
-todo
+Configure PYTHONPATH environnement
+export PYTHONPATH=${lis-build-dir}/bin/:$PYTHONPATH
+
+Run the main python script:
+
+
 
 ## Motivation
 
