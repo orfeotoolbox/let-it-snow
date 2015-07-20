@@ -1,13 +1,13 @@
 {
     "general":{
-        "pout":"/home/grizonnetm/data/Output-CES-Neige",
+        "pout":"/mnt/data/home/gascoins/Output-CES-Neige",
         "shadow_value":64,
         "ram":1024
         },
     "inputs":{
-        "image":"/home/grizonnetm/data/CES-Neige/test_CES/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_ORTHO_SURF_CORR_PENTE_CMarocD0000B0000.TIF",
-        "dem":"/home/grizonnetm/data/CES-Neige/test_CES/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif",
-        "cloud_mask":"/home/grizonnetm/data/CES-Neige/test_CES/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
+        "image":"/mnt/data/home/gascoins/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_ORTHO_SURF_CORR_PENTE_CMarocD0000B0000.TIF",
+        "dem":"/mnt/data/home/gascoins/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif",
+        "cloud_mask":"/mnt/data/home/gascoins/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
     },
     "cloud_mask":{
         "rf":8,
