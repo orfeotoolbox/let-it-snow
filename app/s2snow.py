@@ -21,6 +21,7 @@
 # 
 import sys
 from subprocess import call
+import glob
 import os
 import os.path as op
 import json
@@ -40,6 +41,25 @@ def showHelp():
 def polygonize(input_img,input_mask,output_vec):
     #Gdal polygonize
     call(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
+
+def quicklook_RGB(input_img,output_img):
+    #make a RGB quicklook to highlight the snow cover  
+    #input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color composite RGB image (GTiff)
+    call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b","4","-b","2","-b","1",input_img,output_img])
+
+def burn_polygons_edges(input_img,input_vec):
+    #burn polygon borders onto an image with the following symbology: 
+    # - cloud and cloud shadows: green
+    # - snow: magenta
+    # 1) convert mask polygons to lines
+    tmp_line="tmp_line"
+    call(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
+    # 2) rasterize cloud and cloud shadows polygon borders in green
+    call(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l","tmp_line",tmp_line+".shp",input_img])
+    # 3) rasterize snow polygon borders in magenta
+    call(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
+    # 4) remove tmp_line files
+    call(["rm"]+glob.glob(tmp_line+"*"))
 
 #----------------- MAIN ---------------------------------------------------
 def main(argv):
@@ -132,7 +152,7 @@ def main(argv):
         condition_pass2= "(im3b1 != 1) and (im2b1>" + str(zs) + ") and ((im1b1-im1b4)/(im1b1+im1b4) > " + str(ndsi_pass2) + ") and (im1b2>" + str(rRed_pass2) + ")"
         call(["otbcli_BandMath","-il",img,dem,cloud_refine,"-out",op.join(path_tmp,"pass2.tif"),"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
 
-        #poligonize
+        #polygonize
         polygonize(op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2_vec.shp"))
 
         #Fuse pass1 and pass2
@@ -157,6 +177,14 @@ def main(argv):
 
     #Gdal polygonize
     polygonize(op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask_vec.shp"))
+
+    #RGB quicklook
+    quicklook_RGB(img,op.join(path_tmp,"quicklook.tif"))
+
+    #Burn polygons edges on the quicklook
+    #TODO add pass1 snow polygon in yellow
+    burn_polygons_edges(op.join(path_tmp,"quicklook.tif"),op.join(path_tmp,"final_mask_vec.shp"))
+
 
 if __name__ == "__main__":
   if len(sys.argv) < 1 :
