@@ -19,6 +19,10 @@ Run the main python script:
 
 python s2snow.py param.json
 
+There is a Bash script in app directory which allows to set the env variable and run the script:
+
+runLis.sh param.json
+
 ## Motivation
 
 Code to generate CES Neige products on theia platforms

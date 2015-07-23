@@ -6,6 +6,8 @@ include_directories(src)
 
 # Find necessary packages
 
+find_package(GDAL REQUIRED)
+
 find_package(PythonInterp REQUIRED)
 
 find_package( PythonLibs 2.7 REQUIRED )
