@@ -42,10 +42,10 @@ def polygonize(input_img,input_mask,output_vec):
     #Gdal polygonize
     call(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
-def quicklook_RGB(input_img,output_img):
+def quicklook_RGB(input_img,output_img, nRed, nGreen, nMIR):
     #make a RGB quicklook to highlight the snow cover  
     #input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color composite RGB image (GTiff)
-    call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b","4","-b","2","-b","1",input_img,output_img])
+    call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nMIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
 
 def burn_polygons_edges(input_img,input_vec):
     #burn polygon borders onto an image with the following symbology: 
@@ -75,6 +75,23 @@ def main(argv):
     cloud_refine=op.join(path_tmp,"cloud_refine.tif")
     shadow_value=data["general"]["shadow_value"]
     ram=data["general"]["ram"]
+    
+    mode=data["general"]["mode"]
+    
+    if mode == "spot4":
+      nGreen=1 # Index of green band
+      nMIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
+      nRed=2 # Index of red band
+      nodata=-10000 # no-data value
+    elif mode == "landsat":
+      nGreen=3
+      nMIR=6
+      nRed=4
+      nodata=-10000
+    else:
+      sys.exit("sat should be spot4 or landsat")
+	
+     
     #Parse Inputs 
     img=str(data["inputs"]["image"])
     dem=str(data["inputs"]["dem"])
@@ -91,7 +108,7 @@ def main(argv):
     
     #Pass -1 : generate custom cloud mask
     #Pass -1 extract redband
-    call(["gdal_translate","-ot","Int16","-b","2",img,redBand_path])
+    call(["gdal_translate","-ot","Int16","-b",str(nRed),img,redBand_path])
 
     dataset = gdal.Open( redBand_path, GA_ReadOnly )
     
@@ -109,7 +126,7 @@ def main(argv):
     #call(["otbcli_RigidTransformResample","-in",op.join(path_tmp,"red_warped_1.tif"),"-out",op.join(path_tmp,"red_nn.tif"),"int16","-transform.type.id.scalex",str(rf),"-transform.type.id.scaley",str(rf),"-interpolator","nn"])
     call(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(path_tmp,"red_coarse.tif"),op.join(path_tmp,"red_nn.tif")])
     
-    #edit result to set the resolution to 20 -20
+    #edit result to set the resolution to the input image resolution
     #TODO need to find a better solution and also guess the input spacing
     call(["/mnt/data/home/otbtest/OTB/SuperBuild/OTB/GDAL/build/swig/python/scripts/gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
     #Extract shadow mask
@@ -126,7 +143,10 @@ def main(argv):
     fsnow_total_lim=data["snow"]["fsnow_total_lim"]
 
     #Pass1 : NDSI threshold
-    condition_pass1= "(im2b1!=1 and ((im1b1-im1b4)/(im1b1+im1b4))>"+ str(ndsi_pass1) + " and im1b2> " + str(rRed_pass1) + ")"
+
+    ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nMIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nMIR)+")"
+
+    condition_pass1= "(im2b1!=1 and ("+ndsi_formula+")>"+ str(ndsi_pass1) + " and im1b"+str(nRed)+"> " + str(rRed_pass1) + ")"
     call(["otbcli_BandMath","-il",img,cloud_refine,"-out",ndsi_pass1_path,"uint8","-ram",str(ram),"-exp",condition_pass1 + "?1:0"])
 
 
@@ -149,7 +169,7 @@ def main(argv):
       
       if (zs !=-1):
         #NDSI threshold again
-        condition_pass2= "(im3b1 != 1) and (im2b1>" + str(zs) + ") and ((im1b1-im1b4)/(im1b1+im1b4) > " + str(ndsi_pass2) + ") and (im1b2>" + str(rRed_pass2) + ")"
+        condition_pass2= "(im3b1 != 1) and (im2b1>" + str(zs) + ") and (" + ndsi_formula + "> " + str(ndsi_pass2) + ") and (im1b"+str(nRed)+">" + str(rRed_pass2) + ")"
         call(["otbcli_BandMath","-il",img,dem,cloud_refine,"-out",op.join(path_tmp,"pass2.tif"),"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
 
         #polygonize
@@ -179,7 +199,7 @@ def main(argv):
     polygonize(op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask_vec.shp"))
 
     #RGB quicklook
-    quicklook_RGB(img,op.join(path_tmp,"quicklook.tif"))
+    quicklook_RGB(img,op.join(path_tmp,"quicklook.tif"),nRed,nGreen,nMIR)
 
     #Burn polygons edges on the quicklook
     #TODO add pass1 snow polygon in yellow
@@ -187,7 +207,7 @@ def main(argv):
 
 
 if __name__ == "__main__":
-  if len(sys.argv) < 1 :
+  if len(sys.argv) != 2 :
     showHelp()
   else:
     main(sys.argv)

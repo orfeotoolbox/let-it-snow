@@ -56,7 +56,7 @@ source /mnt/data/home/otbtest/config_otb.sh
 # Then build the lis project using cmake
 
 cd $build_dir
-cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON $source_dir
+cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
 make
 
 ## Tests

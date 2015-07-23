@@ -8,6 +8,10 @@ include_directories(src)
 
 find_package(GDAL REQUIRED)
 
+if(NOT GDAL_FOUND)
+ message(FATAL_ERROR "Cannot find GDAL. Set GDAL_INCLUDE_DIR and GDAL_LIBRARY")
+endif()
+
 find_package(PythonInterp REQUIRED)
 
 find_package( PythonLibs 2.7 REQUIRED )
