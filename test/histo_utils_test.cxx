@@ -23,7 +23,7 @@ int main(int argc, char * argv [])
 const int result = compute_zs(argv[1],argv[2],argv[3],atoi(argv[4]),atof(argv[5]));
   
 std::cout << "result: " << result << std::endl;
-if (result == 2771)
+if (result == 2721)
   {
   return EXIT_SUCCESS;
   }
