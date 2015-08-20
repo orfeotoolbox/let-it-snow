@@ -77,6 +77,7 @@ def main(argv):
     ram=data["general"]["ram"]
     
     mode=data["general"]["mode"]
+    generate_vector=data["general"]["generate_vector"]
     
     if mode == "spot4":
       nGreen=1 # Index of green band
@@ -172,8 +173,9 @@ def main(argv):
         condition_pass2= "(im3b1 != 1) and (im2b1>" + str(zs) + ") and (" + ndsi_formula + "> " + str(ndsi_pass2) + ") and (im1b"+str(nRed)+">" + str(rRed_pass2) + ")"
         call(["otbcli_BandMath","-il",img,dem,cloud_refine,"-out",op.join(path_tmp,"pass2.tif"),"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
 
-        #polygonize
-        polygonize(op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2_vec.shp"))
+	if generate_vector:
+          #polygonize
+          polygonize(op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2_vec.shp"))
 
         #Fuse pass1 and pass2
         condition_pass3= "(im1b1 == 1 or im2b1 == 1)"
@@ -187,15 +189,16 @@ def main(argv):
     else:
         generic_snow_path=ndsi_pass1_path
     
-    #Gdal polygonize
-    polygonize(generic_snow_path,generic_snow_path,op.join(path_tmp,"pass3_vec.shp"))
+    if generate_vector:
+      #Gdal polygonize
+      polygonize(generic_snow_path,generic_snow_path,op.join(path_tmp,"pass3_vec.shp"))
 
     #TODO Final update of the cloud mask
     condition_final= "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + str(rRed_backtocloud) + ")))?2:0"
  
     call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif"),"uint8","-ram",str(ram),"-exp",condition_final])
 
-    #Gdal polygonize
+    #Gdal polygonize (needed to produce quicklook)
     polygonize(op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask_vec.shp"))
 
     #RGB quicklook
