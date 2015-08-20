@@ -245,25 +245,18 @@ short compute_zs_ng(const std::string & infname, const std::string & inmasksnowf
 
   const unsigned int channel = 0;  // red channel
 
-  for( unsigned int bin=0; bin < histogramSize; bin++ )
+  for( int bin=0; bin < histogramSize; bin++ )
     
     {	//std::cout << histogram->GetFrequency( bin, channel ) << std::endl;
 	//std::cout << histogram->GetFrequency( bin+size[0], channel ) << std::endl;
 	if ((float) histogram->GetFrequency( bin+size[0], channel ) / (float) histogram->GetFrequency( bin, channel ) > fsnow_lim)
       {
-      if (bin >= 2)
-        {
 	//Return the min value of the bin (GetMeasurementVector returns the centroid)
 	//std::cout << "value (normal) " << histogram->GetMeasurementVector(bin-2)[0] - dz/2 << std::endl;
-	  return vcl_floor(histogram->GetMeasurementVector(bin-2)[0] - dz/2);
-        }
-      else
-        {
-	  //std::cout << "value " << histogram->GetMeasurementVector(0)[0] - dz/2 << std::endl;
-	  return vcl_floor(histogram->GetMeasurementVector(0)[0] - dz/2);
-        }
+	//take 2 bins before and the lower bound of the bin (cf Gascoin implementation)
+	return vcl_floor(histogram->GetMeasurementVector(std::max(bin-2,0))[channel] - dz/2);
       }
     }
-
-return -1;
+  //don't find zs
+  return -1;
 }
