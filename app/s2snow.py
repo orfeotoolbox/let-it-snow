@@ -161,7 +161,7 @@ def main(argv):
     
     if (nb_snow_pixels > fsnow_total_lim):
       #Pass 2: determine the Zs elevation fraction (done by external c++ code)
-      zs=histo_utils_ext.compute_zs(dem,ndsi_pass1_path,op.join(path_tmp,"cloud_pass1.tif"), dz, fsnow_lim) 
+      zs=histo_utils_ext.compute_zs_ng(dem,ndsi_pass1_path,op.join(path_tmp,"cloud_pass1.tif"), dz, fsnow_lim) 
       #Print zs
       print "computed ZS:", zs
       #TODO plug the right elevation

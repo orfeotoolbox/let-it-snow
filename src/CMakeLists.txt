@@ -10,5 +10,6 @@ target_link_libraries( histo_utils_ext ${Boost_LIBRARIES} histo_utils )
 # don't prepend wrapper library name with lib
 set_target_properties( histo_utils_ext PROPERTIES PREFIX "" )
 
-# ADD_EXECUTABLE(histo_lis main2.cxx ${hdrs} ${thdrs})
-# TARGET_LINK_LIBRARIES(histo_lis ${OTB_LIBRARIES})
+#Test itk class
+ADD_EXECUTABLE(ImageHistogram3 ImageHistogram3.cxx)
+TARGET_LINK_LIBRARIES(ImageHistogram3 ${OTB_LIBRARIES})
