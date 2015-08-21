@@ -122,45 +122,45 @@ typedef otb::StreamingMinMaxVectorImageFilter<VectorImageType>     StreamingMinM
 
 int compute_snow_fraction(const std::string & infname)
 {
-  typedef otb::VectorImage<unsigned char>               VectorImageType;
-  typedef otb::Image<unsigned char, 2>               MaskImageType;
-  typedef otb::ImageFileReader<VectorImageType>               VectorReaderType;
-  typedef otb::ImageFileReader<MaskImageType>               MaskReaderType;
-  typedef otb::StreamingHistogramMaskedVectorImageFilter<VectorImageType, MaskImageType>                SHVIFType;
 
-  const unsigned int nbComp = VectorImageType::ImageDimension;
+  /** Filters typedef */
+  typedef otb::Image<short, 2>               ImageType;
+  typedef otb::ImageFileReader<ImageType>               ReaderType;
 
-  VectorReaderType::Pointer reader = VectorReaderType::New();
+  ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName(infname);
-  reader->UpdateOutputInformation();
 
-  MaskReaderType::Pointer readerMask = MaskReaderType::New();
-  readerMask->SetFileName(infname);
+  typedef itk::Statistics::ImageToHistogramFilter<
+                            ImageType >   HistogramFilterType;
 
-  SHVIFType::Pointer SHVIFFilter = SHVIFType::New();
-  SHVIFFilter->GetFilter()->SetInput(reader->GetOutput());
+  HistogramFilterType::Pointer histogramFilter =
+                                             HistogramFilterType::New();
+  histogramFilter->SetInput(  reader->GetOutput()  );
 
-  VectorImageType::PixelType pixelMin(nbComp);
-  pixelMin[0]=0;
-  pixelMin[1]=0;
-  VectorImageType::PixelType pixelMax(nbComp);
-  pixelMax[0]=1;
-  pixelMax[1]=1;
+  histogramFilter->SetAutoMinimumMaximum( false );
+  histogramFilter->SetMarginalScale( 10000 );
 
-  SHVIFType::FilterType::CountVectorType bins( nbComp );
-  bins[0]=1;
-  bins[1]=1;
-  SHVIFFilter->GetFilter()->SetNumberOfBins( bins );
+  HistogramFilterType::HistogramMeasurementVectorType lowerBound(1);
+  HistogramFilterType::HistogramMeasurementVectorType upperBound(1);
 
-  SHVIFFilter->GetFilter()->SetHistogramMin( pixelMin );
-  SHVIFFilter->GetFilter()->SetHistogramMax( pixelMax );
-
-  SHVIFFilter->SetMaskImage(readerMask->GetOutput());
-  SHVIFFilter->SetMaskValue(1);
-
-  SHVIFFilter->Update();
+  lowerBound.Fill(0);
+  upperBound.Fill(1);
   
-  return SHVIFFilter->GetHistogramList()->GetNthElement(0)->GetFrequency(0,0);
+  histogramFilter->SetHistogramBinMinimum( lowerBound );
+  histogramFilter->SetHistogramBinMaximum( upperBound );
+  
+  typedef HistogramFilterType::HistogramSizeType   SizeType;
+  SizeType size(1);
+
+  size.Fill(2); 
+  histogramFilter->SetHistogramSize( size );
+  
+  histogramFilter->Update();
+
+  typedef HistogramFilterType::HistogramType  HistogramType;
+  const HistogramType * histogram = histogramFilter->GetOutput();
+
+  return histogram->GetFrequency(1);
 }
 
 short compute_zs_ng(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim)
