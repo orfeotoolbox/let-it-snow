@@ -26,6 +26,10 @@ TARGET_LINK_LIBRARIES(histo_utils_test histo_utils)
 ADD_EXECUTABLE(histo_utils_ng_test histo_utils_ng_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_ng_test histo_utils)
 
+ADD_EXECUTABLE(histo_utils_ng_internal_test histo_utils_ng_internal_test.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_ng_internal_test histo_utils)
+
+
 ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
 
@@ -47,6 +51,15 @@ add_test(NAME histo_utils_ng_test
     100
     0.1
     2721
+    )
+
+add_test(NAME histo_utils_ng_internal_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_internal_test
+    0
+    100
+    20
+    0.1
+    20
     )
 
 add_test(NAME histo_utils_full_test

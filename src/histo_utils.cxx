@@ -2,8 +2,8 @@
 
 #include "otbStreamingHistogramVectorImageFilter.h"
 #include "otbStreamingHistogramMaskedVectorImageFilter.h"
-#include "otbVectorImage.h"
 #include "otbImage.h"
+#include "otbVectorImage.h"
 #include "otbImageFileReader.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "otbObjectList.h"
@@ -204,12 +204,18 @@ short compute_zs_ng(const std::string & infname, const std::string & inmasksnowf
   imageToVectorImageFilter->SetInput(1, reader_snow->GetOutput());
   imageToVectorImageFilter->SetInput(2, reader_cloud->GetOutput());
 
+  return compute_zs_ng_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim);
+}
+
+short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim)
+{
+  typedef itk::VectorImage<short, 2>  VectorImageType;
   typedef itk::Statistics::ImageToHistogramFilter<
                             VectorImageType >   HistogramFilterType;
 
   HistogramFilterType::Pointer histogramFilter =
                                              HistogramFilterType::New();
-  histogramFilter->SetInput(  imageToVectorImageFilter->GetOutput()  );
+  histogramFilter->SetInput(  compose_image  );
 
   histogramFilter->SetAutoMinimumMaximum( false );
   histogramFilter->SetMarginalScale( 10000 );
@@ -243,20 +249,106 @@ short compute_zs_ng(const std::string & infname, const std::string & inmasksnowf
 
   const unsigned int histogramSize = histogram->Size();
 
-  const unsigned int channel = 0;  // red channel
+ // ############################################
+  HistogramType::IndexType index(3);
+  index[0] = 0;
+  index[1] = 0;
+  index[2] = 0;
+  std::cout << "Frequency of the bin at index  " << index
+            << " is " << histogram->GetFrequency(index) << std::endl;
+ 
+ 
+  std::cout << "Measurement vector at bin " << index << " is "
+            << histogram->GetMeasurementVector(index) << std::endl;
+ 
+  HistogramType::MeasurementVectorType mv(3);
+  mv[0] = 50;
+  mv[1] = 1;
+  mv[2] = 0;
+ 
+  HistogramType::IndexType resultingIndex;
+  histogram->GetIndex(mv, resultingIndex);
+ 
+  std::cout << "Index of the measurement vector " << mv
+            << " is " << resultingIndex << std::endl;
+ 
+  index.Fill(101);
+  if ( histogram->IsIndexOutOfBounds(index) )
+    {
+    std::cout << "Index " << index << " is out of bounds." << std::endl;
+    }
+ 
+  std::cout << "Number of bins = " << histogram->Size()
+            << " Total frequency = " << histogram->GetTotalFrequency()
+            << " Dimension sizes = " << histogram->GetSize() << std::endl;
+ 
+  std::cout << "50th percentile along the first dimension = "
+            << histogram->Quantile(0, 0.5) << std::endl;
+ // ######################################
 
+  const unsigned int channel = 0;  // red channel
+/*
   for( int bin=0; bin < histogramSize; bin++ )
     
-    {	//std::cout << histogram->GetFrequency( bin, channel ) << std::endl;
+    {	std::cout <<"channel 0 " << histogram->GetFrequency( bin, channel ) << std::endl;
+        std::cout <<"channel 1 " << histogram->GetFrequency( bin, 1 ) << std::endl;
+        std::cout <<"channel 2 " << histogram->GetFrequency( bin, 2 ) << std::endl;
 	//std::cout << histogram->GetFrequency( bin+size[0], channel ) << std::endl;
+   /*
 	if ((float) histogram->GetFrequency( bin+size[0], channel ) / (float) histogram->GetFrequency( bin, channel ) > fsnow_lim)
       {
 	//Return the min value of the bin (GetMeasurementVector returns the centroid)
-	//std::cout << "value (normal) " << histogram->GetMeasurementVector(bin-2)[0] - dz/2 << std::endl;
+	std::cout << "value (normal) " << histogram->GetMeasurementVector(std::max(bin-2,0))[channel] - dz/2 << std::endl;
 	//take 2 bins before and the lower bound of the bin (cf Gascoin implementation)
 	return vcl_floor(histogram->GetMeasurementVector(std::max(bin-2,0))[channel] - dz/2);
       }
+
     }
+*/
+
+  for (int i=0; i< histogram->GetSize()[0];++i)
+	{
+	for (int j=0; j< histogram->GetSize()[1];++j)
+	{
+	HistogramType::IndexType idx(3);
+  	idx[0] = i;
+  	idx[1] = j;
+  	idx[2] = 0;
+	std::cout <<"frequency at index " << i << "," << j << " : "<< histogram->GetFrequency( idx ) << std::endl;
+	}
+	}
+
+  for (int i=0; i< histogram->GetSize()[0];++i)
+	{
+	HistogramType::IndexType idx1(3);
+  	idx1[0] = i;
+  	idx1[1] = 0;
+  	idx1[2] = 0;
+
+        HistogramType::IndexType idx2(3);
+  	idx2[0] = i;
+  	idx2[1] = 1;
+  	idx2[2] = 0;
+	const HistogramType::AbsoluteFrequencyType z=histogram->GetFrequency(idx1)+histogram->GetFrequency(idx2);
+	if (z > 0)
+	{
+	if ((double) histogram->GetFrequency(idx2) / (double) z > fsnow_lim)
+      {
+	//Return the min value of the bin (GetMeasurementVector returns the centroid)
+ 	std::cout << "histogram->GetFrequency(idx2): " << histogram->GetFrequency(idx2) << std::endl;
+	std::cout << "z: " << z << std::endl;
+	HistogramType::IndexType idx_res(3);
+  	idx_res[0] = std::max(i-2,0);
+  	idx_res[1] = 1;
+  	idx_res[2] = 0;
+	
+	std::cout << "idx_res: " << idx_res << std::endl;
+	std::cout << "value: " << histogram->GetMeasurementVector(idx_res)[channel] - dz/2 << std::endl;
+	//take 2 bins before and the lower bound of the bin (cf Gascoin implementation)
+	return vcl_floor(histogram->GetMeasurementVector(idx_res)[channel] - dz/2);
+      }
+	}
+	}
   //don't find zs
   return -1;
 }
