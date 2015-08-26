@@ -59,7 +59,7 @@ add_test(NAME histo_utils_ng_internal_test
     100
     20
     0.1
-    20
+    40
     )
 
 add_test(NAME histo_utils_full_test

@@ -13,7 +13,9 @@
 
 #include "itkHistogram.h"
 #include "itkComposeImageFilter.h"
-#include "itkImageToHistogramFilter.h"
+
+#include <iostream>
+#include <fstream>
 
 int compute_zs(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim)
 {
@@ -163,7 +165,7 @@ int compute_snow_fraction(const std::string & infname)
   return histogram->GetFrequency(1);
 }
 
-short compute_zs_ng(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim)
+short compute_zs_ng(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const char * histo_file)
 {
   /** Filters typedef */
   typedef otb::Image<short, 2>               ImageType;
@@ -201,10 +203,63 @@ short compute_zs_ng(const std::string & infname, const std::string & inmasksnowf
   imageToVectorImageFilter->SetInput(1, reader_snow->GetOutput());
   imageToVectorImageFilter->SetInput(2, reader_cloud->GetOutput());
 
-  return compute_zs_ng_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim);
+  return compute_zs_ng_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim, histo_file);
 }
 
-short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim)
+void print_histogram (const itk::Statistics::ImageToHistogramFilter<
+		      itk::VectorImage<short, 2> >::HistogramType & histogram, const char * histo_file)
+{
+  std::ofstream myfile;
+  myfile.open (std::string(histo_file));
+  
+
+  typedef itk::VectorImage<short, 2>  VectorImageType;
+  typedef itk::Statistics::ImageToHistogramFilter<
+                            VectorImageType >   HistogramFilterType;
+  typedef HistogramFilterType::HistogramSizeType   SizeType;
+  typedef HistogramFilterType::HistogramType  HistogramType;
+
+  myfile << "Print Histogram" << std::endl;
+  myfile << "Number of bins = " << histogram.Size()
+            << " Total frequency = " << histogram.GetTotalFrequency()
+            << " Dimension sizes = " << histogram.GetSize() << std::endl;
+
+  myfile << "z_center, Nz, fcloud_z, fsnow_z" << std::endl;
+
+ for (int i=0; i< histogram.GetSize()[0];++i)
+   {
+     HistogramType::IndexType idx1(3);
+     idx1[0] = i;
+     idx1[1] = 0;
+     idx1[2] = 0;
+
+     HistogramType::IndexType idx2(3);
+     idx2[0] = i;
+     idx2[1] = 1;
+     idx2[2] = 0;
+
+     HistogramType::IndexType idx3(3);
+     idx3[0] = i;
+     idx3[1] = 0;
+     idx3[2] = 1;
+
+     HistogramType::IndexType idx4(3);
+     idx4[0] = i;
+     idx4[1] = 1;
+     idx4[2] = 1;
+
+     const HistogramType::AbsoluteFrequencyType z_center = histogram.GetMeasurementVector(idx1)[0];
+     const int Nz = histogram.GetFrequency(idx1) + histogram.GetFrequency(idx2);
+     const int fcloud_z = histogram.GetFrequency(idx3) + histogram.GetFrequency(idx4);
+     const int fsnow_z = histogram.GetFrequency(idx2) + histogram.GetFrequency(idx4);
+     
+     myfile << z_center << ", " << Nz << ", "<< fcloud_z << ", "<< fsnow_z << std::endl;
+   }
+
+ myfile.close();
+}
+
+short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const char* histo_file)
 {
   typedef itk::VectorImage<short, 2>  VectorImageType;
   typedef itk::Statistics::ImageToHistogramFilter<
@@ -233,9 +288,9 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
   typedef HistogramFilterType::HistogramSizeType   SizeType;
   SizeType size( 3 );
 
-  size[0] = (upperBound[0]-lowerBound[0]) / dz;        // number of bins for the Red   channel
-  size[1] =   2;        // number of bins for the Green channel
-  size[2] =   1;        // number of bins for the Blue  channel
+  size[0] = (upperBound[0]-lowerBound[0]) / dz;        // number of bins for the altitude   channel
+  size[1] =   2;        // number of bins for the snow channel
+  size[2] =   2;        // number of bins for the cloud  channel
 
   histogramFilter->SetHistogramSize( size );
   
@@ -247,6 +302,12 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
   const unsigned int histogramSize = histogram->Size();
 
   const unsigned int channel = 0;  // elevation channel
+
+  //Temporary print the histogram
+  if ( histo_file != NULL )
+    {
+      print_histogram(*histogram,histo_file);
+    }
 
   for (int i=0; i< histogram->GetSize()[0];++i)
     {
@@ -260,7 +321,7 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
       idx2[1] = 1;
       idx2[2] = 0;
 
-      //Compute the total number of pixels (snwo+no snow) in the elevation cell
+      //Compute the total number of pixels (snow+no snow) cloud free in the elevation cell
       const HistogramType::AbsoluteFrequencyType z=histogram->GetFrequency(idx1) + histogram->GetFrequency(idx2);
 
       //If there is pixels in this elevation cell and Check if there is enough snow pixel
@@ -275,6 +336,7 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
 	  return vcl_floor(histogram->GetMeasurementVector(idx_res)[channel] - dz/2);
 	}
     }
+
   //don't find zs
   return -1;
 }

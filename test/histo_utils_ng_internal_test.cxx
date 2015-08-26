@@ -17,7 +17,7 @@
 =========================================================================*/
 
 #include "histo_utils.h"
-#include "itkImageRandomIteratorWithIndex.h"
+#include "itkImageRandomNonRepeatingIteratorWithIndex.h"
 #include <iostream>
 
 typedef itk::VectorImage< short, 2> ImageType;
@@ -70,28 +70,27 @@ void CreateImage(ImageType::Pointer image)
   //pixel.Fill(110);
   pixel[0]=70;
   pixel[1]=1;
-  pixel[2]=0;  
+  pixel[2]=1;  
 
-  itk::ImageRandomIteratorWithIndex<ImageType> imageIterator(image, image->GetLargestPossibleRegion());
-  imageIterator.SetNumberOfSamples(5);
+  itk::ImageRandomNonRepeatingIteratorWithIndex<ImageType> imageIterator(image, image->GetLargestPossibleRegion());
+  imageIterator.ReinitializeSeed(0);  	
+  imageIterator.SetNumberOfSamples(10);
  
-  while(!imageIterator.IsAtEnd())
-    {
-    std::cout << "Setting pixel " << imageIterator.GetIndex() << " to " << pixel << std::endl;
-    imageIterator.Set(pixel);
-    ++imageIterator;
-    }
-  pixel[0]=81;
-  pixel[1]=0;
-  pixel[2]=0;  
+  unsigned int counter=0;
 
-  imageIterator.GoToBegin();
-  
   while(!imageIterator.IsAtEnd())
     {
+      if (counter > 4)
+	{
+	  //Change the pixel value at half of the iterations
+	   pixel[0]=81;
+	   pixel[1]=1;
+	   pixel[2]=0;
+	}
     std::cout << "Setting pixel " << imageIterator.GetIndex() << " to " << pixel << std::endl;
     imageIterator.Set(pixel);
     ++imageIterator;
+    ++counter;
     }
 }
 
