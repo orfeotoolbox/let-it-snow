@@ -78,7 +78,7 @@ def main(argv):
     
     mode=data["general"]["mode"]
     generate_vector=data["general"]["generate_vector"]
-    
+
     if mode == "spot4":
       nGreen=1 # Index of green band
       nMIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
@@ -97,6 +97,7 @@ def main(argv):
     img=str(data["inputs"]["image"])
     dem=str(data["inputs"]["dem"])
     cloud_init=str(data["inputs"]["cloud_mask"])
+       
 
     #Build image filenames
     redBand_path=op.join(path_tmp,"red.tif")
@@ -162,7 +163,9 @@ def main(argv):
     
     if (nb_snow_pixels > fsnow_total_lim):
       #Pass 2: determine the Zs elevation fraction (done by external c++ code)
-      zs=histo_utils_ext.compute_zs_ng(dem,ndsi_pass1_path,op.join(path_tmp,"cloud_pass1.tif"), dz, fsnow_lim) 
+      histo_log=op.join(path_tmp,"histogram.txt")
+
+      zs=histo_utils_ext.compute_zs_ng(dem,ndsi_pass1_path,op.join(path_tmp,"cloud_pass1.tif"), dz, fsnow_lim, histo_log) 
       #Print zs
       print "computed ZS:", zs
       #TODO plug the right elevation
