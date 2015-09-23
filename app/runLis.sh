@@ -5,7 +5,7 @@ export PYTHONPATH=/mnt/data/home/gascoins/CES-Neige/build/let-it-snow/bin/:$PYTH
 
 param=$1
 
-output_dir=/mnt/data/home/gascoins/Output-CES-Neige/
+output_dir=/mnt/data/home/gascoins/Output-CES-Neige-Full
 
 rm -rf $output_dir
 mkdir -p $output_dir

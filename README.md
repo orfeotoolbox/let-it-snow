@@ -47,16 +47,18 @@ GDAL itself depends on a number of other libraries provided by most major operat
 
 Python package dependencies: sys, subprocess, glob, os, json, gdal
 
-## Installing from the source distribution
+### Installing from the source distribution
 
 to configure OTB on venuscalc:
 
 source /mnt/data/home/otbtest/config_otb.sh
 
-# Then build the lis project using cmake
+### Then build the lis project using cmake
 
-cd $build_dir
-cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
+cd $build_dir \
+
+cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir \
+
 make
 
 ## Tests
