@@ -1,0 +1,29 @@
+{
+    "general":{
+        "pout":"outputdir",
+        "shadow_value":64,
+        "ram":1024,
+	"mode":"spot4",
+	"generate_vector":false
+        },
+    "inputs":{ 
+        "image":"inputimage",
+        "dem":"inputdem",
+        "cloud_mask":"inputcloud"
+    },
+    "cloud_mask":{
+        "rf":8,
+        "rRed_darkcloud":650,
+        "rRed_backtocloud":100
+    },
+    "snow":{
+        "dz":100,
+        "ndsi_pass1":0.4,
+        "rRed_pass1":200,
+        "ndsi_pass2":0.15,
+        "rRed_pass2":120,
+        "fsnow_lim":0.1,
+        "fsnow_total_lim":0.001
+    }
+}
+
