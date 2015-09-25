@@ -36,7 +36,7 @@ do
   mkdir -p $po
 
   # projet SRTM dem with cubicspline resampling (target resolution in 20 m x 20 m) 
-  gdalwarp -dstnodata -32768 -tr 20 20 -r cubicspline -overwrite -te $te -t_srs "$proj" $fsrtm $po$s0.tif &
+  gdalwarp -dstnodata -32768 -tr 30 30 -r cubicspline -overwrite -te $te -t_srs "$proj" $fsrtm $po$s0.tif &
 
 done
 wait
