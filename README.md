@@ -1,31 +1,36 @@
+# CES Neige
 ## Synopsis
 
 This code is a Python/OTB version of the demonstrator of the snow detection algorithm for Sentinel-2 images. 
 
-To read more about this product see: 
-https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3_light.pdf#page=10
-http://www.equipex-geosud.fr/documents/10180/233868/7_GascoinHagolle2015-THEIA+CES+surface+enneigee_S%C3%A9minaire+Theia+Geosud+2015.pdf
+To read more about this product (in French):
 
-The input files were generated from L2 images downloaded from Theia Land and pre-processed by three shell scripts:
+* [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3_light.pdf#page=10)
 
-    decompresse_*.sh, to unzip the files
-    decoupe_*.sh, to extract a rectangle AOI from L2A data using gdal_translate with projection window defined in the ascii file AOI_test_CESNeige.csv
-    projette_mnt_*.sh, to project the SRTM DEM and resample at 30m or 20m (Landsat8 or Take5) over the same AOI. It uses gdalwarp with the cubicspline option
+* [Slides Séminaire GEOSUD](http://www.equipex-geosud.fr/documents/10180/233868/7_GascoinHagolle2015-THEIA+CES+surface+enneigee_S%C3%A9minaire+Theia+Geosud+2015.pdf)
 
-Then the snow detection is performed in a Python script.
+The input files are SPOT-4 or Landsat-8 Level-2A images from Theia Land and the SRTM digital elevation model.
 
 ## Code Example
 
+First create the DEM using `projette_mnt_*.sh` in the utils folder to project and resample the SRTM DEM over the Landsat/SPOT area (30m:Landsat8 or 20m:Take5). It uses gdalwarp with the cubicspline option.
+The snow detection is performed in a Python script.
+
+```
 Configure PYTHONPATH environnement
 export PYTHONPATH=${lis-build-dir}/bin/:$PYTHONPATH
-
+```
 Run the main python script:
 
+```
 python s2snow.py param.json
+```
 
 There is a Bash script in app directory which allows to set the env variable and run the script:
 
+```
 runLis.sh param.json
+```
 
 ## Motivation
 
@@ -49,25 +54,23 @@ Python package dependencies: sys, subprocess, glob, os, json, gdal
 
 ### Installing from the source distribution
 
-to configure OTB on venuscalc:
+To configure OTB on venuscalc:
 
 source /mnt/data/home/otbtest/config_otb.sh
 
 ### Then build the lis project using cmake
-
-cd $build_dir \
-
-cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir \
-
+````
+cd $build_dir
+cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
 make
-
+````
 ## Tests
 
 Unable tests with BUILD_TESTING cmake option
 
 ## Contributors
 
-Manuel Grizonnet (CNES), Simon Gascoin (CNRS)
+Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO)
 
 ## License
 
