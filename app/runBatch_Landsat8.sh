@@ -5,8 +5,6 @@ export PYTHONPATH=/mnt/data/home/gascoins/CES-Neige/build/let-it-snow/bin/:$PYTH
 
 output_dir=/mnt/data/home/gascoins/Landsat8/Output-CES-Neige
 
-config=confLandsat8.json
-
 # main input path 
 pin="/mnt/data/home/gascoins/Landsat8/"
 
@@ -28,8 +26,10 @@ inputdem=$pdem/$tile/$tile.tif
 for i in $pimg/*
   do
 
+  config=$i.json
+
   # write the config based on a template file
-  cp ../config/param_full_Take5_template.json $config
+  cp ../config/param_full_Landsat8_template.json $config
 
   # modify only three parameters: image file, cloud file, dem file, output dir
   inputimage=$(find $i -name *ORTHO_SURF_CORR_PENTE*.TIF)
