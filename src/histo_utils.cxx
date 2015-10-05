@@ -146,7 +146,7 @@ int compute_snow_fraction(const std::string & infname)
   HistogramFilterType::HistogramMeasurementVectorType upperBound(1);
 
   lowerBound.Fill(0);
-  upperBound.Fill(1);
+  upperBound.Fill(255);
   
   histogramFilter->SetHistogramBinMinimum( lowerBound );
   histogramFilter->SetHistogramBinMaximum( upperBound );
@@ -279,8 +279,8 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
   lowerBound[1] = 0;
   lowerBound[2] = 0;
   upperBound[0] = max;
-  upperBound[1] = 1;
-  upperBound[2] = 1;
+  upperBound[1] = 255;
+  upperBound[2] = 255;
 
   histogramFilter->SetHistogramBinMinimum( lowerBound );
   histogramFilter->SetHistogramBinMaximum( upperBound );

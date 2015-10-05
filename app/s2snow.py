@@ -108,6 +108,11 @@ def main(argv):
     rRed_darkcloud=data["cloud_mask"]["rRed_darkcloud"]
     rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
     
+    #Build gdal option to generate maks of 1 byte
+    gdal_opt="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
+    #Build gdal option to generate maks of 2 bytes
+    gdal_opt2="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
+
     #Pass -1 : generate custom cloud mask
     #Pass -1 extract redband
     call(["gdal_translate","-ot","Int16","-b",str(nRed),img,redBand_path])
@@ -131,9 +136,10 @@ def main(argv):
     #edit result to set the resolution to the input image resolution
     #TODO need to find a better solution and also guess the input spacing
     call(["/mnt/data/home/otbtest/OTB/SuperBuild/OTB/GDAL/build/swig/python/scripts/gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
+    #call(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
     #Extract shadow mask
     condition_shadow= "(im1b1>0 and im2b1>" + str(rRed_darkcloud) + ") or (im1b1 >= " + str(shadow_value) + ")"
-    call(["otbcli_BandMath","-il",cloud_init,op.join(path_tmp,"red_nn.tif"),"-out",cloud_refine,"uint8","-ram",str(ram),"-exp",condition_shadow + "?1:0"])
+    call(["otbcli_BandMath","-il",cloud_init,op.join(path_tmp,"red_nn.tif"),"-out",cloud_refine+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_shadow + "?1:0"])
 
     #Parse snow parameters
     dz=data["snow"]["dz"]
@@ -148,13 +154,13 @@ def main(argv):
 
     ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nMIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nMIR)+")"
 
-    condition_pass1= "(im2b1!=1 and ("+ndsi_formula+")>"+ str(ndsi_pass1) + " and im1b"+str(nRed)+"> " + str(rRed_pass1) + ")"
-    call(["otbcli_BandMath","-il",img,cloud_refine,"-out",ndsi_pass1_path,"uint8","-ram",str(ram),"-exp",condition_pass1 + "?1:0"])
+    condition_pass1= "(im2b1!=255 and ("+ndsi_formula+")>"+ str(ndsi_pass1) + " and im1b"+str(nRed)+"> " + str(rRed_pass1) + ")"
+    call(["otbcli_BandMath","-il",img,cloud_refine,"-out",ndsi_pass1_path+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_pass1 + "?1:0"])
 
 
     #Update the cloud mask (again)
-    condition_cloud_pass1= "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + str(rRed_backtocloud) + "))"
-    call(["otbcli_BandMath","-il",cloud_refine,ndsi_pass1_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"cloud_pass1.tif"),"uint8","-ram",str(ram),"-exp",condition_cloud_pass1 + "?1:0"])
+    condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(rRed_backtocloud) + "))"
+    call(["otbcli_BandMath","-il",cloud_refine,ndsi_pass1_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"cloud_pass1.tif")+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_cloud_pass1 + "?1:0"])
 
 
     #Pass 2: compute snow fraction
@@ -173,16 +179,16 @@ def main(argv):
       
       if (zs !=-1):
         #NDSI threshold again
-        condition_pass2= "(im3b1 != 1) and (im2b1>" + str(zs) + ") and (" + ndsi_formula + "> " + str(ndsi_pass2) + ") and (im1b"+str(nRed)+">" + str(rRed_pass2) + ")"
-        call(["otbcli_BandMath","-il",img,dem,cloud_refine,"-out",op.join(path_tmp,"pass2.tif"),"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
+        condition_pass2= "(im3b1 != 255) and (im2b1>" + str(zs) + ") and (" + ndsi_formula + "> " + str(ndsi_pass2) + ") and (im1b"+str(nRed)+">" + str(rRed_pass2) + ")"
+        call(["otbcli_BandMath","-il",img,dem,cloud_refine,"-out",op.join(path_tmp,"pass2.tif")+gdal_opt,"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
 
 	if generate_vector:
           #polygonize
           polygonize(op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2.tif"),op.join(path_tmp,"pass2_vec.shp"))
 
         #Fuse pass1 and pass2
-        condition_pass3= "(im1b1 == 1 or im2b1 == 1)"
-        call(["otbcli_BandMath","-il",ndsi_pass1_path,op.join(path_tmp,"pass2.tif"),"-out",op.join(path_tmp,"pass3.tif"),"uint8","-ram",str(ram),"-exp",condition_pass3 + "?1:0"])
+        condition_pass3= "(im1b1 == 255 or im2b1 == 255)"
+        call(["otbcli_BandMath","-il",ndsi_pass1_path,op.join(path_tmp,"pass2.tif"),"-out",op.join(path_tmp,"pass3.tif")+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_pass3 + "?1:0"])
 
         generic_snow_path=op.join(path_tmp,"pass3.tif")
       else:
@@ -197,9 +203,9 @@ def main(argv):
       polygonize(generic_snow_path,generic_snow_path,op.join(path_tmp,"pass3_vec.shp"))
 
     #TODO Final update of the cloud mask
-    condition_final= "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + str(rRed_backtocloud) + ")))?2:0"
+    condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(rRed_backtocloud) + ")))?2:0"
  
-    call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif"),"uint8","-ram",str(ram),"-exp",condition_final])
+    call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif")+gdal_opt2,"uint8","-ram",str(ram),"-exp",condition_final])
 
     #Gdal polygonize (needed to produce quicklook)
     polygonize(op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask_vec.shp"))
