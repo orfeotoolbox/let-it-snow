@@ -1,0 +1,35 @@
+Salut Manuel,
+
+Les données S2A sont là : /mnt/data/SENTINEL2/N2A_TEC
+Elles sont rangées par tuiles : 31TCJ (Toulouse) et 30TYN (Tarbes, avec l'Aneto et Gavarnie)), puis par dates
+
+Il y a encore un sous répertoire, il faut choisir  : S2A_OPER_SSC_L2VALD_31TCJ____20150805.DBL.DIR
+
+Ensuite on trouve des fichiers pour la résolution 10m "R1" et la résolution 20m "R2"
+
+
+    - les réflectances de surface sont dans le plan SRE (ou FRE pour la correction des effets du relief)
+Ce sont les fichiers R2 dont les numéros de bandes sont décalés. La première
+bande ne correspond à rien, et la bande 12 qui aurait dû être en sixième
+position n'est pas fournie. 
+Bon j'espère qu'on aura bientôt la prochaine version qui corrigera le bug.
+
+    - Le masque de Nuages est le plan CLD
+        - l'ordre des bits à changé par rapport au produit que tu connais :
+
+Bit 1 : Cloud_Mask.all : summary Logical or of All cloud and shadow
+masks
+
+Bit 2 - Cloud_Mask.all clouds: Logical or of All cloud masks
+
+Bit 3 : Cloud_Mask.shadows : shadows mask from clouds within image
+
+Bit 4 : Cloud_Mask.shadvar: shadows mask from clouds outside image
+
+Bit 5 - Cloud_Mask.refl : reflectance threshold
+
+Bit 6 - Cloud_Mask.refl_var : reflectance variation threshold
+
+Bit 7 - Cloud_Mask.extension : extension of the cloud mask
+
+Bit 8 - Cirrus Mask pour S2 et L8 
