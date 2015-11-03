@@ -152,7 +152,6 @@ def main(argv):
       nGreen=1
       nRed=2
       nMIR=3
-      #sys.exit("Stop here for s2")
     else:
       sys.exit("Supported sensors:  spot4, landsat, s2")
     
@@ -215,7 +214,6 @@ def main(argv):
     condition_pass1= "(im2b1!=255 and ("+ndsi_formula+")>"+ str(ndsi_pass1) + " and im1b"+str(nRed)+"> " + str(rRed_pass1) + ")"
     call(["otbcli_BandMath","-il",img,cloud_refine,"-out",ndsi_pass1_path+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_pass1 + "?1:0"])
     
-    sys.exit("Stop here for s2")
     #Update the cloud mask (again)
     condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(rRed_backtocloud) + "))"
     call(["otbcli_BandMath","-il",cloud_refine,ndsi_pass1_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"cloud_pass1.tif")+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_cloud_pass1 + "?1:0"])
