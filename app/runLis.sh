@@ -10,6 +10,6 @@ output_dir=/mnt/data/home/gascoins/Output-CES-Neige-Full
 rm -rf $output_dir
 mkdir -p $output_dir
 
-echo python s2snow.py $param 
+python s2snow.py $param 
 
 exit 0
