@@ -12,9 +12,12 @@ if(NOT GDAL_FOUND)
  message(FATAL_ERROR "Cannot find GDAL. Set GDAL_INCLUDE_DIR and GDAL_LIBRARY")
 endif()
 
+#Set python home (needed on the cnes cluster)
+set(PYTHON_INCLUDE_DIRS $ENV{PYTHONHOME}/include)
+
 find_package(PythonInterp REQUIRED)
 
-find_package( PythonLibs 2.7 REQUIRED )
+find_package( PythonLibs 2.7 REQUIRED)
 include_directories( ${PYTHON_INCLUDE_DIRS} )
  
 find_package( Boost COMPONENTS python REQUIRED )
