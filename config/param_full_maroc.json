@@ -8,7 +8,7 @@
         },
     "inputs":{ 
         "image":"/mnt/data/home/grizonnetm/CES-Neige/Data_Full/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000/SPOT4_HRVIR_XS_20130327_N2A_ORTHO_SURF_CORR_PENTE_CMarocD0000B0000.TIF",
-        "dem":"/mnt/data/home/grizonnetm/CES-Neige/Data_Full/SRTM/srtm_superimpose.tif",
+        "dem":"/mnt/data/home/gascoins/Take5/SRTM/CMaroc/CMaroc.tif",
         "cloud_mask":"/mnt/data/home/grizonnetm/CES-Neige/Data_Full/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000/MASK/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
     },
     "cloud_mask":{
@@ -22,7 +22,7 @@
         "rRed_pass1":200,
         "ndsi_pass2":0.15,
         "rRed_pass2":120,
-        "fsnow_lim":0.1,
+        "fsnow_lim":0.05,
         "fsnow_total_lim":0.001
     }
 }

@@ -27,6 +27,8 @@ import os.path as op
 import json
 import gdal
 from gdalconst import *
+import glob
+
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -79,6 +81,15 @@ def main(argv):
     mode=data["general"]["mode"]
     generate_vector=data["general"]["generate_vector"]
 
+    #Parse Inputs 
+    img=str(data["inputs"]["image"])
+    dem=str(data["inputs"]["dem"])
+    cloud_init=str(data["inputs"]["cloud_mask"])
+
+    #Build image filenames
+    redBand_path=op.join(path_tmp,"red.tif")
+    ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
+    
     if mode == "spot4":
       nGreen=1 # Index of green band
       nMIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
@@ -89,19 +100,61 @@ def main(argv):
       nMIR=6
       nRed=4
       nodata=-10000
-    else:
-      sys.exit("sat should be spot4 or landsat")
-	
-     
-    #Parse Inputs 
-    img=str(data["inputs"]["image"])
-    dem=str(data["inputs"]["dem"])
-    cloud_init=str(data["inputs"]["cloud_mask"])
-       
+    elif mode == "s2":
+      #Number of bands in R1 and R2 respectively
+      nGreen=2
+      nMIR=5
+      nRed=3
+      nodata=-10000
 
-    #Build image filenames
-    redBand_path=op.join(path_tmp,"red.tif")
-    ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
+      if not os.path.isdir(img):
+        sys.exit("Sentinel-2 image path must be a directory!")
+      
+      s2_r1_img_path=glob.glob(op.join(img,"*FRE_R1*.TIF"))
+      s2_r2_img_path=glob.glob(op.join(img,"*FRE_R2*.TIF"))
+
+      if not s2_r1_img_path:
+        sys.exit("No R1 S2 image found.")
+
+      if not s2_r2_img_path:
+        sys.exit("No R2 S2 image found.")
+      
+      greenBand_path=op.join(path_tmp,"green_s2.tif")
+      greenBand_resample_path=op.join(path_tmp,"s2_green_resample.tif")
+
+      redBand_path=op.join(path_tmp,"red_s2.tif")
+      redBand_resample_path=op.join(path_tmp,"s2_red_resample.tif")
+
+      mirBand_path=op.join(path_tmp,"mir_s2.tif")
+      #mirBand_resample_path=op.join(path_tmp,"s2_mir_resample.tif")
+      
+      #print "s2_r1_img_path ", s2_r1_img_path[0]
+      #print "s2_r2_img_path ", s2_r2_img_path[0]
+      #Extract green bands and sample to 20 meters
+      call(["gdal_translate","-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
+      call(["gdalwarp","-r","cubicspline","-tr","20","-20",greenBand_path,greenBand_resample_path])
+
+      #Extract red bands and sample to 20 meters
+      call(["gdal_translate","-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
+      call(["gdalwarp","-r","cubicspline","-tr","20","-20",redBand_path,redBand_resample_path])
+
+      #Extract MIR
+      call(["gdal_translate","-ot","Int16","-b",str(nMIR),s2_r2_img_path[0],mirBand_path])
+
+      #Concatenate all bands in a single image
+      concat_s2=op.join(path_tmp,"concat_s2.tif")
+      call(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,mirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
+
+      #Concat in img variable
+      img=concat_s2
+      redBand_path=op.join(path_tmp,"red.tif")
+      
+      nGreen=1
+      nRed=2
+      nMIR=3
+    else:
+      sys.exit("Supported sensors:  spot4, landsat, s2")
+    
     
     #parse cloud mask parameters
     rf=data["cloud_mask"]["rf"]
@@ -113,8 +166,11 @@ def main(argv):
     #Build gdal option to generate maks of 2 bytes
     gdal_opt2="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
+    
     #Pass -1 : generate custom cloud mask
     #Pass -1 extract redband
+    print "img s2 ", img
+    
     call(["gdal_translate","-ot","Int16","-b",str(nRed),img,redBand_path])
 
     dataset = gdal.Open( redBand_path, GA_ReadOnly )
@@ -127,7 +183,7 @@ def main(argv):
 
     #resample red band using multiresolution pyramid
     #call(["otbcli_MultiResolutionPyramid","-in",redBand_path,"-out",op.join(path_tmp,"red_warped.tif"),"int16","-sfactor",str(rf)])
-    call(["gdalwarp","-r","bilinear","-ts",str(xSize/rf),str(ySize/rf),op.join(path_tmp,"red.tif"),op.join(path_tmp,"red_coarse.tif")])
+    call(["gdalwarp","-r","bilinear","-ts",str(xSize/rf),str(ySize/rf),redBand_path,op.join(path_tmp,"red_coarse.tif")])
 
     #oversample red band nn
     #call(["otbcli_RigidTransformResample","-in",op.join(path_tmp,"red_warped_1.tif"),"-out",op.join(path_tmp,"red_nn.tif"),"int16","-transform.type.id.scalex",str(rf),"-transform.type.id.scaley",str(rf),"-interpolator","nn"])
@@ -153,11 +209,11 @@ def main(argv):
     #Pass1 : NDSI threshold
 
     ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nMIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nMIR)+")"
-
+    print "ndsi formula: ",ndsi_formula
+    
     condition_pass1= "(im2b1!=255 and ("+ndsi_formula+")>"+ str(ndsi_pass1) + " and im1b"+str(nRed)+"> " + str(rRed_pass1) + ")"
     call(["otbcli_BandMath","-il",img,cloud_refine,"-out",ndsi_pass1_path+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_pass1 + "?1:0"])
-
-
+    
     #Update the cloud mask (again)
     condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(rRed_backtocloud) + "))"
     call(["otbcli_BandMath","-il",cloud_refine,ndsi_pass1_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"cloud_pass1.tif")+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_cloud_pass1 + "?1:0"])
