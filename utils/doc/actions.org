@@ -1,0 +1,42 @@
+* CES-Neige (Suivi) [2015-11-23 lun.]
+** Validation S2:
+   - premier test
+   - récuperer image
+** validation landsat
+   - sur 57 tuiles landsat
+   - qualitatif
+   - dégrossir
+** Taches
+*** TODO Commenter le code et ajouter des tests
+*** TODO avec un mnt ign, masque (données landsat), pléiades...
+*** TODO montrer aux utilisateurs -> pas de trou
+*** TODO Produits suivants
+    - produit de synthèse: 5 ou 10 jours le temps réel en fait intéresse plus
+    - Pour chaque date on peut interpoler avec avant/après
+    - Intérets pour synthèse mensuel/trimestriel/
+*** TODO Reprise shapefile
+    - facon de stocker le champ dans la classe -> demander à Jordi
+    - documenter le shapefile (annoter)
+*** TODO script de preprocessing récupère la résolution ->
+*** TODO Annoncer a PS qu'on peut lancer d'images
+*** TODO gif animé
+*** TODO kml ou shapefile?
+*** TODO style dans le shapefile?
+*** TODO Renommer les fichiers de sorties
+*** TODO Regarder sur 2 tuiles -> comment gérer la continuité? assembler les shapefiles
+*** TODO Installer sur le cluster
+** Liens / taches
+Bonjour,
+Pour info, l'IGN vient de mettre en ligne le MNT au pas de 5 mètres sur toute la France.
+Nous (labos, formation) y avons accès gratuitement, comme la plupart des couches IGN.
+Il faut un compte pour les télécharger (j'en ai un).
+Je n'ai pas testé cette couche...
+
+http://professionnels.ign.fr/rgealti
+
+cdlt
+JFD
+   - Les séries Landsat-8 traitées sont là:
+/mnt/data/home/gascoins/Landsat8/Output-CES-Neige/N2A_France-MetropoleD0005H0001/
+   - Et la todo-list!: https://lite6.framapad.org/p/TODOs_let-it-snow
+
