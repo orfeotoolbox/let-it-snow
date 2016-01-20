@@ -191,7 +191,7 @@ def main(argv):
     
     #edit result to set the resolution to the input image resolution
     #TODO need to find a better solution and also guess the input spacing
-    call(["/mnt/data/home/otbtest/OTB/SuperBuild/OTB/GDAL/build/swig/python/scripts/gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
+    call(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
     #call(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(path_tmp,"red_nn.tif")])
     #Extract shadow mask
     condition_shadow= "(im1b1>0 and im2b1>" + str(rRed_darkcloud) + ") or (im1b1 >= " + str(shadow_value) + ")"
