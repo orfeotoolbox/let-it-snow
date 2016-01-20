@@ -21,6 +21,24 @@ find_package( PythonLibs 2.7 REQUIRED)
 include_directories( ${PYTHON_INCLUDE_DIRS} )
  
 find_package( Boost COMPONENTS python REQUIRED )
+
+#On cnes cluster there is an issue loading boost required library
+#Boost_LIBRARIES should contain here libboost_python.so, on cluster it is optimizedboost_python-mt-shareddebugboost_python-mt-shared-debug
+#As it is a silent bug on cmake level we need to check the configuration by hand
+#So check the content of boost library
+
+string(REGEX MATCH ".*libboost_python\\..*"  BOOSTPYTHONLIB ${Boost_LIBRARIES})
+
+if(NOT "${BOOSTPYTHONLIB}" )
+		message(WARNING "Unable to find boost python component. Need to override boost python libs with custom path (Boost_Python_Lib cmake variable). Related to buggy FindBoost.cmake on the cluster.")
+		
+		set (Boost_Python_Lib "$ENV{BOOSTHOME}/lib/libboost_python.so"
+		CACHE PATH "Location of libboost_python.so (used on the cluster as FindBoost.cmake is buggy.")
+		mark_as_advanced(Boost_Python_Lib)
+
+	    set(Boost_LIBRARIES ${Boost_Python_Lib})
+endif()
+
 include_directories( ${Boost_INCLUDE_DIR} )
 
 # Link to the Orfeo ToolBox
