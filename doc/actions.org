@@ -40,3 +40,21 @@ JFD
 /mnt/data/home/gascoins/Landsat8/Output-CES-Neige/N2A_France-MetropoleD0005H0001/
    - Et la todo-list!: https://lite6.framapad.org/p/TODOs_let-it-snow
 
+* Bibliographie modis (Gascoin)
+  1. Il s'agit du produit MOD10A1 (Terra). Il y a le même avec Aqua qui
+     s'appelle MYD10A1. Ensuite il y a un produit de synthèse au pas de temps
+     8-jours qui s'appelle MOD10A2 (MYD10A2).
+  2. Voici comment est codé le raster MOD10A1 : il y a 3 bandes, une qui donne
+     la résence/absence de neige (comme nous), une qui donne l'albédo de la
+     neige, une ui donne la fraction de neige dans un pixel (pas pertinent pourSentinel-2/Landsat-8):
+     http://nsidc.org/data/docs/daac/modis_v5/mod10a1_modis_terra_snow_daily_global_500m_grid.gd.html
+     Si tu descends dans la page il y a texte pédagogique avec pleins de
+     références. Pour une doc plus technique il y a l'ATBD ici :
+     http://modis.gsfc.nasa.gov/data/atbd/atbd_mod10.pdf
+  3. Pour le gap-filling que j'avais implémenté, tu regarder ce papier sur MODIS
+     Pyrénées : http://www.hydrol-earth-syst-sci.net/19/2337/2015/hess-19-2337-2015.html
+  4. Regarder en priorité les papiers suivants:
+     - Parajka and Blöschl (2008) http://www.hydro.tuwien.ac.at/fileadmin/mediapool-hydro/Publikationen/bloeschl/2008_Parajka_WRR.pdf
+     - Gafurov and Bárdossy (2009) http://www.hydrol-earth-syst-sci.net/13/1361/2009/hess-13-1361-2009.pdf
+
+    
