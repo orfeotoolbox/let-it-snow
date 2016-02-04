@@ -1,3 +1,19 @@
+/*=========================================================================
+
+  Program:   lis
+  Language:  C++
+
+  Copyright (c) Simon Gascoin
+  Copyright (c) Manuel Grizonnet
+
+  See lis-copyright.txt for details.
+
+  This software is distributed WITHOUT ANY WARRANTY; without even
+  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.  See the above copyright notices for more information.
+
+=========================================================================*/
+
 #ifndef HISTO_UTILS_H
 #define HISTO_UTILS_H
 

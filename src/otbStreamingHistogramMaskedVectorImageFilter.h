@@ -1,21 +1,16 @@
 /*=========================================================================
 
-  Program:   ORFEO Toolbox
+  Program:   lis
   Language:  C++
-  Date:      $Date$
-  Version:   $Revision$
 
+  Copyright (c) Simon Gascoin
+  Copyright (c) Manuel Grizonnet
 
-  Copyright (c) Centre National d'Etudes Spatiales. All rights reserved.
-  See OTBCopyright.txt for details.
+  See lis-copyright.txt for details.
 
-  Some parts of this code are derived from ITK. See ITKCopyright.txt
-  for details.
-
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANT2ABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
+  This software is distributed WITHOUT ANY WARRANTY; without even
+  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
 #ifndef __otbStreamingHistogramMaskedVectorImageFilter_h
