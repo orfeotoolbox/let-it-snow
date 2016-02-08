@@ -1,9 +1,9 @@
 #!/usr/bin/python
 #coding=utf8
-#/*=========================================================================
+#=========================================================================
 #
 #  Program:   lis
-#  Language:  C++
+#  Language:  Python
 #
 #  Copyright (c) Simon Gascoin
 #  Copyright (c) Manuel Grizonnet
@@ -14,8 +14,8 @@
 #  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 #  PURPOSE.  See the above copyright notices for more information.
 #
-#=========================================================================*/
-# 
+#=========================================================================
+
 import sys
 from subprocess import call
 import glob
@@ -29,28 +29,36 @@ import glob
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
-#Custom C++ lib to compute histograms
+#Internal C++ lib to compute histograms and minimum elevation threshold (step 2)
 import histo_utils_ext
 
-
 def showHelp():
-  print "This script is used to compute snow mask using OTB applications"
-  print "Usage: s2snow.py param.json"
+    """Show help of the s2snow script"""
+    print "This script is used to compute snow mask using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
+    print "Usage: s2snow.py param.json"
 
 def polygonize(input_img,input_mask,output_vec):
-    #Gdal polygonize
+    """Helper function to polygonize raster mask using gdal polygonize"""
     call(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
-def quicklook_RGB(input_img,output_img, nRed, nGreen, nMIR):
-    #make a RGB quicklook to highlight the snow cover  
-    #input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color composite RGB image (GTiff)
-    call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nMIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
+def quicklook_RGB(input_img,output_img, nRed, nGreen, nSWIR):
+    """make a RGB quicklook to highlight the snow cover
+     
+    input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color
+    composite RGB image (GTiff).nRed,nGreen,nSWIR are index of red, green and
+    SWIR in in put images.
+
+    """
+    call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
 
 def burn_polygons_edges(input_img,input_vec):
-    #burn polygon borders onto an image with the following symbology: 
-    # - cloud and cloud shadows: green
-    # - snow: magenta
-    # 1) convert mask polygons to lines
+    """burn polygon borders onto an image with the following symbology:
+     
+    - cloud and cloud shadows: green
+    - snow: magenta
+    - convert mask polygons to lines
+
+    """
     tmp_line="tmp_line"
     call(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
     # 2) rasterize cloud and cloud shadows polygon borders in green
@@ -62,14 +70,16 @@ def burn_polygons_edges(input_img,input_vec):
 
 #----------------- MAIN ---------------------------------------------------
 def main(argv):
-    parameters=argv[1]
+    """ main script of snow extraction procedure"""
 
-    #load parameters from json files
-    with open(parameters) as json_data_file:
+    json_file=argv[1]
+
+    #load json_file from json files
+    with open(json_file) as json_data_file:
       data = json.load(json_data_file)
     #pprint(data)
 
-    #Parse general parameters
+    #Parse general parameters in json file
     path_tmp=str(data["general"]["pout"])
     cloud_refine=op.join(path_tmp,"cloud_refine.tif")
     shadow_value=data["general"]["shadow_value"]
@@ -78,96 +88,107 @@ def main(argv):
     mode=data["general"]["mode"]
     generate_vector=data["general"]["generate_vector"]
 
-    #Parse Inputs 
+    #Parse input parameters
     img=str(data["inputs"]["image"])
     dem=str(data["inputs"]["dem"])
     cloud_init=str(data["inputs"]["cloud_mask"])
 
-    #Build image filenames
+    #Build image path
     redBand_path=op.join(path_tmp,"red.tif")
     ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
     
     if mode == "spot4":
       nGreen=1 # Index of green band
-      nMIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
+      nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
       nRed=2 # Index of red band
       nodata=-10000 # no-data value
     elif mode == "landsat":
       nGreen=3
-      nMIR=6
+      nSWIR=6
       nRed=4
       nodata=-10000
     elif mode == "s2":
-      #Number of bands in R1 and R2 respectively
+      #Handle Sentinel-2 case here. Sentinel-2 images are in 2 separates tif. R1
+      #(green/red) at 10 meters and R2 (swir) at 20 meters. Need to extract each
+      #band separately and resample green/red to 20 meters. 
+      
+      #Index of bands in R1 and R2 respectively
       nGreen=2
-      nMIR=5
+      nSWIR=5
       nRed=3
       nodata=-10000
 
       if not os.path.isdir(img):
         sys.exit("Sentinel-2 image path must be a directory!")
-      
+
+      #Build sentinel-2 image product path using Level2-a theia product
+      #specification. Using FRE images to get slope correction products.
       s2_r1_img_path=glob.glob(op.join(img,"*FRE_R1*.TIF"))
       s2_r2_img_path=glob.glob(op.join(img,"*FRE_R2*.TIF"))
 
+      
       if not s2_r1_img_path:
-        sys.exit("No R1 S2 image found.")
+        sys.exit("No R1 S2 image found in Sentinel-2 directory.")
 
       if not s2_r2_img_path:
-        sys.exit("No R2 S2 image found.")
-      
+        sys.exit("No R2 S2 image found in Sentinel-2 directory.")
+
+      #Build in path for extracted and resampled (20 merters) green band 
       greenBand_path=op.join(path_tmp,"green_s2.tif")
       greenBand_resample_path=op.join(path_tmp,"s2_green_resample.tif")
 
+      #Build in path for extracted and resampled (20 merters) green band 
       redBand_path=op.join(path_tmp,"red_s2.tif")
       redBand_resample_path=op.join(path_tmp,"s2_red_resample.tif")
 
-      mirBand_path=op.join(path_tmp,"mir_s2.tif")
-      #mirBand_resample_path=op.join(path_tmp,"s2_mir_resample.tif")
+      #Path for swir band (already at 20 meters)
+      swirBand_path=op.join(path_tmp,"swir_s2.tif")
       
-      #print "s2_r1_img_path ", s2_r1_img_path[0]
-      #print "s2_r2_img_path ", s2_r2_img_path[0]
-      #Extract green bands and sample to 20 meters
+      #Extract green bands and resample to 20 meters
+      #FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
       call(["gdal_translate","-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
       call(["gdalwarp","-r","cubicspline","-tr","20","-20",greenBand_path,greenBand_resample_path])
 
       #Extract red bands and sample to 20 meters
+      #FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
       call(["gdal_translate","-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
       call(["gdalwarp","-r","cubicspline","-tr","20","-20",redBand_path,redBand_resample_path])
 
-      #Extract MIR
-      call(["gdal_translate","-ot","Int16","-b",str(nMIR),s2_r2_img_path[0],mirBand_path])
+      #Extract SWIR
+      call(["gdal_translate","-ot","Int16","-b",str(nSWIR),s2_r2_img_path[0],swirBand_path])
 
       #Concatenate all bands in a single image
       concat_s2=op.join(path_tmp,"concat_s2.tif")
-      call(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,mirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
+      call(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,swirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
 
-      #Concat in img variable
+      #img variable is used later to compute snow mask
       img=concat_s2
       redBand_path=op.join(path_tmp,"red.tif")
       
+      #Set generic band index for Sentinel-2
       nGreen=1
       nRed=2
-      nMIR=3
+      nSWIR=3
     else:
-      sys.exit("Supported sensors:  spot4, landsat, s2")
+      sys.exit("Supported modes are spot4,landsat and s2.")
     
     
-    #parse cloud mask parameters
+    #parse cloud mask parameters in json_file
     rf=data["cloud_mask"]["rf"]
     rRed_darkcloud=data["cloud_mask"]["rRed_darkcloud"]
     rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
     
-    #Build gdal option to generate maks of 1 byte
+    #Build gdal option to generate maks of 1 byte using otb extended filename
+    #syntax
     gdal_opt="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
-    #Build gdal option to generate maks of 2 bytes
-    gdal_opt2="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
+    #Build gdal option to generate maks of 2 bytes using otb extended filename
+    #syntax
+    gdal_opt_2b="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
-    
     #Pass -1 : generate custom cloud mask
+    #TODO: extract pass -1 in a custom function
+
     #Pass -1 extract redband
-    print "img s2 ", img
-    
     call(["gdal_translate","-ot","Int16","-b",str(nRed),img,redBand_path])
 
     dataset = gdal.Open( redBand_path, GA_ReadOnly )
@@ -194,7 +215,7 @@ def main(argv):
     condition_shadow= "(im1b1>0 and im2b1>" + str(rRed_darkcloud) + ") or (im1b1 >= " + str(shadow_value) + ")"
     call(["otbcli_BandMath","-il",cloud_init,op.join(path_tmp,"red_nn.tif"),"-out",cloud_refine+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_shadow + "?1:0"])
 
-    #Parse snow parameters
+    #Parse snow json_file
     dz=data["snow"]["dz"]
     ndsi_pass1=data["snow"]["ndsi_pass1"]
     rRed_pass1=data["snow"]["rRed_pass1"]
@@ -205,7 +226,7 @@ def main(argv):
 
     #Pass1 : NDSI threshold
 
-    ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nMIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nMIR)+")"
+    ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nSWIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nSWIR)+")"
     print "ndsi formula: ",ndsi_formula
     
     condition_pass1= "(im2b1!=255 and ("+ndsi_formula+")>"+ str(ndsi_pass1) + " and im1b"+str(nRed)+"> " + str(rRed_pass1) + ")"
@@ -214,7 +235,6 @@ def main(argv):
     #Update the cloud mask (again)
     condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(rRed_backtocloud) + "))"
     call(["otbcli_BandMath","-il",cloud_refine,ndsi_pass1_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"cloud_pass1.tif")+gdal_opt,"uint8","-ram",str(ram),"-exp",condition_cloud_pass1 + "?1:0"])
-
 
     #Pass 2: compute snow fraction
     nb_snow_pixels= histo_utils_ext.compute_snow_fraction(ndsi_pass1_path)
@@ -258,13 +278,13 @@ def main(argv):
     #TODO Final update of the cloud mask
     condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(rRed_backtocloud) + ")))?2:0"
  
-    call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif")+gdal_opt2,"uint8","-ram",str(ram),"-exp",condition_final])
+    call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif")+gdal_opt_2b,"uint8","-ram",str(ram),"-exp",condition_final])
 
     #Gdal polygonize (needed to produce quicklook)
     polygonize(op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask.tif"),op.join(path_tmp,"final_mask_vec.shp"))
 
     #RGB quicklook
-    quicklook_RGB(img,op.join(path_tmp,"quicklook.tif"),nRed,nGreen,nMIR)
+    quicklook_RGB(img,op.join(path_tmp,"quicklook.tif"),nRed,nGreen,nSWIR)
 
     #Burn polygons edges on the quicklook
     #TODO add pass1 snow polygon in yellow
