@@ -54,7 +54,7 @@ add_test(NAME histo_utils_ng_internal_test
     )
 
 add_test(NAME histo_utils_full_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_test
     "${LIS_DATA_ROOT}/Data_Full/SRTM/srtm_superimpose.tif"
     "${BASELINE}/pass1_full.tif"
     "${BASELINE}/cloud_refine_full.tif"
