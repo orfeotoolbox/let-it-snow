@@ -164,6 +164,8 @@ int compute_snow_fraction(const std::string & infname)
   HistogramFilterType::HistogramMeasurementVectorType upperBound(1);
 
   lowerBound.Fill(0);
+  //Bound set to 255 because of bad handling of tif 1 bits in OTB!
+  //FIXME Change 255 to 0 when bug Mantis 1079 will be fixed
   upperBound.Fill(255);
   
   histogramFilter->SetHistogramBinMinimum( lowerBound );
@@ -229,11 +231,11 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
   std::ofstream myfile;
   
 #if CXX11_ENABLED
-  myfile.open (std::string(histo_file));
+  myfile.open(std::string(histo_file));
 #else
   myfile.open(histo_file);
 #endif
-  
+   std::cout << histo_file << std::endl;
 
   typedef itk::VectorImage<short, 2>  VectorImageType;
   typedef itk::Statistics::ImageToHistogramFilter<
@@ -300,6 +302,8 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
   lowerBound[1] = 0;
   lowerBound[2] = 0;
   upperBound[0] = max;
+  //Bound set to 255 because of bad handling of tif 1 bits in OTB!
+  //FIXME Change 255 to 0 when bug Mantis 1079 will be fixed
   upperBound[1] = 255;
   upperBound[2] = 255;
 
@@ -324,7 +328,7 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
 
   //Temporary print the histogram
   if ( histo_file != NULL )
-    {
+    { std::cout << "print histogram in file " << histo_file << std::endl;
       print_histogram(*histogram,histo_file);
     }
 

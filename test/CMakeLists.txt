@@ -33,16 +33,6 @@ TARGET_LINK_LIBRARIES(histo_utils_ng_internal_test histo_utils)
 ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
 
-add_test(NAME histo_utils_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_test
-    "${LIS_DATA_ROOT}/test_CES/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif"
-    "${BASELINE}/pass1.tif"
-    "${BASELINE}/cloud_refine.tif"
-    100
-    0.1
-    2721
-    )
-
 add_test(NAME histo_utils_ng_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_test
     "${LIS_DATA_ROOT}/test_CES/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif"
@@ -59,6 +49,7 @@ add_test(NAME histo_utils_ng_internal_test
     100
     20
     0.1
+    "/home/grizonnetm/temporary/histo_file.txt"
     40
     )
 

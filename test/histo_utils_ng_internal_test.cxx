@@ -24,23 +24,28 @@ void CreateImage(ImageType::Pointer image);
 
 int main(int argc, char * argv [])
 {
-
+  const short minValue = atoi(argv[1]);
+  const short maxValue = atoi(argv[2]);
+  const int dz = atoi(argv[3]);
+  const float fsnow_lim = atoi(argv[4]);
+  const char * histo_path = argv[5];
+  std::cout << "histo_path " << histo_path << std::endl;
   ImageType::Pointer image = ImageType::New();
   CreateImage(image);
 
-const int result = compute_zs_ng_internal(image,atoi(argv[1]),atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
-const int expected = atoi(argv[5]); 
-std::cout << "result: " << result << std::endl;
+  const int result = compute_zs_ng_internal(image,minValue,maxValue,dz,fsnow_lim,histo_path);
+  const int expected = atoi(argv[6]); 
+  std::cout << "Computed zs: " << result << std::endl;
 
-if (result == expected)
-  {
-  return EXIT_SUCCESS;
-  }
-else
-  {
-  std::cerr << "Expected value is " << expected << " but get " << result << std::endl; 
-  return EXIT_FAILURE;
-  }
+  if (result == expected)
+    {
+    return EXIT_SUCCESS;
+    }
+  else
+    {
+    std::cerr << "Expected value is " << expected << " but get " << result << std::endl; 
+    return EXIT_FAILURE;
+    }
 }
 
 void CreateImage(ImageType::Pointer image)
@@ -66,8 +71,8 @@ void CreateImage(ImageType::Pointer image)
   pixel.SetSize(MeasurementVectorSize);
   //pixel.Fill(110);
   pixel[0]=70;
-  pixel[1]=1;
-  pixel[2]=1;  
+  pixel[1]=255;
+  pixel[2]=255;  
 
   itk::ImageRandomNonRepeatingIteratorWithIndex<ImageType> imageIterator(image, image->GetLargestPossibleRegion());
   imageIterator.ReinitializeSeed(0);  	
@@ -77,13 +82,13 @@ void CreateImage(ImageType::Pointer image)
 
   while(!imageIterator.IsAtEnd())
     {
-      if (counter > 4)
-	{
-	  //Change the pixel value at half of the iterations
-	   pixel[0]=81;
-	   pixel[1]=1;
-	   pixel[2]=0;
-	}
+    if (counter > 4)
+      {
+      //Change the pixel value at half of the iterations
+      pixel[0]=81;
+      pixel[1]=255;
+      pixel[2]=0;
+      }
     std::cout << "Setting pixel " << imageIterator.GetIndex() << " to " << pixel << std::endl;
     imageIterator.Set(pixel);
     ++imageIterator;
