@@ -185,7 +185,6 @@ short compute_zs_ng(const std::string & infname, const std::string & inmasksnowf
 {
   /** Filters typedef */
   typedef otb::Image<short, 2>               ImageType;
-  typedef itk::VectorImage<short, 2>  VectorImageType;
   typedef otb::ImageFileReader<ImageType>               ReaderType;
 
   typedef otb::StreamingMinMaxImageFilter<ImageType>     StreamingMinMaxImageFilterType;
