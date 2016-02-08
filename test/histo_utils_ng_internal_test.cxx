@@ -24,7 +24,6 @@ void CreateImage(ImageType::Pointer image);
 
 int main(int argc, char * argv [])
 {
-  const unsigned int binsPerDimension = 4;
 
   ImageType::Pointer image = ImageType::New();
   CreateImage(image);

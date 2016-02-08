@@ -238,7 +238,6 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
   typedef itk::VectorImage<short, 2>  VectorImageType;
   typedef itk::Statistics::ImageToHistogramFilter<
                             VectorImageType >   HistogramFilterType;
-  typedef HistogramFilterType::HistogramSizeType   SizeType;
   typedef HistogramFilterType::HistogramType  HistogramType;
 
   myfile << "Print Histogram" << std::endl;
@@ -248,7 +247,7 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
 
   myfile << "z_center, Nz, fcloud_z, fsnow_z" << std::endl;
 
- for (int i=0; i< histogram.GetSize()[0];++i)
+ for (unsigned int i=0; i< histogram.GetSize()[0];++i)
    {
      HistogramType::IndexType idx1(3);
      idx1[0] = i;
@@ -321,8 +320,6 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
   typedef HistogramFilterType::HistogramType  HistogramType;
   const HistogramType * histogram = histogramFilter->GetOutput();
 
-  const unsigned int histogramSize = histogram->Size();
-
   const unsigned int channel = 0;  // elevation channel
 
   //Temporary print the histogram
@@ -331,7 +328,7 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
       print_histogram(*histogram,histo_file);
     }
 
-  for (int i=0; i< histogram->GetSize()[0];++i)
+  for (unsigned int i=0; i< histogram->GetSize()[0];++i)
     {
       HistogramType::IndexType idx1(3);
       idx1[0] = i;
@@ -351,7 +348,7 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
 	{
 	  //Return the min value of the bin -2 (GetMeasurementVector returns the centroid)
 	  HistogramType::IndexType idx_res(3);
-	  idx_res[0] = std::max(i-2,0);
+	  idx_res[0] = std::max(static_cast<int>(i-2),0);
 	  idx_res[1] = 1;
 	  idx_res[2] = 0;
 	
