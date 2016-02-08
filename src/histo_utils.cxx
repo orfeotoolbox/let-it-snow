@@ -33,6 +33,8 @@
 #include <iostream>
 #include <fstream>
 
+#define CXX11_ENABLED (__cplusplus > 199711L )
+
 int compute_zs(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim)
 {
     typedef otb::VectorImage<double>               VectorImageType;
@@ -225,7 +227,12 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
 		      itk::VectorImage<short, 2> >::HistogramType & histogram, const char * histo_file)
 {
   std::ofstream myfile;
+  
+#if CXX11_ENABLED
   myfile.open (std::string(histo_file));
+#else
+  myfile.open(histo_file);
+#endif
   
 
   typedef itk::VectorImage<short, 2>  VectorImageType;
