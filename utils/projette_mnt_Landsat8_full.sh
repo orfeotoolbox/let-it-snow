@@ -7,7 +7,7 @@ fsrtm="/mnt/data/DONNEES_AUX/SRTM/srtm.vrt"
 pimg="/mnt/data/home/gascoins/Landsat8"
 
 # Tiles to process
-tiles="N2A_France-MetropoleD0005H0001 N2A_France-MetropoleD0005H0002"
+tiles="N2A_France-MetropoleD0005H0001 N2A_France-MetropoleD0005H0002 N2A_France-MetropoleD0006H0001"
 
 # Path to write the output DEM
 pout="/mnt/data/home/gascoins/Landsat8/SRTM"

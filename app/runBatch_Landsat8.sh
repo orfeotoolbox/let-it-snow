@@ -12,7 +12,8 @@ pin="/mnt/data/home/gascoins/Landsat8/"
 pdem=$pin/"SRTM"
 
 # Tiles to process
-tiles="N2A_France-MetropoleD0005H0001 N2A_France-MetropoleD0005H0002"
+#tiles="N2A_France-MetropoleD0005H0001 N2A_France-MetropoleD0005H0002"
+tiles="N2A_France-MetropoleD0006H0001"
 
 for tile in $tiles
 do
