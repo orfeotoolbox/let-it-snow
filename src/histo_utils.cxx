@@ -349,7 +349,7 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
     const HistogramType::AbsoluteFrequencyType z=histogram->GetFrequency(idx1) + histogram->GetFrequency(idx2);
 
     //If there are pixels in this elevation cell and Check if there is enough snow pixel
-    if ( (z != 0) && ( ( (double) histogram->GetFrequency(idx2) / (double) z ) > fsnow_lim ) )
+    if ( (z != 0) && ( ( static_cast<double> (histogram->GetFrequency(idx2)) / static_cast<double> (z) ) > fsnow_lim ) )
       {
       //Return the min value of the bin -2 (GetMeasurementVector returns the centroid)
       HistogramType::IndexType idx_res(3);
