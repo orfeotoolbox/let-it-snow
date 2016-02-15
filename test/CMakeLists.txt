@@ -124,5 +124,5 @@ add_test(NAME histo_utils_ng_full_test
 add_test(NAME histo_utils_snow_fraction_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snow_fraction_test
     "${BASELINE}/pass1.tif"
-    123078
+    127784
     )
