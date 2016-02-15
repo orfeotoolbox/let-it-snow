@@ -1,3 +1,4 @@
+
 {
     "general":{
         "pout":"outputdir",
@@ -5,8 +6,10 @@
         "ram":1024,
 	"mode":"landsat",
 	"generate_vector":false
+	"preprocessing":false
         },
     "inputs":{ 
+	"vrt":"inputvrt"
         "image":"inputimage",
         "dem":"inputdem",
         "cloud_mask":"inputcloud"

@@ -5,8 +5,10 @@
         "ram":1024,
 	"mode":"spot4",
 	"generate_vector":false
-        },
-    "inputs":{ 
+	"preprocessing":true
+         },
+    "inputs":{
+	"vrt":"inputvrt"
         "image":"inputimage",
         "dem":"inputdem",
         "cloud_mask":"inputcloud"
