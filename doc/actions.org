@@ -61,4 +61,33 @@ JFD
  1. Pléiades: on a une tristéréo Pléiades sur la zone de Bassiès (Marti et al. 2016 <http://www.the-cryosphere-discuss.net/tc-2016-11/>). 
  2. Sur un subset de cette zone on a déjà extrait le masque de neige à partir de la panchro (mais il y a >80% de pixels neige) 
  3. Sinon il faut repartir des images brutes panchro et multispectrales prises le plus proche du nadir (pour la métode avec un capteur similaire voir Bühler et al. 2015 <http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6939633>)
-    
+* Tâche Tristan
+** Test
+*** TODO Test n° 
+    - Update snow fraction value
+** Doc
+*** TODO Update Readme.md
+    - Code example
+    - SRTM and VRT generation explanation
+    - Files system explanation
+    - Contributors list update
+*** TODO S2Snow
+    - Preprocessing integration
+    - Cluster working directories ? 
+    - Validation tests (odd elev and snow parameters ... etc.)
+    - Script Version
+    - Tag 0.1
+*** TODO Data format 
+    - S'inspirer de la technical note pour naming. Product id => nom fichier. penser au shape file. SEB
+    - Codage fichier 2.5.4. Notre chaine ne gère pas l'erreur. L'eau ? 
+    - Meta donnée si pass 1 != pass 2 pixel
+    - SEB reprendre valeur du document pour notre sortie. indépendant des calculs post processing
+    - S'assurer quon à la bonne proj wkt 
+    - Coder shapefile coder dans un champs (table attributs) pareil que SEB Type. Colonne SEB (snow, cloud, no data). 
+    - Meta data file ZS ?
+    - QUM pass1 != pass2 ? coarse cloud => thin cloud ?
+    - XML s'inspirer page. pytonXML 7 champs (post processing). Variable en dur
+*** TODO Amélioration de la chaine   
+   - Faire tourner imgs sur l'ensemble des landsat/Sentinel/Pleiades(ortho de l'image panchro avec l'OTB)
+   - Pleaides regarder si en HR on peut générer un masqe neige regarder publi (plus tard après synthèse)
+   - Synthèse modis atbd => algo 
