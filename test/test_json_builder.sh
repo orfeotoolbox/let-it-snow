@@ -14,6 +14,9 @@ outputPath=$3
 #exit 1 on error
 set -e 
 
+#remove old test files
+rm -rf $outputPath
+mkdir $outputPath
 # move to config path to build the json file.
 cd $configPath
 
