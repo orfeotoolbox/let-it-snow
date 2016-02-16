@@ -63,7 +63,7 @@ JFD
  3. Sinon il faut repartir des images brutes panchro et multispectrales prises le plus proche du nadir (pour la métode avec un capteur similaire voir Bühler et al. 2015 <http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6939633>)
 * Tâche Tristan
 ** Test
-*** TODO Test n° 
+*** TODO Test n°13 
     - Update snow fraction value
 ** Doc
 *** TODO Update Readme.md
@@ -71,7 +71,8 @@ JFD
     - SRTM and VRT generation explanation
     - Files system explanation
     - Contributors list update
-*** TODO S2Snow
+** Chaine
+*** TODO S2Snow.py
     - Preprocessing integration
     - Cluster working directories ? 
     - Validation tests (odd elev and snow parameters ... etc.)

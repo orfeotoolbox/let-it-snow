@@ -32,17 +32,25 @@ gdal.UseExceptions()
 #Internal C++ lib to compute histograms and minimum elevation threshold (step 2)
 import histo_utils_ext
 
-def showHelp():
+#Preprocessing script
+import preprocessing
+
+def show_help():
     """Show help of the s2snow script"""
     print "This script is used to compute snow mask using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
     print "Usage: s2snow.py param.json"
+    print "s2snow.py version to show version"
+    print "s2snow.py help to show help"
+
+def show_version():
+    print "0.1"
 
 def polygonize(input_img,input_mask,output_vec):
     """Helper function to polygonize raster mask using gdal polygonize"""
     call(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
 def quicklook_RGB(input_img,output_img, nRed, nGreen, nSWIR):
-    """make a RGB quicklook to highlight the snow cover
+    """Make a RGB quicklook to highlight the snow cover
      
     input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color
     composite RGB image (GTiff).nRed,nGreen,nSWIR are index of red, green and
@@ -52,7 +60,7 @@ def quicklook_RGB(input_img,output_img, nRed, nGreen, nSWIR):
     call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
 
 def burn_polygons_edges(input_img,input_vec):
-    """burn polygon borders onto an image with the following symbology:
+    """Burn polygon borders onto an image with the following symbology:
      
     - cloud and cloud shadows: green
     - snow: magenta
@@ -67,6 +75,7 @@ def burn_polygons_edges(input_img,input_vec):
     call(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
     # 4) remove tmp_line files
     call(["rm"]+glob.glob(tmp_line+"*"))
+   
 
 #----------------- MAIN ---------------------------------------------------
 def main(argv):
@@ -83,14 +92,19 @@ def main(argv):
     cloud_refine=op.join(path_tmp,"cloud_refine.tif")
     shadow_value=data["general"]["shadow_value"]
     ram=data["general"]["ram"]
-    
     mode=data["general"]["mode"]
     generate_vector=data["general"]["generate_vector"]
-
+    do_preprocessing=data["general"]["preprocessing"]
+   
     #Parse input parameters
+    vrt=str(data["inputs"]["vrt"])
     img=str(data["inputs"]["image"])
     dem=str(data["inputs"]["dem"])
     cloud_init=str(data["inputs"]["cloud_mask"])
+
+    #External preprocessing
+    if do_preprocessing:
+        preprocessing.build_dem(vrt, img, dem)
 
     #Build image path
     redBand_path=op.join(path_tmp,"red.tif")
@@ -184,11 +198,9 @@ def main(argv):
     gdal_opt_2b="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
     #Pass -1 : generate custom cloud mask
-    #TODO: extract pass -1 in a custom function
-
-    #Pass -1: Extract red band
+   
+    #Extract red band
     call(["gdal_translate","-ot","Int16","-b",str(nRed),img,redBand_path])
-
     dataset = gdal.Open( redBand_path, GA_ReadOnly )
     
     xSize=dataset.RasterXSize
@@ -298,10 +310,12 @@ def main(argv):
     burn_polygons_edges(op.join(path_tmp,"quicklook.tif"),op.join(path_tmp,"final_mask_vec.shp"))
 
 if __name__ == "__main__":
-  if len(sys.argv) != 2 :
-    showHelp()
-  else:
-    main(sys.argv)
-
-
-
+    if len(sys.argv) != 2 :
+        show_help()
+    else:
+        if sys.argv[1] == "version":
+            show_version()
+        elif sys.argv[1] == "help":
+            show_help()
+        else:
+            main(sys.argv)
