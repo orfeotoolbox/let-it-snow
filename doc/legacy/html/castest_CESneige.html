@@ -1,0 +1,482 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CES surface enneig&eacute;e</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-06-11"><meta name="DC.source" content="castest_CESneige.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>CES surface enneig&eacute;e</h1><!--introduction--><p><b>Author: Simon Gascoin (CNRS/CESBIO)</b></p><p><b>June 2015</b></p><p>This code is a demonstrator of the snow detection algorithm for Sentinel-2 images. It calls <a href="S2snow.html">the function S2snow</a> using subsets of SPOT-4 or Landsat-8 level 2 images</p><p>The input files were generated from L2 images downloaded from Theia Land and pre-processed by three shell scripts:</p><div><ol><li><tt>decompresse_*.sh</tt>,        to unzip the files</li><li><tt>decoupe_*.sh</tt>,        to extract a rectangle AOI from L2A data using       gdal_translate with projection window defined in the ascii file       <i>AOI_test_CESNeige.csv</i></li><li><tt>projette_mnt_*.sh</tt>,        to project the SRTM DEM and resample at 30m or 20m       (Landsat8 or Take5) over the same AOI. It uses gdalwarp with the       cubicspline option</li></ol></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Configuration</a></li><li><a href="#6">Cloud mask processing parameters</a></li><li><a href="#9">Snow detection parameters</a></li><li><a href="#16">Definition of the input images</a></li><li><a href="#21">Data loading</a></li><li><a href="#32">Snow detection</a></li><li><a href="#33">Figures</a></li></ul></div><p>Check Matlab version</p><pre class="codeinput">matlabversion=version;
+assert(str2double(matlabversion(end-5:end-2))&gt;=2014,<span class="keyword">...</span>
+    <span class="string">'Needs Matlab version 2014 and later'</span>)
+</pre><h2>Configuration<a name="2"></a></h2><p>This demo can run for only one image (option 1) or process several images series from different sites and sensors (option 2)</p><pre class="codeinput">demotype=1;
+</pre><p>If this flag QL is true the code will output three figures for each image</p><div><ol><li>a bar graph showing the snow fraction per elevation band,</li><li>a bar graph showing the snow, cloud and elevation area in m2,</li><li>a false color composite image overlaid by snow and cloud masks.</li></ol></div><pre class="codeinput">QL=true;
+</pre><p>Define the output path for the figures</p><pre class="codeinput">pout=<span class="string">'../figures/demo_CESneige'</span>;
+</pre><p>Define a label to add to the figure file names</p><pre class="codeinput">label=<span class="string">'ndsipass2_015_cloudpass1'</span>;
+</pre><h2>Cloud mask processing parameters<a name="6"></a></h2><p>Resampling factor to determine the "dark clouds" in the initial cloud mask. Here rf=8 corresponds to a target resolution of 240m for Landsat.</p><pre class="codeinput">rf=8;
+</pre><p>Dark cloud threshold (reflectance unit: per mil). The clouds pixels with a (coarse) reflectance lower than rRed_darkcloud are selected to pass the snow test</p><pre class="codeinput">rRed_darkcloud=500;
+</pre><p>Back to cloud threshold. Pixels which are not detected as snow then they go back to the cloud mask only if their reflectance at full resolution is greater than rRed_backtocloud. Here we use full resolution reflectances because resampled cloud pixels reflectance drops rapidly along the cloud edges due to the mixing with the land reflectance.</p><pre class="codeinput">rRed_backtocloud=100;
+</pre><h2>Snow detection parameters<a name="9"></a></h2><p>Elevation band height in m.</p><pre class="codeinput">dz=100;
+</pre><p>NDSI threshold for pass 1</p><pre class="codeinput">ndsi_pass1=0.4;
+</pre><p>Threshold in the red reflectance for pass 1</p><pre class="codeinput">rRed_pass1=200;
+</pre><p>NDSI threshold for pass 2</p><pre class="codeinput">ndsi_pass2=0.15; <span class="comment">% Note: Zhu's fmask algorithm uses 0.15</span>
+</pre><p>Threshold in the red reflectance for pass 2</p><pre class="codeinput">rRed_pass2=120;
+</pre><p>Minimum snow fraction from which to compute the snowline elevation (zs)</p><pre class="codeinput">fsnow_lim=0.1;
+</pre><p>Snow fraction limit to go to pass 2. The total snow fraction after pass 1 is computed to decide whether or not proceed to pass 2. If the snow fraction is below fsnow_total_lim then pass 2 is skipped because the number of snow pixels is not sufficient to properly determine the snow line elevation. Here we use 1000 pixels.</p><pre class="codeinput">fsnow_total_lim=0.001; <span class="comment">% Warning! it depends on the image size</span>
+</pre><h2>Definition of the input images<a name="16"></a></h2><pre class="codeinput"><span class="keyword">switch</span> demotype
+    <span class="keyword">case</span> 1
+</pre><p>use only 1 image</p><pre class="codeinput">        satlist={<span class="string">'Take5'</span>};
+        sitelist{1}={<span class="string">'Maroc'</span>};
+        datelist{1}{1}={<span class="string">'20130327'</span>}; <span class="comment">% format yyyymmdd</span>
+</pre><pre class="codeinput">    <span class="keyword">case</span> 2
+</pre><p>process a batch of 2 x Landsat8 and 4 x Take5 images series</p><pre class="codeinput">        [satlist,sitelist,datelist]=load_demo_input(<span class="string">'all'</span>);
+</pre><pre class="codeinput">    <span class="keyword">otherwise</span>
+        error(<span class="string">'demotype should be 1 or 2'</span>)
+<span class="keyword">end</span>
+</pre><h2>Data loading<a name="21"></a></h2><p>Begin the sensor loop</p><pre class="codeinput">nsat=length(satlist);
+<span class="keyword">for</span> isat=1:nsat
+</pre><pre class="codeinput">    sat=satlist{isat};
+
+    nsite=length(sitelist{isat});
+</pre><p>Get the sensor band numbers and no-data value</p><pre class="codeinput">    <span class="keyword">switch</span> sat
+        <span class="keyword">case</span> <span class="string">'Take5'</span>
+            nGreen=1; <span class="comment">% Index of green band</span>
+            nMIR=4; <span class="comment">% Index of SWIR band (1 to 3 &micro;m) = band 11 (1.6 &micro;m) in S2</span>
+            nRed=2; <span class="comment">% Index of red band</span>
+            nodata=-10000; <span class="comment">% no-data value</span>
+        <span class="keyword">case</span> <span class="string">'Landsat8'</span>
+            nGreen=3;
+            nMIR=6;
+            nRed=4;
+            nodata=-10000;
+        <span class="keyword">otherwise</span>
+            error(<span class="string">'sat should be Take5 or Landsat8'</span>)
+    <span class="keyword">end</span>
+</pre><p>Begin the site loop</p><pre class="codeinput">    <span class="keyword">for</span> isite=1:nsite;
+</pre><pre class="codeinput">        site=sitelist{isat}{isite};
+        ndate=length(datelist{isat}{isite});
+</pre><p>read SRTM DEM for this site</p><pre class="codeinput">        fdem=[<span class="string">'../'</span> sat <span class="string">'/AOI_test_CESNeige/SRTM/'</span> site <span class="string">'/'</span> site <span class="string">'.tif'</span>];
+        [Zdem,R]=geotiffread(fdem);
+</pre><p>Begin the date loop</p><pre class="codeinput">        <span class="keyword">for</span> idate=1:ndate
+</pre><pre class="codeinput">            date=datelist{isat}{isite}{idate};
+</pre><p>Read the L2 reflectance data (search the image filename based on the date)</p><pre class="codeinput">            pL2=[<span class="string">'../'</span> sat <span class="string">'/AOI_test_CESNeige/LEVEL2A/'</span> site]; <span class="comment">% path</span>
+            fL2=dir([pL2 <span class="string">'/*'</span> date <span class="string">'*PENTE*.TIF'</span>]); <span class="comment">% file list</span>
+            assert(~isempty(fL2),<span class="string">'The L2 image is not present in the input directory'</span>)
+            f=[pL2 <span class="string">'/'</span> fL2.name];
+            [ZL2,~]=geotiffread(f);
+</pre><p>The data are converted to double because it enables to work with NaN, but we could probably avoid this to optimize memory use..</p><pre class="codeinput">            ZL2=double(ZL2);
+            ZL2(ZL2==nodata)=NaN;
+</pre><p>Read the cloud mask</p><pre class="codeinput">            fc=dir([pL2 <span class="string">'/*'</span> date <span class="string">'*NUA.TIF'</span>]);
+            assert(~isempty(fc),<span class="string">'The cloud mask is not present in the input directory'</span>)
+            f=[pL2 <span class="string">'/'</span> fc.name];
+            [Zc,~]=geotiffread(f);
+</pre><h2>Snow detection<a name="32"></a></h2><p>Calls <a href="S2snow.html">the function S2snow</a></p><pre class="codeinput">            [snowtest,cloudtestfinal,z_center,B1,B2,fsnow,zs,<span class="keyword">...</span>
+                fsnow_z,fcloud_z,N,z_edges]<span class="keyword">...</span>
+                = S2snow(<span class="keyword">...</span>
+                ZL2,Zc,Zdem,nGreen,nRed,nMIR,rf,QL,rRed_darkcloud,<span class="keyword">...</span>
+                ndsi_pass1,ndsi_pass2,rRed_pass1,rRed_pass2,dz,fsnow_lim,<span class="keyword">...</span>
+                fsnow_total_lim,rRed_backtocloud);
+</pre><h2>Figures<a name="33"></a></h2><pre class="codeinput">            <span class="keyword">if</span> QL
+</pre><p>Draw a bar plot of the snow fraction per elevation band</p><pre class="codeinput">                figure(1),clf
+                barh(z_center,fsnow_z,1,<span class="string">'facecolor'</span>,<span class="string">'c'</span>);
+                hold <span class="string">on</span>
+                <span class="keyword">if</span> ~isempty(zs)
+                    hrf=refline(0,zs);
+                    set(hrf,<span class="string">'Color'</span>,<span class="string">'r'</span>,<span class="string">'LineStyle'</span>,<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2)
+                <span class="keyword">end</span>
+                xlabel(<span class="string">'Fractional area'</span>)
+                ylabel(<span class="string">'Elevation (m)'</span>)
+                legend(<span class="string">'Snow'</span>,<span class="string">'zs'</span>)
+                title(sprintf(<span class="string">'%s zs=%g'</span>,date,zs))
+</pre><img vspace="5" hspace="5" src="castest_CESneige_01.png" alt=""> <p>Draw a bar plot of the snow area and elevation band area</p><pre class="codeinput">                figure(2),clf
+                [Nz,~,~] = histcounts(Zdem(:),z_edges);
+                barh(z_center,Nz,1,<span class="string">'facecolor'</span>,.8*[1 1 1]);
+                hold <span class="string">on</span>
+                barh(z_center,(fcloud_z+fsnow_z).*Nz',1,<span class="string">'facecolor'</span>,.5*[1 1 1]);
+                barh(z_center,fsnow_z.*Nz',1,<span class="string">'facecolor'</span>,<span class="string">'c'</span>);
+                <span class="keyword">if</span> ~isempty(zs)
+                    hrf=refline(0,zs);
+                    set(hrf,<span class="string">'Color'</span>,<span class="string">'r'</span>,<span class="string">'LineStyle'</span>,<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2)
+                <span class="keyword">end</span>
+                xlabel(<span class="string">'Area (m2)'</span>)
+                ylabel(<span class="string">'Elevation (m)'</span>)
+                legend(<span class="string">'DEM'</span>,<span class="string">'Cloud'</span>,<span class="string">'Snow'</span>,<span class="string">'zs'</span>)
+                title(sprintf(<span class="string">'%s zs=%g'</span>,date,zs))
+</pre><img vspace="5" hspace="5" src="castest_CESneige_02.png" alt=""> <p>Show an RGB composition overlaid with pass 1 and 2 snow cover polygons. The clouds pixels are in black.</p><pre class="codeinput">                figure(3),clf
+                z=ZL2(:,:,[nMIR nRed nGreen]);
+                max_b=[300 300 300];
+                z2=zeros(size(z),<span class="string">'uint8'</span>);
+                <span class="keyword">for</span> b=1:3
+                    z2(:,:,b)=~cloudtestfinal.*double(z(:,:,b))/max_b(b)*255;
+                <span class="keyword">end</span>
+                imshow(uint8(z2),<span class="string">'Border'</span>,<span class="string">'tight'</span>)
+                hold <span class="string">on</span>
+                <span class="keyword">for</span> k = 1:length(B1)
+                    boundary = B1{k};
+                    <span class="comment">%         if length(boundary)&gt;100</span>
+                    plot(boundary(:,2), boundary(:,1), <span class="string">'y'</span>, <span class="string">'LineWidth'</span>, 1)
+                    <span class="comment">%         end</span>
+                <span class="keyword">end</span>
+                <span class="keyword">if</span> ~isempty(zs)
+                    <span class="keyword">for</span> k = 1:length(B2)
+                        boundary = B2{k};
+                        <span class="comment">%         if length(boundary)&gt;100</span>
+                        plot(boundary(:,2), boundary(:,1), <span class="string">'m'</span>, <span class="string">'LineWidth'</span>, 1)
+                        <span class="comment">%         end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+</pre><pre class="codeoutput">Warning: Image is too big to fit on screen; displaying at 67% 
+</pre><img vspace="5" hspace="5" src="castest_CESneige_03.png" alt=""> <p>Print figures</p><pre class="codeinput">                set(1:3,<span class="string">'PaperPositionMode'</span>,<span class="string">'auto'</span>,<span class="string">'Visible'</span>,<span class="string">'off'</span>);
+                pfig=[pout <span class="string">'/'</span> sat <span class="string">'/'</span> site];
+                system(sprintf(<span class="string">'mkdir -p %s/zs1'</span>,pfig));
+                system(sprintf(<span class="string">'mkdir -p %s/zs2'</span>,pfig));
+                system(sprintf(<span class="string">'mkdir -p %s/QL'</span>,pfig));
+                f1=sprintf(<span class="string">'%s/zs1/%s_%s_%s_%s.png'</span>,pfig,sat,site,date,label);
+                f2=sprintf(<span class="string">'%s/zs2/%s_%s_%s_%s.png'</span>,pfig,sat,site,date,label);
+                f3=sprintf(<span class="string">'%s/QL/%s_%s_%s_%s.png'</span>,pfig,sat,site,date,label);
+                print(1,f1,<span class="string">'-dpng'</span>)
+                print(2,f2,<span class="string">'-dpng'</span>)
+                print(3,f3,<span class="string">'-dpng'</span>)
+</pre><pre class="codeinput">            <span class="keyword">end</span>
+</pre><pre class="codeinput">        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% CES surface enneigée
+% *Author: Simon Gascoin (CNRS/CESBIO)*
+% 
+% *June 2015*
+%
+% This code is a demonstrator of the snow detection algorithm for
+% Sentinel-2 images. It calls <S2snow.html the function S2snow> using 
+% subsets of SPOT-4 or Landsat-8 level 2 images
+%
+% The input files were generated from L2 images downloaded from Theia Land
+% and pre-processed by three shell scripts:
+%
+% #  |decompresse_*.sh|,
+%        to unzip the files
+% #  |decoupe_*.sh|,
+%        to extract a rectangle AOI from L2A data using
+%       gdal_translate with projection window defined in the ascii file
+%       _AOI_test_CESNeige.csv_
+% #  |projette_mnt_*.sh|,
+%        to project the SRTM DEM and resample at 30m or 20m
+%       (Landsat8 or Take5) over the same AOI. It uses gdalwarp with the 
+%       cubicspline option
+
+%%
+% Check Matlab version
+matlabversion=version;
+assert(str2double(matlabversion(end-5:end-2))>=2014,...
+    'Needs Matlab version 2014 and later')
+
+%% Configuration
+% This demo can run for only one image (option 1) or process several
+% images series from different sites and sensors (option 2)
+
+demotype=1;
+
+%%
+% If this flag QL is true the code will output three figures for each image
+%
+% # a bar graph showing the snow fraction per elevation band,
+% # a bar graph showing the snow, cloud and elevation area in m2,
+% # a false color composite image overlaid by snow and cloud masks.
+
+QL=true;
+
+%%
+% Define the output path for the figures
+
+pout='../figures/demo_CESneige';
+
+%%
+% Define a label to add to the figure file names
+
+label='ndsipass2_015_cloudpass1';
+
+%% Cloud mask processing parameters
+% Resampling factor to determine the "dark clouds" in the initial cloud
+% mask. Here rf=8 corresponds to a target resolution of 240m for Landsat.
+
+rf=8;
+
+%%
+% Dark cloud threshold (reflectance unit: per mil). The clouds pixels with a (coarse) reflectance lower than rRed_darkcloud
+% are selected to pass the snow test 
+
+rRed_darkcloud=500;
+
+%%
+%  
+% Back to cloud threshold. Pixels which are not detected as snow then they go back to the cloud
+% mask only if their reflectance at full resolution is greater than
+% rRed_backtocloud. Here we use full resolution reflectances because
+% resampled cloud pixels reflectance drops rapidly along the cloud edges
+% due to the mixing with the land reflectance.
+
+rRed_backtocloud=100;
+
+%% Snow detection parameters
+%
+% Elevation band height in m. 
+dz=100;
+%%
+% NDSI threshold for pass 1 
+ndsi_pass1=0.4;
+%%
+% Threshold in the red reflectance for pass 1
+rRed_pass1=200;
+%%
+% NDSI threshold for pass 2 
+ndsi_pass2=0.15; % Note: Zhu's fmask algorithm uses 0.15
+%%
+% Threshold in the red reflectance for pass 2
+rRed_pass2=120;
+%%
+% Minimum snow fraction from which to compute the snowline elevation (zs)
+fsnow_lim=0.1;
+%%
+% Snow fraction limit to go to pass 2.
+% The total snow fraction after pass 1 is computed to decide 
+% whether or not proceed to pass 2. If the snow fraction is below
+% fsnow_total_lim then pass 2 is skipped because the number of snow pixels
+% is not sufficient to properly determine the snow line elevation. Here we
+% use 1000 pixels.
+fsnow_total_lim=0.001; % Warning! it depends on the image size
+
+%% Definition of the input images 
+switch demotype
+    case 1 
+        %% 
+        % use only 1 image
+        satlist={'Take5'};
+        sitelist{1}={'Maroc'};
+        datelist{1}{1}={'20130327'}; % format yyyymmdd
+    case 2 
+        %% 
+        % process a batch of 2 x Landsat8 and 4 x Take5 images series
+        [satlist,sitelist,datelist]=load_demo_input('all');
+    otherwise
+        error('demotype should be 1 or 2')
+end
+
+%% Data loading
+% Begin the sensor loop
+nsat=length(satlist);
+for isat=1:nsat 
+    
+    sat=satlist{isat};
+    
+    nsite=length(sitelist{isat});
+
+    %%
+    % Get the sensor band numbers and no-data value
+    switch sat
+        case 'Take5'
+            nGreen=1; % Index of green band
+            nMIR=4; % Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
+            nRed=2; % Index of red band
+            nodata=-10000; % no-data value
+        case 'Landsat8'
+            nGreen=3;
+            nMIR=6;
+            nRed=4;
+            nodata=-10000;
+        otherwise
+            error('sat should be Take5 or Landsat8')
+    end
+    %%
+    % Begin the site loop
+    for isite=1:nsite;  
+
+        site=sitelist{isat}{isite};
+        ndate=length(datelist{isat}{isite});
+        
+        %%
+        % read SRTM DEM for this site
+        fdem=['../' sat '/AOI_test_CESNeige/SRTM/' site '/' site '.tif'];
+        [Zdem,R]=geotiffread(fdem);
+        
+        %%
+        % Begin the date loop
+        for idate=1:ndate 
+
+            date=datelist{isat}{isite}{idate};
+            
+            %%
+            % Read the L2 reflectance data (search the image filename based on the date)
+            pL2=['../' sat '/AOI_test_CESNeige/LEVEL2A/' site]; % path
+            fL2=dir([pL2 '/*' date '*PENTE*.TIF']); % file list
+            assert(~isempty(fL2),'The L2 image is not present in the input directory')
+            f=[pL2 '/' fL2.name];
+            [ZL2,~]=geotiffread(f);
+            
+            %%
+            % The data are converted to double because it enables to work
+            % with NaN, but we could probably avoid this to optimize memory use..
+            ZL2=double(ZL2);
+            ZL2(ZL2==nodata)=NaN;
+            
+            %%
+            % Read the cloud mask
+            fc=dir([pL2 '/*' date '*NUA.TIF']);
+            assert(~isempty(fc),'The cloud mask is not present in the input directory')
+            f=[pL2 '/' fc.name];
+            [Zc,~]=geotiffread(f);
+            
+            %% Snow detection 
+            % Calls <S2snow.html the function S2snow>
+            [snowtest,cloudtestfinal,z_center,B1,B2,fsnow,zs,...
+                fsnow_z,fcloud_z,N,z_edges]...
+                = S2snow(...
+                ZL2,Zc,Zdem,nGreen,nRed,nMIR,rf,QL,rRed_darkcloud,...
+                ndsi_pass1,ndsi_pass2,rRed_pass1,rRed_pass2,dz,fsnow_lim,...
+                fsnow_total_lim,rRed_backtocloud);
+            
+            %% Figures
+            if QL
+                
+                %%
+                % Draw a bar plot of the snow fraction per elevation band
+                figure(1),clf
+                barh(z_center,fsnow_z,1,'facecolor','c');
+                hold on
+                if ~isempty(zs)
+                    hrf=refline(0,zs);
+                    set(hrf,'Color','r','LineStyle','REPLACE_WITH_DASH_DASH','LineWidth',2)
+                end
+                xlabel('Fractional area')
+                ylabel('Elevation (m)')
+                legend('Snow','zs')
+                title(sprintf('%s zs=%g',date,zs))
+                
+                %%
+                % Draw a bar plot of the snow area and elevation band area
+                figure(2),clf
+                [Nz,~,~] = histcounts(Zdem(:),z_edges);
+                barh(z_center,Nz,1,'facecolor',.8*[1 1 1]);
+                hold on
+                barh(z_center,(fcloud_z+fsnow_z).*Nz',1,'facecolor',.5*[1 1 1]);
+                barh(z_center,fsnow_z.*Nz',1,'facecolor','c');
+                if ~isempty(zs)
+                    hrf=refline(0,zs);
+                    set(hrf,'Color','r','LineStyle','REPLACE_WITH_DASH_DASH','LineWidth',2)
+                end
+                xlabel('Area (m2)')
+                ylabel('Elevation (m)')
+                legend('DEM','Cloud','Snow','zs')
+                title(sprintf('%s zs=%g',date,zs))
+                
+                %%
+                % Show an RGB composition overlaid with pass 1 and 2 snow cover
+                % polygons. The clouds pixels are in black.
+                figure(3),clf
+                z=ZL2(:,:,[nMIR nRed nGreen]);
+                max_b=[300 300 300];
+                z2=zeros(size(z),'uint8');
+                for b=1:3
+                    z2(:,:,b)=~cloudtestfinal.*double(z(:,:,b))/max_b(b)*255;
+                end
+                imshow(uint8(z2),'Border','tight')
+                hold on
+                for k = 1:length(B1)
+                    boundary = B1{k};
+                    %         if length(boundary)>100
+                    plot(boundary(:,2), boundary(:,1), 'y', 'LineWidth', 1)
+                    %         end
+                end
+                if ~isempty(zs)
+                    for k = 1:length(B2)
+                        boundary = B2{k};
+                        %         if length(boundary)>100
+                        plot(boundary(:,2), boundary(:,1), 'm', 'LineWidth', 1)
+                        %         end
+                    end
+                end
+                
+                %%
+                % Print figures
+                set(1:3,'PaperPositionMode','auto','Visible','off');
+                pfig=[pout '/' sat '/' site];
+                system(sprintf('mkdir -p %s/zs1',pfig));
+                system(sprintf('mkdir -p %s/zs2',pfig));
+                system(sprintf('mkdir -p %s/QL',pfig));
+                f1=sprintf('%s/zs1/%s_%s_%s_%s.png',pfig,sat,site,date,label);
+                f2=sprintf('%s/zs2/%s_%s_%s_%s.png',pfig,sat,site,date,label);
+                f3=sprintf('%s/QL/%s_%s_%s_%s.png',pfig,sat,site,date,label);
+                print(1,f1,'-dpng')
+                print(2,f2,'-dpng')
+                print(3,f3,'-dpng')
+                
+            end
+        end
+        
+    end
+    
+end
+
+##### SOURCE END #####
+--></body></html>
