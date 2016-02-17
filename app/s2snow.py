@@ -32,8 +32,9 @@ gdal.UseExceptions()
 #Internal C++ lib to compute histograms and minimum elevation threshold (step 2)
 import histo_utils_ext
 
-#Preprocessing script
+#Preprocessing an postprocessing script
 import preprocessing
+import postprocessing
 
 def show_help():
     """Show help of the s2snow script"""
@@ -95,7 +96,7 @@ def main(argv):
     mode=data["general"]["mode"]
     generate_vector=data["general"]["generate_vector"]
     do_preprocessing=data["general"]["preprocessing"]
-   
+    do_postprocessing=data["general"]["postprocessing"]
     #Parse input parameters
     vrt=str(data["inputs"]["vrt"])
     img=str(data["inputs"]["image"])
@@ -308,6 +309,10 @@ def main(argv):
     #Burn polygons edges on the quicklook
     #TODO add pass1 snow polygon in yellow
     burn_polygons_edges(op.join(path_tmp,"quicklook.tif"),op.join(path_tmp,"final_mask_vec.shp"))
+    
+    #External postprocessing
+    if do_postprocessing:
+        postprocessing.format_files()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 :

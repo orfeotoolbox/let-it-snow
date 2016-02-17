@@ -1,0 +1,29 @@
+{
+    "general":{
+        "pout":"/home/grizonnetm/Data-Neige/Data-LIS/Output-Test",
+        "shadow_value":64,
+        "ram":1024,
+	"mode":"spot4",
+	"generate_vector":false
+        },
+    "inputs":{ 
+        "image":"/home/grizonnetm/Data-Neige/Data-LIS/Data-Test/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_ORTHO_SURF_CORR_PENTE_CMarocD0000B0000.TIF",
+        "dem":"/home/grizonnetm/Data-Neige/Data-LIS/Data-Test/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif",
+        "cloud_mask":"/home/grizonnetm/Data-Neige/Data-LIS/Data-Test/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
+    },
+    "cloud_mask":{
+        "rf":8,
+        "rRed_darkcloud":650,
+        "rRed_backtocloud":100
+    },
+    "snow":{
+        "dz":100,
+        "ndsi_pass1":0.4,
+        "rRed_pass1":200,
+        "ndsi_pass2":0.15,
+        "rRed_pass2":120,
+        "fsnow_lim":0.1,
+        "fsnow_total_lim":0.001
+    }
+}
+

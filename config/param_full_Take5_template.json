@@ -4,8 +4,9 @@
         "shadow_value":64,
         "ram":1024,
 	"mode":"spot4",
-	"generate_vector":false
-	"preprocessing":true
+	"generate_vector":false,
+	"preprocessing":false,
+	"postprocessing":false,
          },
     "inputs":{
 	"vrt":"inputvrt"
