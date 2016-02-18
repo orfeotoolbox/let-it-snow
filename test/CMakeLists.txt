@@ -1,7 +1,3 @@
-ENABLE_TESTING()
-
-INCLUDE(Dart)
-
 mark_as_advanced(LIS_DATA_ROOT)
 
 set(BASELINE ${LIS_DATA_ROOT}/Baseline)
@@ -11,7 +7,6 @@ set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 #TODO need to pass env variable propoerly using qgis code
 #SET(ENV{PYTHONPATH} \"${CMAKE_BINARY_DIR}/bin/:\$ENV{PYTHONPATH}\")
 #MESSAGE(\"PYTHONPATH:\$ENV{PYTHONPATH}\")
-
 
 add_test(NAME test_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
