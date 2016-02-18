@@ -75,6 +75,9 @@ add_subdirectory(src)
 
 # Add Testing subdirectory
 option(BUILD_TESTING  "Build testing." OFF)
+
 if(BUILD_TESTING)
+    ENABLE_TESTING()
+    INCLUDE(Dart)
     add_subdirectory(test)
 endif()

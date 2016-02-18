@@ -9,7 +9,7 @@
 	"postprocessing":false,
          },
     "inputs":{
-	"vrt":"inputvrt"
+	"vrt":"inputvrt",
         "image":"inputimage",
         "dem":"inputdem",
         "cloud_mask":"inputcloud"
