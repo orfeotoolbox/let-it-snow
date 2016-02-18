@@ -1,4 +1,4 @@
-# CES Neige
+# CES NeigeOA
 ## Synopsis
 
 This code is a Python/OTB version of the demonstrator of the snow detection algorithm for Sentinel-2 images. 
@@ -13,8 +13,8 @@ The input files are SPOT-4 or Landsat-8 Level-2A images from Theia Land and the 
 
 ## Code Example
 
-First create the DEM using `projette_mnt_*.sh` in the utils folder to project and resample the SRTM DEM over the Landsat/SPOT area (30m:Landsat8 or 20m:Take5). It uses gdalwarp with the cubicspline option.
-The snow detection is performed in a Python script.
+To build DEM data. Download VRT files corresponding to the data and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set vrt path. It will  project and resample the SRTM DEM over the Landsat/SPOT area (30m:Landsat8 or 20m:Take5). It uses gdalwarp with the cubicspline option.
+The snow detection is performed in the Python script app/S2Snow.py. 
 
 ```
 Configure PYTHONPATH environnement
@@ -66,11 +66,16 @@ make
 ````
 ## Tests
 
-Unable tests with BUILD_TESTING cmake option
+Download LIS-Data folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files. 
+Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated. 
+Data-Test : Test data folder needed to run tests. It contains Landsat, Take5 and SRTM data.
+Output-Test : Temporary output tests folder.
+Do not modify these folders.
+Enable tests with BUILD_TESTING cmake option
 
 ## Contributors
 
-Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO)
+Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (Stagiaire CNES)
 
 ## License
 

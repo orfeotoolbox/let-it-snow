@@ -1,0 +1,378 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Function S2snow</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-06-11"><meta name="DC.source" content="S2snow.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Function S2snow</h1><!--introduction--><p><b>Author: Simon Gascoin (CNRS/CESBIO)</b></p><p><b>June 2015</b></p><p>This function computes the snow presence and absence (snow/no-snow) from a high-resolution optical multispectral image like Sentinel-2 (eg Landsat-8, SPOT-4) The input are the full resolution reflectances corrected from atmospheric and slope effects (Level 2A), the associated cloud mask and a digital elevation model. The output is a mask with three classes: snow/no-snow/cloud. The output cloud mask is different from the input cloud mask.</p><p>The snow detection algorithm works in two passes: first the most evident snow is detected using a set of conservative thresholds, then this snow pixels are used to determine the lower elevation of the snow cover. A second pass is performed for the pixels above this elevation with a new set of less conservative thresholds</p><p>The snow detection is made on a pixel-basin using the Normalized Difference Snow Index (NDSI):</p><p><img src="S2snow_eq11519809210784707025.png" alt="$$ \textrm{NDSI} = \frac{\rho_\textrm{{Green}}-\rho_\textrm{{MIR}}}{\rho_\textrm{{Green}}+\rho_\textrm{{MIR}}} $$"></p><p>where <img src="S2snow_eq02512469557822599828.png" alt="$\rho_\textrm{{Green}}$"> is the reflectance in the green channel and <img src="S2snow_eq02512469557822599828.png" alt="$\rho_\textrm{{Green}}$"> in the shortwave infrared.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Function call</a></li><li><a href="#3">Inputs</a></li><li><a href="#4">Outputs</a></li><li><a href="#5">Initial cloud mask processing</a></li><li><a href="#12">Pass 1 : first snow test</a></li><li><a href="#19">Pass 2 : second snow test</a></li><li><a href="#40">Final update of the cloud mask</a></li></ul></div><h2>Function call<a name="1"></a></h2><pre class="codeinput"><span class="keyword">function</span> [snowtest,cloudtestfinal,z_center,B1,B2,fsnow,zs,<span class="keyword">...</span>
+    fsnow_z,fcloud_z,N,z_edges]<span class="keyword">...</span>
+    = S2snow(<span class="keyword">...</span>
+    ZL2,Zc,Zdem,nGreen,nRed,nMIR,rf,QL,rRed_darkcloud,<span class="keyword">...</span>
+    ndsi_pass1,ndsi_pass2,rRed_pass1,rRed_pass2,dz,fsnow_lim,<span class="keyword">...</span>
+    fsnow_total_lim,rRed_backtocloud)
+</pre><h2>Inputs<a name="3"></a></h2><div><ul><li>ZL2: L2A reflectances (NxMxB double array, where B is the number of band)</li><li>Zc: cloud mask (Zc&gt;0 is cloud) (NxM array)</li><li>Zdem: digital elevation model (NxM array)</li><li>nGreen, nRed, nMIR: index of green, red, SWIR band in ZL2</li><li>rf: resampling factor for cloud reflectance</li><li>QL: quicklooks? (boolean)</li><li>ndsi_pass1,ndsi_pass2,rRed_pass1,rRed_pass2,rRed_backtocloud: parameters for reflectance-based tests (see <a href="castest_CESneige.html">the documnetation for castest_CESneige</a>)</li><li>dz: elevation band width</li><li>fsnow_lim: minimum snow fraction in an elevation band to define zs</li><li>fsnow_total_lim: minimum snow fraction in the whole image after pass1 to go to pass2</li></ul></div><h2>Outputs<a name="4"></a></h2><div><ul><li>snowtest: snow presence/absence (NxM boolean)</li><li>cloudtestfinal: cloud presence/absence (NxM boolean)</li><li>z_center: centers of the elevation bands (vector)</li><li>B1, B2: snow cover contours after pass 1 and pass 2 (cell)</li><li>fsnow: total snow fraction in the image after pass 1</li><li>zs: snow elevation for pass 2</li><li>fsnow_z: snow fraction in each band</li><li>N: number of clear pixels in each elevation band</li><li>z_edges: upper and lower limits of the elevation bands</li></ul></div><h2>Initial cloud mask processing<a name="5"></a></h2><p>The L2A cloud mask is too conservative and much useful information for snow cover mapping is lost.</p><p>We allow the reclassification of some cloud pixels in snow or no-snow only if they have a rather low reflectance. We select only these "dark clouds" because the NDSI test is robust to the snow/cloud confusion in this case</p><p>Initial cloud mask (incl. cloud shadows)</p><pre class="codeinput">cloudtestinit = Zc&gt;0;
+</pre><p>Get the cloud shadows</p><pre class="codeinput">code_shad = bin2dec(fliplr(<span class="string">'00000011'</span>));
+cloudshadow = bitand(Zc,code_shad)&gt;0;
+</pre><p>The "dark cloud" are found with a threshold rRed_darkcloud in the red band after bilinear resampling of the original image to match the MACCS algorithm philosophy but the benefit of this was not yet evaluated.</p><pre class="codeinput">rRedcoarse = imresize(ZL2(:,:,nRed), 1/rf,<span class="string">'bilinear'</span>);
+</pre><p>Then we oversample to the initial resolution using nearest neighbour to have the same image size.</p><pre class="codeinput">rRedcoarse_oversampl = imresize(rRedcoarse,rf,<span class="string">'nearest'</span>);
+</pre><p>clear rRedcoarse to free up memory</p><pre class="codeinput">clear <span class="string">rRedcoarse</span>
+</pre><p>These pixels are removed from the intial cloud mask unless they were flagged as a cloud shadow. The snow detection will not be applied where cloudtesttmp is true.</p><pre class="codeinput">cloudtesttmp = <span class="keyword">...</span>
+    (cloudtestinit &amp; rRedcoarse_oversampl&gt;rRed_darkcloud) | cloudshadow;
+</pre><h2>Pass 1 : first snow test<a name="12"></a></h2><p>The test is based on the Normalized Difference Snow Index (ndsi0) and the reflectance value in the red channel</p><pre class="codeinput">ndsi0 = (ZL2(:,:,nGreen)-ZL2(:,:,nMIR))./(ZL2(:,:,nGreen)+ZL2(:,:,nMIR));
+</pre><p>A pixel is marked as snow covered if NDSI is higher than ndsi_pass1 and if the red reflectance is higher than Red_pass1</p><pre class="codeinput">snowtest = ~cloudtesttmp &amp; ndsi0&gt;ndsi_pass1 &amp; ZL2(:,:,nRed)&gt;rRed_pass1;
+</pre><p>Now we can update the cloud mask Some pixels were originally marked as cloud but were not reclassified as snow after pass 1. These pixels are marked as cloud if they have a high reflectance ("back to black"). Otherwise we keep them as "no-snow" ("stayin alive").</p><pre class="codeinput">cloudtestpass1 = cloudtesttmp <span class="keyword">...</span>
+    | (~snowtest &amp; cloudtestinit &amp; ZL2(:,:,nRed)&gt;rRed_backtocloud);
+</pre><p>For the quicklooks we compute the boundary of the snow cover after pass 1.</p><p><i>Warning this uses much computer time.</i></p><pre class="codeinput"><span class="keyword">if</span> QL
+    [B1, ~] = bwboundaries(snowtest); <span class="comment">% requires Matlab Image Processing Toolbox</span>
+<span class="keyword">else</span>
+    B1 = [];
+<span class="keyword">end</span>
+</pre><p>Initialize some output variables as empty array in case they is not reached in pass 2</p><pre class="codeinput">B2 = [];
+zs = [];
+N = [];
+bin = [];
+</pre><h2>Pass 2 : second snow test<a name="19"></a></h2><p>Based on the DEM, the scene is discretized in elevation band of height dz. The elevation bands start from the minimal elevation found in the DEM resampled at the image resolution. The edges of elevation band are :</p><pre class="codeinput">z_edges = double(min(Zdem(:)):dz:max(Zdem(:)));
+
+<span class="comment">% NB) the colon operator j:i:k is the same as [j,j+i,j+2i, ...,j+m*i],</span>
+<span class="comment">% where m = fix((k-j)/i).</span>
+</pre><p>The number of bins is :</p><pre class="codeinput">nbins = length(z_edges)-1;
+</pre><p>The mean elevation of each band is computed for the graphics but not used by the algorithm</p><pre class="codeinput">z_center = mean([z_edges(2:end);z_edges(1:end-1)]);
+</pre><p>The lower edge of each bin is used to define zs</p><pre class="codeinput">z_loweredges=z_edges(1:end-1);
+</pre><p>We get the number of pixels (N) which are cloud-free (at this step) in each bin, and the index array (bin) to identify the elevation band corresponding to a pixel in the cloud-free portion of the image</p><pre class="codeinput"><span class="keyword">if</span> nbins&gt;0
+    [N,~,bin] = histcounts(Zdem(~cloudtestpass1),z_edges);
+<span class="keyword">end</span>
+</pre><p>Compute the fraction of snow pixels in each elevation band</p><pre class="codeinput">fsnow_z = zeros(nbins,1);
+fcloud_z = zeros(nbins,1);
+<span class="keyword">if</span> ~isempty(bin)
+</pre><p>We collect the snow pixels only in the cloud free areas</p><pre class="codeinput">    M = snowtest(~cloudtestpass1(:)); <span class="comment">% this also reshapes snowtest from a</span>
+    <span class="comment">% 2D array to 1D array to match the bin index array dimension</span>
+</pre><p>Then we start to loop over the each elevation band</p><pre class="codeinput">    <span class="keyword">for</span> i = 1:nbins
+</pre><p>We sum the snow pixels and divide by the number of cloud-free pixels</p><pre class="codeinput">        <span class="keyword">if</span> N(i)&gt;0
+            fsnow_z(i) = sum(M(bin==i))/N(i);
+            fcloud_z(i) = sum(cloudtestpass1(bin==i))/N(i);
+        <span class="keyword">else</span>
+            fsnow_z(i) = NaN;
+            fcloud_z(i) = NaN;
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><p>We compute the total fraction of snow pixels in the image</p><pre class="codeinput">    fsnow = nnz(snowtest)/numel(snowtest);
+</pre><p>The pass 2 snow test is not performed if there is not enough snow detected in pass 1.</p><pre class="codeinput">    <span class="keyword">if</span> fsnow&gt;fsnow_total_lim
+</pre><p>We get zs, the minimum snow elevation above which we apply pass 2. zs is <b>two elevation bands</b> below the band at which fsnow &gt; fsnow_lim</p><pre class="codeinput">        izs = find(fsnow_z&gt;fsnow_lim,1,<span class="string">'first'</span>);
+        zs = z_loweredges(max(izs-2,1));
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p>if zs was found then we apply the second snow test : A pixel is marked as snow covered if NDSI is higher than ndsi_pass2 and if the red reflectance is higher than Red_pass1... and if it is above zs!</p><pre class="codeinput"><span class="keyword">if</span> ~isempty(zs)
+</pre><pre class="codeinput">    snowtest2 = ~cloudtesttmp <span class="keyword">...</span><span class="comment"> % we use cloudtesttmp again</span>
+        &amp; ndsi0&gt;ndsi_pass2 <span class="keyword">...</span>
+        &amp; Zdem&gt;zs <span class="keyword">...</span>
+        &amp; ZL2(:,:,nRed)&gt;rRed_pass2;
+</pre><p>We add these snow pixels in the snow mask from pass 1</p><pre class="codeinput">    snowtest = snowtest2 | snowtest;
+</pre><p>For the quicklooks we compute the boundary of the snow cover after pass 2 <i>Warning this uses much computer time.</i></p><pre class="codeinput">    <span class="keyword">if</span> QL
+        [B2, ~] = bwboundaries(snowtest);
+    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><h2>Final update of the cloud mask<a name="40"></a></h2><p>Some pixels were originally marked as cloud but were not reclassified as snow after pass 1. These pixels are marked as cloud if they have a high reflectance ("back to black"). Otherwise we keep them as "no-snow" ("stayin alive").</p><pre class="codeinput">cloudtestfinal = cloudtesttmp <span class="keyword">...</span>
+    | (~snowtest &amp; cloudtestinit &amp; ZL2(:,:,nRed)&gt;rRed_backtocloud);
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Function S2snow
+% *Author: Simon Gascoin (CNRS/CESBIO)*
+%
+% *June 2015*
+%
+% This function computes the snow presence and absence (snow/no-snow) from
+% a high-resolution optical multispectral image like Sentinel-2
+% (eg Landsat-8, SPOT-4)
+% The input are the full resolution reflectances corrected from atmospheric
+% and slope effects (Level 2A), the associated cloud mask and a digital
+% elevation model.
+% The output is a mask with three classes: snow/no-snow/cloud. The output cloud
+% mask is different from the input cloud mask.
+%
+% The snow detection algorithm works in two passes: first the most evident
+% snow is detected using a set of conservative thresholds, then this snow pixels
+% are used to determine the lower elevation of the snow cover. A second pass
+% is performed for the pixels above this elevation with a new set of less
+% conservative thresholds
+%
+% The snow detection is made on a pixel-basin using the Normalized Difference Snow Index (NDSI):
+%
+% $$ \textrm{NDSI} = \frac{\rho_\textrm{{Green}}-\rho_\textrm{{MIR}}}{\rho_\textrm{{Green}}+\rho_\textrm{{MIR}}} $$
+%
+% where $\rho_\textrm{{Green}}$ is the reflectance in the green channel and $\rho_\textrm{{Green}}$ in the
+% shortwave infrared.
+
+%% Function call
+function [snowtest,cloudtestfinal,z_center,B1,B2,fsnow,zs,...
+    fsnow_z,fcloud_z,N,z_edges]...
+    = S2snow(...
+    ZL2,Zc,Zdem,nGreen,nRed,nMIR,rf,QL,rRed_darkcloud,...
+    ndsi_pass1,ndsi_pass2,rRed_pass1,rRed_pass2,dz,fsnow_lim,...
+    fsnow_total_lim,rRed_backtocloud)
+
+%% Inputs
+%
+% * ZL2: L2A reflectances (NxMxB double array, where B is the number of band)
+% * Zc: cloud mask (Zc>0 is cloud) (NxM array)
+% * Zdem: digital elevation model (NxM array)
+% * nGreen, nRed, nMIR: index of green, red, SWIR band in ZL2
+% * rf: resampling factor for cloud reflectance
+% * QL: quicklooks? (boolean)
+% * ndsi_pass1,ndsi_pass2,rRed_pass1,rRed_pass2,rRed_backtocloud:
+% parameters for reflectance-based tests (see <castest_CESneige.html the documnetation for castest_CESneige>)
+% * dz: elevation band width
+% * fsnow_lim: minimum snow fraction in an elevation band to define zs
+% * fsnow_total_lim: minimum snow fraction in the whole image after pass1 to go to pass2
+
+%% Outputs
+%
+% * snowtest: snow presence/absence (NxM boolean)
+% * cloudtestfinal: cloud presence/absence (NxM boolean)
+% * z_center: centers of the elevation bands (vector)
+% * B1, B2: snow cover contours after pass 1 and pass 2 (cell)
+% * fsnow: total snow fraction in the image after pass 1
+% * zs: snow elevation for pass 2
+% * fsnow_z: snow fraction in each band
+% * N: number of clear pixels in each elevation band
+% * z_edges: upper and lower limits of the elevation bands
+
+%% Initial cloud mask processing
+% The L2A cloud mask is too conservative and much useful information for
+% snow cover mapping is lost.
+%
+% We allow the reclassification of some cloud pixels in snow
+% or no-snow only if they have a rather low reflectance. We select only these
+% "dark clouds" because the NDSI test is robust to the snow/cloud confusion
+% in this case
+%%
+% Initial cloud mask (incl. cloud shadows)
+cloudtestinit = Zc>0;
+%%
+% Get the cloud shadows
+code_shad = bin2dec(fliplr('00000011'));
+cloudshadow = bitand(Zc,code_shad)>0;
+%%
+% The "dark cloud" are found with a threshold rRed_darkcloud
+% in the red band after bilinear resampling of the original image
+% to match the MACCS algorithm philosophy but the benefit of this was not
+% yet evaluated.
+
+rRedcoarse = imresize(ZL2(:,:,nRed), 1/rf,'bilinear');
+
+%%
+% Then we oversample to the initial resolution using nearest neighbour to have
+% the same image size.
+rRedcoarse_oversampl = imresize(rRedcoarse,rf,'nearest');
+
+%%
+% clear rRedcoarse to free up memory
+clear rRedcoarse
+
+%%
+% These pixels are removed from the intial cloud mask unless they were
+% flagged as a cloud shadow. The snow detection will not be applied where
+% cloudtesttmp is true.
+cloudtesttmp = ...
+    (cloudtestinit & rRedcoarse_oversampl>rRed_darkcloud) | cloudshadow;
+
+%% Pass 1 : first snow test
+%%
+% The test is based on the Normalized Difference Snow Index (ndsi0) and the
+% reflectance value in the red channel
+ndsi0 = (ZL2(:,:,nGreen)-ZL2(:,:,nMIR))./(ZL2(:,:,nGreen)+ZL2(:,:,nMIR));
+%%
+% A pixel is marked as snow covered if NDSI is higher than ndsi_pass1 and
+% if the red reflectance is higher than Red_pass1
+snowtest = ~cloudtesttmp & ndsi0>ndsi_pass1 & ZL2(:,:,nRed)>rRed_pass1;
+
+%%
+% Now we can update the cloud mask
+% Some pixels were originally marked as cloud but were not reclassified as
+% snow after pass 1. These pixels are marked as cloud if they have a high
+% reflectance ("back to black").
+% Otherwise we keep them as "no-snow" ("stayin alive").
+
+cloudtestpass1 = cloudtesttmp ...
+    | (~snowtest & cloudtestinit & ZL2(:,:,nRed)>rRed_backtocloud);
+
+%%
+% For the quicklooks we compute the boundary of the snow cover after pass
+% 1.
+%
+%%
+% _Warning this uses much computer time._
+if QL
+    [B1, ~] = bwboundaries(snowtest); % requires Matlab Image Processing Toolbox
+else
+    B1 = [];
+end
+
+%%
+% Initialize some output variables as empty array in case they is not reached 
+% in pass 2
+B2 = [];
+zs = [];
+N = [];
+bin = [];
+
+%% Pass 2 : second snow test
+% Based on the DEM, the scene is discretized in elevation band of height dz.
+% The elevation bands start from the minimal elevation
+% found in the DEM resampled at the image resolution.
+% The edges of elevation band are :
+
+z_edges = double(min(Zdem(:)):dz:max(Zdem(:)));
+
+% NB) the colon operator j:i:k is the same as [j,j+i,j+2i, ...,j+m*i],
+% where m = fix((k-j)/i).
+%%
+% The number of bins is :
+nbins = length(z_edges)-1;
+%%
+% The mean elevation of each band is computed for the graphics but not used
+% by the algorithm
+z_center = mean([z_edges(2:end);z_edges(1:end-1)]);
+%%
+% The lower edge of each bin is used to define zs
+z_loweredges=z_edges(1:end-1);
+%%
+% We get the number of pixels (N) which are cloud-free (at this step) in each
+% bin, and the index array (bin) to identify the elevation band corresponding
+% to a pixel in the cloud-free portion of the image
+if nbins>0
+    [N,~,bin] = histcounts(Zdem(~cloudtestpass1),z_edges);
+end
+%%
+% Compute the fraction of snow pixels in each elevation band
+fsnow_z = zeros(nbins,1);
+fcloud_z = zeros(nbins,1);
+if ~isempty(bin)
+    %%
+    % We collect the snow pixels only in the cloud free areas
+    
+    M = snowtest(~cloudtestpass1(:)); % this also reshapes snowtest from a
+    % 2D array to 1D array to match the bin index array dimension
+    %%
+    % Then we start to loop over the each elevation band
+    for i = 1:nbins
+        %%
+        % We sum the snow pixels and divide by the number of cloud-free pixels
+        if N(i)>0
+            fsnow_z(i) = sum(M(bin==i))/N(i);
+            fcloud_z(i) = sum(cloudtestpass1(bin==i))/N(i);
+        else
+            fsnow_z(i) = NaN;
+            fcloud_z(i) = NaN;
+        end
+    end
+    
+    %%
+    % We compute the total fraction of snow pixels in the image
+    fsnow = nnz(snowtest)/numel(snowtest);
+    
+    %%
+    % The pass 2 snow test is not performed if there is not enough snow
+    % detected in pass 1.    
+    if fsnow>fsnow_total_lim
+        %%
+        % We get zs, the minimum snow elevation above which we apply pass
+        % 2.
+        % zs is *two elevation bands* below the band at which fsnow > fsnow_lim
+        izs = find(fsnow_z>fsnow_lim,1,'first');
+        zs = z_loweredges(max(izs-2,1));
+    end
+end
+
+%%
+% if zs was found then we apply the second snow test :
+% A pixel is marked as snow covered if NDSI is higher than ndsi_pass2 and
+% if the red reflectance is higher than Red_pass1... and if it is above zs!
+if ~isempty(zs)
+    snowtest2 = ~cloudtesttmp ... % we use cloudtesttmp again 
+        & ndsi0>ndsi_pass2 ...
+        & Zdem>zs ...
+        & ZL2(:,:,nRed)>rRed_pass2;
+    %%
+    % We add these snow pixels in the snow mask from pass 1
+    snowtest = snowtest2 | snowtest;
+    %%
+    % For the quicklooks we compute the boundary of the snow cover after pass 2
+    % _Warning this uses much computer time._
+    if QL
+        [B2, ~] = bwboundaries(snowtest);
+    end
+end
+
+%%
+%% Final update of the cloud mask
+% Some pixels were originally marked as cloud but were not reclassified as
+% snow after pass 1. These pixels are marked as cloud if they have a high
+% reflectance ("back to black").
+% Otherwise we keep them as "no-snow" ("stayin alive").
+cloudtestfinal = cloudtesttmp ...
+    | (~snowtest & cloudtestinit & ZL2(:,:,nRed)>rRed_backtocloud);
+
+##### SOURCE END #####
+--></body></html>

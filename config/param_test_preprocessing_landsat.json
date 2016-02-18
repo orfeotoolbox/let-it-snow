@@ -1,0 +1,32 @@
+
+{
+    "general":{
+        "pout":"/home/grizonnetm/Data-Neige/LandSat_Bassies/s2snow_output",
+        "shadow_value":64,
+        "ram":1024,
+	"mode":"landsat",
+	"generate_vector":true,
+	"preprocessing":true
+        },
+    "inputs":{ 
+	"vrt":"/home/grizonnetm/Data-Neige/LandSat_Bassies/SRTM_sud_ouest/sud_ouest.vrt",
+        "image":"/home/grizonnetm/Data-Neige/LandSat_Bassies/LANDSAT8_OLITIRS_XS_20150312_N2A_France-MetropoleD0005H0001/LANDSAT8_OLITIRS_XS_20150312_N2A_ORTHO_SURF_CORR_PENTE_France-MetropoleD0005H0001.TIF",
+        "dem":"/home/grizonnetm/Data-Neige/LandSat_Bassies/LANDSAT8_OLITIRS_XS_20150312_N2A_France-MetropoleD0005H0001/SRTM/LANDSAT8_OLITIRS_XS_20150312_N2A_SRTM_France-MetropoleD0005H0001.TIF",
+        "cloud_mask":"/home/grizonnetm/Data-Neige/LandSat_Bassies/LANDSAT8_OLITIRS_XS_20150312_N2A_France-MetropoleD0005H0001/MASK/LANDSAT8_OLITIRS_XS_20150312_N2A_France-MetropoleD0005H0001_NUA.TIF"
+    },
+    "cloud_mask":{
+        "rf":8,
+        "rRed_darkcloud":650,
+        "rRed_backtocloud":100
+    },
+    "snow":{
+        "dz":100,
+        "ndsi_pass1":0.4,
+        "rRed_pass1":200,
+        "ndsi_pass2":0.15,
+        "rRed_pass2":120,
+        "fsnow_lim":0.1,
+        "fsnow_total_lim":0.001
+    }
+}
+
