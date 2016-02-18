@@ -5,8 +5,8 @@ INCLUDE(Dart)
 mark_as_advanced(LIS_DATA_ROOT)
 
 set(BASELINE ${LIS_DATA_ROOT}/Baseline)
-set(DATA_TEST ${LIS_DATA_ROOT}/Data-Test)
-set(OUTPUT_TEST ${LIS_DATA_ROOT}/Output-Test)
+set(DATA_TEST ${LIS_DATA_ROOT}/Input-Data-Test)
+set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
 #TODO need to pass env variable propoerly using qgis code
 #SET(ENV{PYTHONPATH} \"${CMAKE_BINARY_DIR}/bin/:\$ENV{PYTHONPATH}\")
