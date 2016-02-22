@@ -103,6 +103,20 @@ def parse_data(data):
     redBand_path=op.join(path_tmp,"red.tif")
     global ndsi_pass1_path
     ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
+    global dz
+    dz=data["snow"]["dz"]
+    global ndsi_pass1
+    ndsi_pass1=data["snow"]["ndsi_pass1"]
+    global rRed_pass1
+    rRed_pass1=data["snow"]["rRed_pass1"]
+    global ndsi_pass2
+    ndsi_pass2=data["snow"]["ndsi_pass2"]
+    global rRed_pass2
+    rRed_pass2=data["snow"]["rRed_pass2"]
+    global fsnow_lim
+    fsnow_lim=data["snow"]["fsnow_lim"]
+    global fsnow_total_lim
+    fsnow_total_lim=data["snow"]["fsnow_total_lim"]
 
 
 
@@ -259,7 +273,7 @@ def format_files_name(path_img, pout):
     print str_final_mask
     print str_final_mask_vec
     os.rename(op.join(pout, "final_mask.tif"), op.join(pout, str_final_mask))
-   # os.rename(op.join(pout, "final_mask_vec.shp"), op.join(pout, str_final_mask))
+    os.rename(op.join(pout, "final_mask_vec.shp"), op.join(pout, str_final_mask))
 
 #----------------- MAIN ---------------------------------------------------
 #todo sentinel not working img var is not updated (local)
@@ -354,9 +368,9 @@ def main(argv):
     else:
       sys.exit("Supported modes are spot4,landsat and s2.")
                  
-    pass0(nRed, data)
-    pass1(nGreen, nRed, nSWIR, data)
-    pass2(nGreen, nRed, nSWIR, data)
+    pass0(nRed)
+    pass1(nGreen, nRed, nSWIR)
+    pass2(nGreen, nRed, nSWIR)
     
     #Gdal polygonize (needed to produce quicklook)
     #TODO: Study possible loss and issue with vectorization product
