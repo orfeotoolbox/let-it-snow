@@ -6,7 +6,7 @@
 	"mode":"spot4",
 	"generate_vector":false,
 	"preprocessing":false,
-	"postprocessing":false,
+	"postprocessing":false
          },
     "inputs":{
 	"vrt":"inputvrt",

@@ -51,7 +51,7 @@ add_test(NAME compare_snow_output_final_mask_test
 set_tests_properties(compare_snow_output_final_mask_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME preprocessing_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/utils/preprocessing.py 
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/utils/dem_builder.py 
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
   "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20150312_N2A_ORTHO_SURF_CORR_PENTE_France-MetropoleD0005H0001.TIF"
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
