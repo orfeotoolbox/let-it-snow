@@ -25,6 +25,7 @@ import json
 import gdal
 from gdalconst import *
 import glob
+import datetime
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
@@ -33,8 +34,9 @@ gdal.UseExceptions()
 import histo_utils_ext
 
 #Preprocessing an postprocessing script
-import preprocessing
-import postprocessing
+import dem_builder
+
+VERSION="0.1"
 
 #Build gdal option to generate maks of 1 byte using otb extended filename
 #syntax
@@ -43,6 +45,64 @@ GDAL_OPT="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 #syntax
 GDAL_OPT_2B="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
+#fixme
+path_tmp=""
+cloud_refine=""
+rf=""
+rRed_darkcloud=""
+rRed_backtocloud=""
+shadow_value=""
+ram=""
+mode=""
+generate_vector=""
+do_preprocessing=""
+do_postprocessing=""
+vrt=""
+img=""
+dem=""
+cloud_init=""
+dz=""
+ndsi_pass1=""
+rRed_pass1=""
+fsnow_lim=""
+fsnow_total_lim=""
+
+def parse_data(data):
+    global path_tmp
+    path_tmp=str(data["general"]["pout"])
+    global cloud_refine
+    cloud_refine=op.join(path_tmp,"cloud_refine.tif")
+    global shadow_value
+    shadow_value=data["general"]["shadow_value"]
+    global rf
+    rf=data["cloud_mask"]["rf"]
+    global rRed_darkcloud
+    rRed_darkcloud=data["cloud_mask"]["rRed_darkcloud"]
+    global rRed_backtocloud
+    rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
+    global ram
+    ram=data["general"]["ram"]
+    global mode
+    mode=data["general"]["mode"]
+    global generate_vector
+    generate_vector=data["general"]["generate_vector"]
+    global do_preprocessing
+    do_preprocessing=data["general"]["preprocessing"]
+    global do_postprocessing
+    do_postprocessing=data["general"]["postprocessing"]
+    #Parse input parameters
+    global vrt
+    vrt=str(data["inputs"]["vrt"]) 
+    global img
+    img=str(data["inputs"]["image"])
+    global dem
+    dem=str(data["inputs"]["dem"])
+    global cloud_init
+    cloud_init=str(data["inputs"]["cloud_mask"])
+    global redBand_path
+    redBand_path=op.join(path_tmp,"red.tif")
+    global ndsi_pass1_path
+    ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
 
 
 
@@ -54,7 +114,7 @@ def show_help():
     print "s2snow.py help to show help"
 
 def show_version():
-    print "0.1"
+    print VERSION
 
 def polygonize(input_img,input_mask,output_vec):
     """Helper function to polygonize raster mask using gdal polygonize"""
@@ -87,18 +147,8 @@ def burn_polygons_edges(input_img,input_vec):
     # 4) remove tmp_line files
     call(["rm"]+glob.glob(tmp_line+"*"))
 
-def pass0(nRed, data):
-    path_tmp=str(data["general"]["pout"])
-    img=str(data["inputs"]["image"])
-    ram=data["general"]["ram"]
-    #parse cloud mask parameters in json_file
-    rf=data["cloud_mask"]["rf"]
-    cloud_init=str(data["inputs"]["cloud_mask"])
-    cloud_refine=op.join(path_tmp,"cloud_refine.tif")
-    shadow_value=data["general"]["shadow_value"]
-    rRed_darkcloud=data["cloud_mask"]["rRed_darkcloud"]
-    rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
-    redBand_path=op.join(path_tmp,"red.tif")
+
+def pass0(nRed):
     #Pass -1 : generate custom cloud mask
    
     #Extract red band
@@ -127,19 +177,7 @@ def pass0(nRed, data):
     condition_shadow= "(im1b1>0 and im2b1>" + str(rRed_darkcloud) + ") or (im1b1 >= " + str(shadow_value) + ")"
     call(["otbcli_BandMath","-il",cloud_init,op.join(path_tmp,"red_nn.tif"),"-out",cloud_refine+GDAL_OPT,"uint8","-ram",str(ram),"-exp",condition_shadow + "?1:0"])
 
-def pass1(nGreen, nRed, nSWIR, data):
-    path_tmp=str(data["general"]["pout"])
-    cloud_refine=op.join(path_tmp,"cloud_refine.tif")
-    ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
-    redBand_path=op.join(path_tmp,"red.tif")
-    cloud_init=str(data["inputs"]["cloud_mask"])
-    
-    ram=data["general"]["ram"]
-    ndsi_pass1=data["snow"]["ndsi_pass1"]
-    rRed_pass1=data["snow"]["rRed_pass1"]
-    img=str(data["inputs"]["image"])
-    rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
-
+def pass1(nGreen, nRed, nSWIR):
     #Pass1 : NDSI threshold
     ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nSWIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nSWIR)+")"
     print "ndsi formula: ",ndsi_formula
@@ -155,24 +193,8 @@ def pass1(nGreen, nRed, nSWIR, data):
     condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(rRed_backtocloud) + "))"
     call(["otbcli_BandMath","-il",cloud_refine,ndsi_pass1_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"cloud_pass1.tif")+GDAL_OPT,"uint8","-ram",str(ram),"-exp",condition_cloud_pass1 + "?1:0"])
 
-def pass2(nGreen, nRed, nSWIR, data):
-    dz=data["snow"]["dz"]
-    ndsi_pass2=data["snow"]["ndsi_pass2"]
-    rRed_pass2=data["snow"]["rRed_pass2"]
-    fsnow_lim=data["snow"]["fsnow_lim"]
-    fsnow_total_lim=data["snow"]["fsnow_total_lim"]
-    dem=str(data["inputs"]["dem"])
-    img=str(data["inputs"]["image"])
-    ram=data["general"]["ram"]
-
-    path_tmp=str(data["general"]["pout"])
-    ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
-    cloud_init=str(data["inputs"]["cloud_mask"])
-    cloud_refine=op.join(path_tmp,"cloud_refine.tif")
-    redBand_path=op.join(path_tmp,"red.tif")
-    rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
-    generate_vector=data["general"]["generate_vector"]
-
+def pass2(nGreen, nRed, nSWIR):
+    
     ndsi_formula= "(im1b"+str(nGreen)+"-im1b"+str(nSWIR)+")/(im1b"+str(nGreen)+"+im1b"+str(nSWIR)+")"
      #Pass 2: compute snow fraction (c++)
     nb_snow_pixels= histo_utils_ext.compute_snow_fraction(ndsi_pass1_path)
@@ -223,8 +245,24 @@ def pass2(nGreen, nRed, nSWIR, data):
  
     call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(ram),"-exp",condition_final])
     
+#TODO add qum
+def format_files_name(path_img, pout):
+    #ID corresponding to the parent folder of the img
+    productID = op.basename(op.abspath(op.join(path_img, os.pardir)))
+    version = VERSION
+    date = datetime.datetime.now()
+    str_date = str(date.year)+str(date.month)+str(date.day)
+    ext = "tif"
+    extv = "shp"
+    str_final_mask = productID+"_"+str(version)+"_"+"_SEB_"+str_date+"."+ext 
+    str_final_mask_vec = productID+"_"+str(version)+"_SEBV_"+str_date+"."+extv 
+    print str_final_mask
+    print str_final_mask_vec
+    os.rename(op.join(pout, "final_mask.tif"), op.join(pout, str_final_mask))
+   # os.rename(op.join(pout, "final_mask_vec.shp"), op.join(pout, str_final_mask))
 
 #----------------- MAIN ---------------------------------------------------
+#todo sentinel not working img var is not updated (local)
 def main(argv):
     """ main script of snow extraction procedure"""
 
@@ -233,30 +271,13 @@ def main(argv):
     #load json_file from json files
     with open(json_file) as json_data_file:
       data = json.load(json_data_file)
-
+      
     #Parse general parameters in json file
-    path_tmp=str(data["general"]["pout"])
-    cloud_refine=op.join(path_tmp,"cloud_refine.tif")
-    shadow_value=data["general"]["shadow_value"]
-    ram=data["general"]["ram"]
-    mode=data["general"]["mode"]
-    generate_vector=data["general"]["generate_vector"]
-    do_preprocessing=data["general"]["preprocessing"]
-    do_postprocessing=data["general"]["postprocessing"]
-    #Parse input parameters
-    vrt=str(data["inputs"]["vrt"]) 
-    img=str(data["inputs"]["image"])
-    dem=str(data["inputs"]["dem"])
-    cloud_init=str(data["inputs"]["cloud_mask"])
-
+    parse_data(data)
     #External preprocessing
     if do_preprocessing:
         preprocessing.build_dem(vrt, img, dem)
 
-    #Build image path
-    redBand_path=op.join(path_tmp,"red.tif")
-    ndsi_pass1_path=op.join(path_tmp,"pass1.tif")
-    
     if mode == "spot4":
       nGreen=1 # Index of green band
       nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
@@ -265,7 +286,7 @@ def main(argv):
     elif mode == "landsat":
       nGreen=3
       nSWIR=6
-      nRed=4
+      nRed=4 
       nodata=-10000
     elif mode == "s2":
       #Handle Sentinel-2 case here. Sentinel-2 images are in 2 separates tif. R1
@@ -321,7 +342,9 @@ def main(argv):
       call(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,swirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
 
       #img variable is used later to compute snow mask
+      global img
       img=concat_s2
+      global redBand_path
       redBand_path=op.join(path_tmp,"red.tif")
       
       #Set generic band index for Sentinel-2
@@ -330,10 +353,7 @@ def main(argv):
       nSWIR=3
     else:
       sys.exit("Supported modes are spot4,landsat and s2.")
-    
-    
-    #Parse snow parameters in json_file
-     
+                 
     pass0(nRed, data)
     pass1(nGreen, nRed, nSWIR, data)
     pass2(nGreen, nRed, nSWIR, data)
@@ -351,7 +371,7 @@ def main(argv):
     
     #External postprocessing
     if do_postprocessing:
-        postprocessing.format_files("final_mask.tif", "final_mask_vec.shp", "")
+        format_files_name(img, path_tmp)    
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 :
