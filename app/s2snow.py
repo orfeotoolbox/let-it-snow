@@ -45,6 +45,7 @@ GDAL_OPT="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 #syntax
 GDAL_OPT_2B="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
+#TODO add temporaty directory
 #fixme
 path_tmp=""
 cloud_refine=""
@@ -267,14 +268,29 @@ def format_files_name(path_img, pout):
     date = datetime.datetime.now()
     str_date = str(date.year)+str(date.month)+str(date.day)
     ext = "tif"
-    extv = "shp"
-    str_final_mask = productID+"_"+str(version)+"_"+"_SEB_"+str_date+"."+ext 
-    str_final_mask_vec = productID+"_"+str(version)+"_SEBV_"+str_date+"."+extv 
-    print str_final_mask
-    print str_final_mask_vec
-    os.rename(op.join(pout, "final_mask.tif"), op.join(pout, str_final_mask))
-    os.rename(op.join(pout, "final_mask_vec.shp"), op.join(pout, str_final_mask))
+    str_final_mask = productID+"_"+str(version)+"_SEB_"+str_date+"."+ext 
+    final_mask=op.join(pout, str_final_mask)
+    
+    os.rename(op.join(pout, "final_mask.tif"), final_mask)
+    format_SEB_values(final_mask)
 
+    for f in glob.glob(op.join(pout, "final_mask_vec.*")):
+        extension = op.splitext(f)[1]
+        str_final_mask_vec = productID+"_"+str(version)+"_SEB_VEC_"+str_date+extension
+        final_mask_vec = op.join(pout, str_final_mask_vec) 
+        os.rename(f, final_mask_vec)
+        if extension == ".dbf":
+            format_SEB_VEC_values(final_mask_vec)
+
+#TODO add vector values
+def format_SEB_values(final_mask_path):
+    call(["otbcli_BandMath", "-il", final_mask_path, "-out", final_mask_path, "uint8", "-exp", "(im1b1==1)?100:im1b1 or (im1b1==2)?205:im1b1"])    
+
+def format_SEB_VEC_values(final_mask_vec_path):
+    table = op.splitext(op.basename(final_mask_vec_path))[0]
+    call(["ogrinfo", final_mask_vec_path, "-sql", "ALTER TABLE "+table+" ADD COLUMN type varchar(15)"]) 
+    call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=100, type='snow' WHERE DN=1"])
+    call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=205, type='cloud' WHERE DN=2"])
 #----------------- MAIN ---------------------------------------------------
 #todo sentinel not working img var is not updated (local)
 def main(argv):
