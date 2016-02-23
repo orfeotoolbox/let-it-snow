@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S2SNOW>
+  <metadataFile>
+    <version>1.0</version>
+    <generationDateOfMetadatfile></generationDateOfMetadatfile>
+  </metadataFile>
+
+  <contactPerson>
+    <Name>Simon.Gascoin</Name>
+    <email>simon.gascoin@cesbio.cnes.fr</email>
+    <Affiliation>CESBIO</Affiliation>
+  </contactPerson>
+
+  <productAvailability>
+    <productGenerated>YES</productGenerated>
+  </productAvailability>
+
+  <link>
+    <SnowExtentBinaryFile></SnowExtentBinaryFile>
+    <SnowExtentBinaryVectorFile></SnowExtentBinaryVectorFile>
+    <QualityUncertaintyFile></QualityUncertaintyFile>
+  </link>
+
+  <processingInfo>
+    <processingFacility>CESBIO/CNES</processingFacility>
+    <software>S2Snow</software>
+    <softwareVersion></softwareVersion>
+  </processingInfo>
+
+  <productInfo>
+    <ProductID></ProductID>
+    <productType>SEB</productType>
+    <ProductVersion></ProductVersion>
+    <Mode></Mode>
+    <ZS></ZS>
+  </productInfo>
+
+  <mapProjection>
+    <EPSG></EPSG>
+    <OGC_WKT>
+    </OGC_WKT>
+  </mapProjection>
+
+<grid>
+  <upperLeftCorner_X unit="degree"></upperLeftCorner_X>
+  <upperLeftCorner_Y unit="degree"></upperLeftCorner_Y>
+  <upperRightCorner_X unit="degree"></upperRightCorner_X>
+  <upperRightCorner_Y unit="degree"></upperRightCorner_Y>
+  <lowerLeftCorner_X unit="degree"></lowerLeftCorner_X>
+  <lowerLeftCorner_Y unit="degree"></lowerLeftCorner_Y>
+  <lowerRightCorner_X unit="degree"></lowerRightCorner_X>
+  <lowerRightCorner_Y unit="degree"></lowerRightCorner_Y>
+  <pixelSpacing_X unit="degree"></pixelSpacing_X>
+  <pixelSpacing_Y unit= "degree"></pixelSpacing_Y>
+</grid>
+
+</S2SNOW>
