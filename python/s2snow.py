@@ -26,7 +26,8 @@ import gdal
 from gdalconst import *
 import glob
 import datetime
-
+from lxml import etree
+from shutil import copyfile
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -47,6 +48,7 @@ GDAL_OPT_2B="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
 #TODO add temporaty directory
 #fixme
+
 path_tmp=""
 cloud_refine=""
 rf=""
@@ -67,6 +69,8 @@ ndsi_pass1=""
 rRed_pass1=""
 fsnow_lim=""
 fsnow_total_lim=""
+zs=0
+xmltemplate=""
 
 def parse_data(data):
     global path_tmp
@@ -98,6 +102,8 @@ def parse_data(data):
     img=str(data["inputs"]["image"])
     global dem
     dem=str(data["inputs"]["dem"])
+    global xmltemplate
+    xmltemplate = str(data["inputs"]["xml"])
     global cloud_init
     cloud_init=str(data["inputs"]["cloud_mask"])
     global redBand_path
@@ -220,6 +226,7 @@ def pass2(nGreen, nRed, nSWIR):
       #Save histogram values for logging
       histo_log=op.join(path_tmp,"histogram.txt")
       #c++ function
+      global zs
       zs=histo_utils_ext.compute_zs_ng(dem,ndsi_pass1_path,op.join(path_tmp,"cloud_pass1.tif"), dz, fsnow_lim, histo_log) 
       
       print "computed ZS:", zs
@@ -261,6 +268,7 @@ def pass2(nGreen, nRed, nSWIR):
     call(["otbcli_BandMath","-il",cloud_refine,generic_snow_path,cloud_init,redBand_path,"-out",op.join(path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(ram),"-exp",condition_final])
     
 #TODO add qum
+#fixme separate names and values formating
 def format_files_name(path_img, pout):
     #ID corresponding to the parent folder of the img
     productID = op.basename(op.abspath(op.join(path_img, os.pardir)))
@@ -273,7 +281,8 @@ def format_files_name(path_img, pout):
     
     os.rename(op.join(pout, "final_mask.tif"), final_mask)
     format_SEB_values(final_mask)
-
+    
+    str_final_mask_vec_shp=""
     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
         extension = op.splitext(f)[1]
         str_final_mask_vec = productID+"_"+str(version)+"_SEB_VEC_"+str_date+extension
@@ -281,16 +290,34 @@ def format_files_name(path_img, pout):
         os.rename(f, final_mask_vec)
         if extension == ".dbf":
             format_SEB_VEC_values(final_mask_vec)
+        if extension == ".shp":
+            str_final_mask_vec_shp = final_mask_vec
+    
+    copyfile(xmltemplate, "metadata.xml")
+    tree = etree.parse("metadata.xml")
+    root = tree.getroot()
+    root.find('metadataFile').find('generationDateOfMetadatafile').text = str(datetime.datetime.now())
+    root.find('link').find('snowExtentBinaryFile').text = final_mask 
+    root.find('link').find('snowExtentBinaryVectorFile').text = str_final_mask_vec_shp
+    root.find('processingInfo').find('softwareVersion').text = str(version)
+    root.find('productInfo').find('productID').text = productID
+    root.find('productInfo').find('mode').text = mode
+    root.find('productInfo').find('ZS').text = str(zs)
+    ds = gdal.Open(final_mask)
+    prj = ds.GetProjection()
+    root.find('mapProjection').text = str(prj)
+    tree.write("metadata.xml")
 
 #TODO add vector values
 def format_SEB_values(final_mask_path):
-    call(["otbcli_BandMath", "-il", final_mask_path, "-out", final_mask_path, "uint8", "-exp", "(im1b1==1)?100:im1b1 or (im1b1==2)?205:im1b1"])    
+    call(["otbcli_BandMath", "-il", final_mask_path, "-out", final_mask_path, "uint8", "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
 
 def format_SEB_VEC_values(final_mask_vec_path):
     table = op.splitext(op.basename(final_mask_vec_path))[0]
     call(["ogrinfo", final_mask_vec_path, "-sql", "ALTER TABLE "+table+" ADD COLUMN type varchar(15)"]) 
     call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=100, type='snow' WHERE DN=1"])
     call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=205, type='cloud' WHERE DN=2"])
+    call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=255, type='no data' WHERE DN != 100 AND DN != 205"])
 #----------------- MAIN ---------------------------------------------------
 #todo sentinel not working img var is not updated (local)
 def main(argv):
