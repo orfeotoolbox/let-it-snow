@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-setup(name='histo_utils_ext',
+setup(name='s2snow',
       version='${PACKAGE_VERSION}',
       package_dir={ '': '${CMAKE_CURRENT_SOURCE_DIR}' },
-      packages=['histo_utils_ext'])
+      packages=['s2snow'])

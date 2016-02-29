@@ -12,7 +12,8 @@
 	"vrt":"inputvrt",
         "image":"inputimage",
         "dem":"inputdem",
-        "cloud_mask":"inputcloud"
+        "cloud_mask":"inputcloud",
+	"xml":"inputxml"
     },
     "cloud_mask":{
         "rf":8,
