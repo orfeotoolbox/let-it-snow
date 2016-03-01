@@ -2,13 +2,13 @@
 <S2SNOW>
   <metadataFile>
     <version>1.0</version>
-    <generationDateOfMetadatfile></generationDateOfMetadatfile>
+    <generationDateOfMetadatafile></generationDateOfMetadatafile>
   </metadataFile>
 
   <contactPerson>
-    <Name>Simon.Gascoin</Name>
+    <name>Simon.Gascoin</name>
     <email>simon.gascoin@cesbio.cnes.fr</email>
-    <Affiliation>CESBIO</Affiliation>
+    <affiliation>CESBIO</affiliation>
   </contactPerson>
 
   <productAvailability>
@@ -16,9 +16,9 @@
   </productAvailability>
 
   <link>
-    <SnowExtentBinaryFile></SnowExtentBinaryFile>
-    <SnowExtentBinaryVectorFile></SnowExtentBinaryVectorFile>
-    <QualityUncertaintyFile></QualityUncertaintyFile>
+    <snowExtentBinaryFile></snowExtentBinaryFile>
+    <snowExtentBinaryVectorFile></snowExtentBinaryVectorFile>
+    <qualityUncertaintyFile></qualityUncertaintyFile>
   </link>
 
   <processingInfo>
@@ -28,10 +28,10 @@
   </processingInfo>
 
   <productInfo>
-    <ProductID></ProductID>
+    <productID></productID>
     <productType>SEB</productType>
-    <ProductVersion></ProductVersion>
-    <Mode></Mode>
+    <productVersion></productVersion>
+    <mode></mode>
     <ZS></ZS>
   </productInfo>
 

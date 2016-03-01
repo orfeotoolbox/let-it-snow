@@ -25,9 +25,6 @@ import json
 import gdal
 from gdalconst import *
 import glob
-import datetime
-from lxml import etree
-from shutil import copyfile
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -36,7 +33,7 @@ import histo_utils_ext
 
 #Preprocessing an postprocessing script
 import dem_builder
-
+import format_output
 VERSION="0.1"
 
 #Build gdal option to generate maks of 1 byte using otb extended filename
@@ -92,6 +89,7 @@ def burn_polygons_edges(input_img,input_vec):
 class snow_detector :
     def __init__(self, data):
         
+        self.version = VERSION
         #Parse general parameters
         self.path_tmp=str(data["general"]["pout"])
         self.ram=data["general"]["ram"]
@@ -173,8 +171,8 @@ class snow_detector :
             burn_polygons_edges(op.join(self.path_tmp,"quicklook.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
     
         #External postprocessing
-        #if do_postprocessing:
-            #format_files_name(self.img, self.path_tmp)    
+        if self.do_postprocessing:
+            format_output.format_files_name(self) 
 
     def pass0(self):
         #Pass -1 : generate custom cloud mask
@@ -328,58 +326,7 @@ class snow_detector :
         self.img=concat_s2
         self.redBand_path=op.join(path_tmp,"red.tif")
 
-    #TODO add qum
-    #fixme separate names and values formating
-    # def format_files_name(self, path_img, pout):
-    #     #ID corresponding to the parent folder of the img
-    #     productID = op.basename(op.abspath(op.join(path_img, os.pardir)))
-    #     version = VERSION
-    #     date = datetime.datetime.now()
-    #     str_date = str(date.year)+str(date.month)+str(date.day)
-    #     ext = "tif"
-    #     str_final_mask = productID+"_"+str(version)+"_SEB_"+str_date+"."+ext 
-    #     final_mask=op.join(pout, str_final_mask)
-
-    #     os.rename(op.join(pout, "final_mask.tif"), final_mask)
-    #     format_SEB_values(final_mask)
     
-    #     str_final_mask_vec_shp=""
-    #     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
-    #         extension = op.splitext(f)[1]
-    #         str_final_mask_vec = productID+"_"+str(version)+"_SEB_VEC_"+str_date+extension
-    #         final_mask_vec = op.join(pout, str_final_mask_vec) 
-    #         os.rename(f, final_mask_vec)
-    #         if extension == ".dbf":
-    #             format_SEB_VEC_values(final_mask_vec)
-    #         if extension == ".shp":
-    #             str_final_mask_vec_shp = final_mask_vec
-                
-    #     copyfile(xmltemplate, "metadata.xml")
-    #     tree = etree.parse("metadata.xml")
-    #     root = tree.getroot()
-    #     root.find('metadataFile').find('generationDateOfMetadatafile').text = str(datetime.datetime.now())
-    #     root.find('link').find('snowExtentBinaryFile').text = final_mask 
-    #     root.find('link').find('snowExtentBinaryVectorFile').text = str_final_mask_vec_shp
-    #     root.find('processingInfo').find('softwareVersion').text = str(version)
-    #     root.find('productInfo').find('productID').text = productID
-    #     root.find('productInfo').find('mode').text = mode
-    #     root.find('productInfo').find('ZS').text = str(zs)
-    #     ds = gdal.Open(final_mask)
-    #     prj = ds.GetProjection()
-    #     root.find('mapProjection').text = str(prj)
-    #     tree.write("metadata.xml")
-    
-    #TODO add vector values
-    def format_SEB_values(final_mask_path):
-        call(["otbcli_BandMath", "-il", final_mask_path, "-out", final_mask_path, "uint8", "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
-
-    def format_SEB_VEC_values(final_mask_vec_path):
-        table = op.splitext(op.basename(final_mask_vec_path))[0]
-        call(["ogrinfo", final_mask_vec_path, "-sql", "ALTER TABLE "+table+" ADD COLUMN type varchar(15)"]) 
-        call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=100, type='snow' WHERE DN=1"])
-        call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=205, type='cloud' WHERE DN=2"])
-        call(["ogrinfo", final_mask_vec_path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=255, type='no data' WHERE DN != 100 AND DN != 205"])
-
 #----------------- MAIN ---------------------------------------------------
 #todo sentinel not working img var is not updated (local)
 def main(argv):
