@@ -217,7 +217,7 @@ class snow_detector :
         #FIXME
         condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(self.rRed_backtocloud) + "))"
         call(["otbcli_BandMath","-il",self.cloud_refine,self.ndsi_pass1_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"cloud_pass1.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_cloud_pass1 + "?1:0"])
-
+        
     def pass2(self):
         ndsi_formula= "(im1b"+str(self.nGreen)+"-im1b"+str(self.nSWIR)+")/(im1b"+str(self.nGreen)+"+im1b"+str(self.nSWIR)+")"
         #Pass 2: compute snow fraction (c++)
@@ -268,7 +268,18 @@ class snow_detector :
         condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(self.rRed_backtocloud) + ")))?2:0"
                         
         call(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
-    
+ 
+        #Build 8 bits snow_all tif
+        # 1st bit : pass1 snow
+        # 2nd bit : pass2 snow
+        # 3rd bit : pass3 snow
+        # 4th bit : cloud pass1
+        # 5th bit : cloud refine 
+        expr = "(im1b1>0?0b00000001:0b00000000)|(im2b1>0?0b00000010:0b00000000)|(im3b1>0?0b00000100:0b00000000)|(im4b1>0?0b00001000:0b00000000)| (im5b1>0?0b00010000:0b00000000)"
+        
+        #TODO fix absolute path for OTB app
+        call(["/home/klempkat/OTB_5_2_1/build/OTB/build/bin/otbcli_BandMathX", "-il", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"pass3.tif"),  op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), "-out", op.join(self.path_tmp, "snow_all.tif"), "uint8", "-exp", expr])
+
     def sentinel_2_preprocessing(self):
         #Handle Sentinel-2 case here. Sentinel-2 images are in 2 separates tif. R1
         #(green/red) at 10 meters and R2 (swir) at 20 meters. Need to extract each
