@@ -127,3 +127,12 @@ add_test(NAME histo_utils_snow_fraction_test
     "${BASELINE}/pass1.tif"
     127784
     )
+
+add_test(NAME compute_snow_mask_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/compute_snow_mask
+    "${BASELINE}/pass1.tif"
+    "${BASELINE}/pass2.tif"
+    "${BASELINE}/cloud_pass1.tif"
+    "${BASELINE}/cloud_refine.tif"
+    "${OUTPUT_TEST}/snow_all_test.tif" 
+    )

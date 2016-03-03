@@ -260,9 +260,9 @@ class snow_detector :
         # 2nd bit : pass2 snow
         # 3rd bit : cloud pass1
         # 4th bit : cloud refine 
-        expr = "(im1b1>0?0b00000001:0b00000000)|(im2b1>0?0b00000010:0b00000000)|(im3b1>0?0b00000100:0b00000000)|(im4b1>0?0b00001000:0b00000000)"
+        #expr = "(im1b1>0?0b00000001:0b00000000)|(im2b1>0?0b00000010:0b00000000)|(im3b1>0?0b00000100:0b00000000)|(im4b1>0?0b00001000:0b00000000)"
         
-        call(["otbcli_BandMathX", "-il", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), "-out", op.join(self.path_tmp, "snow_all.tif"), "uint8","-ram",str(self.ram), "-exp", expr])
+        call(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
         
     def pass3(self):
         #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
