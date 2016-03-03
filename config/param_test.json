@@ -1,6 +1,6 @@
 {
     "general":{
-        "pout":"/home/klempkat/let-it-snow/build/Testing/Temporary",
+        "pout":"/home/klempkat/let-it-snow/build-superbuild/Testing/Temporary",
         "shadow_value":64,
         "ram":1024,
 	"mode":"spot4",

@@ -17,7 +17,7 @@ add_test(NAME test_json_builder_test
 
 add_test(NAME s2snow_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/python/s2snow/s2snow.py ${CMAKE_SOURCE_DIR}/config/param_test.json
+  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${CMAKE_SOURCE_DIR}/config/param_test.json
   )
 set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test)
 	
@@ -61,6 +61,12 @@ add_test(NAME compare_preprocessing_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
   "${BASELINE}/landsat_bassies_srtm.tif"
+  )
+
+add_test(NAME compare_snow_all_output_test
+  COMMAND ${CMAKE_COMMAND} -E compare_files
+  "${OUTPUT_TEST}/snow_all.tif" 
+  "${BASELINE}/snow_all.tif"
   )
 
 ADD_EXECUTABLE(histo_utils_test histo_utils_test.cxx)
