@@ -11,13 +11,15 @@ import gdal
 
 #TODO add qum
 #fixme separate names and values formating
-def format_files_name(snow_detector):
+def format_ESA(snow_detector):
     version = snow_detector.version
     path_img = snow_detector.img
     pout = snow_detector.path_tmp
     xmltemplate = snow_detector.xmltemplate
     mode = snow_detector.mode
     zs = snow_detector.zs
+    ram = snow_detector.ram
+   
     #ID corresponding to the parent folder of the img
     productID = op.basename(op.abspath(op.join(path_img, os.pardir)))
     date = datetime.datetime.now()
@@ -27,7 +29,7 @@ def format_files_name(snow_detector):
     final_mask=op.join(pout, str_final_mask)
 
     os.rename(op.join(pout, "final_mask.tif"), final_mask)
-    format_SEB_values(final_mask)
+    format_SEB_values(final_mask, ram)
 
     str_final_mask_vec_shp=""
     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
@@ -54,10 +56,10 @@ def format_files_name(snow_detector):
     prj = ds.GetProjection()
     root.find('mapProjection').text = str(prj)
     tree.write(op.join(pout, "metadata.xml"))
-        
+    
 
-def format_SEB_values(final_mask_path):
-    call(["otbcli_BandMath", "-il", final_mask_path, "-out", final_mask_path, "uint8", "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
+def format_SEB_values(final_mask_path, ram):
+    call(["otbcli_BandMath", "-il", final_mask_path, "-out", final_mask_path, "uint8", "-ram",str(ram), "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
 
 def format_SEB_VEC_values(final_mask_vec_path):
     table = op.splitext(op.basename(final_mask_vec_path))[0]

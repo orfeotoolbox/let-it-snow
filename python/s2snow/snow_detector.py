@@ -34,6 +34,7 @@ import histo_utils_ext
 #Preprocessing an postprocessing script
 import dem_builder
 import format_output
+
 VERSION="0.1"
 
 #Build gdal option to generate maks of 1 byte using otb extended filename
@@ -44,16 +45,6 @@ GDAL_OPT="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 GDAL_OPT_2B="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
 #TODO add temporaty directory
-
-def show_help():
-    """Show help of the s2snow script"""
-    print "This script is used to compute snow mask using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
-    print "Usage: s2snow.py param.json"
-    print "s2snow.py version to show version"
-    print "s2snow.py help to show help"
-
-def show_version():
-    print VERSION
 
 def polygonize(input_img,input_mask,output_vec):
     """Helper function to polygonize raster mask using gdal polygonize"""
@@ -172,7 +163,7 @@ class snow_detector :
     
         #External postprocessing
         if self.do_postprocessing:
-            format_output.format_files_name(self) 
+            format_output.format_ESA(self) 
 
     def pass0(self):
         #Pass -1 : generate custom cloud mask
@@ -245,12 +236,7 @@ class snow_detector :
                     #Generate polygons for pass2 (useful for quality check)
                     #TODO 
                     polygonize(op.join(self.path_tmp,"pass2.tif"),op.join(self.path_tmp,"pass2.tif"),op.join(self.path_tmp,"pass2_vec.shp"))
-                    
-                #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
-                #FIXME
-                condition_pass3= "(im1b1 == 255 or im2b1 == 255)"
-                call(["otbcli_BandMath","-il",self.ndsi_pass1_path,op.join(self.path_tmp,"pass2.tif"),"-out",op.join(self.path_tmp,"pass3.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_pass3 + "?1:0"])
-
+                self.pass3()    
                 generic_snow_path=op.join(self.path_tmp,"pass3.tif")
             else:
                 #No zs elevation found, take result of pass1 in the output product
@@ -272,13 +258,17 @@ class snow_detector :
         #Build 8 bits snow_all tif
         # 1st bit : pass1 snow
         # 2nd bit : pass2 snow
-        # 3rd bit : pass3 snow
-        # 4th bit : cloud pass1
-        # 5th bit : cloud refine 
-        expr = "(im1b1>0?0b00000001:0b00000000)|(im2b1>0?0b00000010:0b00000000)|(im3b1>0?0b00000100:0b00000000)|(im4b1>0?0b00001000:0b00000000)| (im5b1>0?0b00010000:0b00000000)"
+        # 3rd bit : cloud pass1
+        # 4th bit : cloud refine 
+        expr = "(im1b1>0?0b00000001:0b00000000)|(im2b1>0?0b00000010:0b00000000)|(im3b1>0?0b00000100:0b00000000)|(im4b1>0?0b00001000:0b00000000)"
         
-        #TODO fix absolute path for OTB app
-        call(["/home/klempkat/OTB_5_2_1/build/OTB/build/bin/otbcli_BandMathX", "-il", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"pass3.tif"),  op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), "-out", op.join(self.path_tmp, "snow_all.tif"), "uint8", "-exp", expr])
+        call(["otbcli_BandMathX", "-il", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), "-out", op.join(self.path_tmp, "snow_all.tif"), "uint8","-ram",str(self.ram), "-exp", expr])
+        
+    def pass3(self):
+        #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
+        #FIXME
+        condition_pass3= "(im1b1 == 255 or im2b1 == 255)"
+        call(["otbcli_BandMath","-il",self.ndsi_pass1_path,op.join(self.path_tmp,"pass2.tif"),"-out",op.join(self.path_tmp,"pass3.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_pass3 + "?1:0"])
 
     def sentinel_2_preprocessing(self):
         #Handle Sentinel-2 case here. Sentinel-2 images are in 2 separates tif. R1
@@ -336,30 +326,3 @@ class snow_detector :
         #img variable is used later to compute snow mask
         self.img=concat_s2
         self.redBand_path=op.join(path_tmp,"red.tif")
-
-    
-#----------------- MAIN ---------------------------------------------------
-#todo sentinel not working img var is not updated (local)
-def main(argv):
-    """ main script of snow extraction procedure"""
-
-    json_file=argv[1]
-
-    #load json_file from json files
-    with open(json_file) as json_data_file:
-      data = json.load(json_data_file)
-      
-    sd = snow_detector(data)
-      
-    sd.detect_snow(2)
-      
-if __name__ == "__main__":
-    if len(sys.argv) != 2 :
-        show_help()
-    else:
-        if sys.argv[1] == "version":
-            show_version()
-        elif sys.argv[1] == "help":
-            show_help()
-        else:
-            main(sys.argv)
