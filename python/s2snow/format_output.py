@@ -9,53 +9,50 @@ from lxml import etree
 from shutil import copyfile
 import gdal
 
-#TODO add qum
-#fixme separate names and values formating
-def format_ESA(snow_detector):
-    version = snow_detector.version
+def format_LIS(snow_detector):
     path_img = snow_detector.img
     pout = snow_detector.path_tmp
-    xmltemplate = snow_detector.xmltemplate
-    mode = snow_detector.mode
     zs = snow_detector.zs
     ram = snow_detector.ram
+    mode = snow_detector.mode
+    
+    if mode == "s2":
+        #ID corresponding to the parent folder of the img
+        product_id = op.basename(op.abspath(op.join(path_img, os.pardir)))
+    else:
+        #ID corresponding to the name of the img
+        product_id = op.splitext(op.basename(path_img))[0]
+
+    ext = "TIF"
    
-    #ID corresponding to the parent folder of the img
-    productID = op.basename(op.abspath(op.join(path_img, os.pardir)))
-    date = datetime.datetime.now()
-    str_date = str(date.year)+str(date.month)+str(date.day)
-    ext = "tif"
-    str_final_mask = productID+"_"+str(version)+"_SEB_"+str_date+"."+ext 
-    final_mask=op.join(pout, str_final_mask)
+    #TODO associate product name with let-it-snow results to make a loop
+    code_snow_all = "_SNOW_ALL_"
+    str_snow_all = product_id+"_"+code_snow_all+"."+ext 
+    str_snow_all = str_snow_all.upper()
+    os.rename(op.join(pout, "snow_all.tif"), op.join(pout, str_snow_all))
 
-    os.rename(op.join(pout, "final_mask.tif"), final_mask)
+    code_compo = "_COMPO_"
+    str_compo = product_id+"_"+code_compo"."+ext
+    str_compo = str_compo.upper()
+    os.rename(op.join(pout, "quicklook.tif"), op.join(pout, str_compo))
+    
+    code_seb = "_SEB_"
+    str_seb = product_id+"_"+code_seb"."+ext 
+    str_seb = str_seb.upper()
+    os.rename(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
     format_SEB_values(final_mask, ram)
-
-    str_final_mask_vec_shp=""
+    code_seb_vec = "_SEB_VEC_"
+    str_seb_vec_shp=""
     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
         extension = op.splitext(f)[1]
-        str_final_mask_vec = productID+"_"+str(version)+"_SEB_VEC_"+str_date+extension
-        final_mask_vec = op.join(pout, str_final_mask_vec) 
-        os.rename(f, final_mask_vec)
+        str_seb_vec = product_id+"_"+code_seb_vec+str_date+extension
+        os.rename(f, op.join(pout, str_seb_vec))
         if extension == ".dbf":
-            format_SEB_VEC_values(final_mask_vec)
-            if extension == ".shp":
-                str_final_mask_vec_shp = final_mask_vec
+            format_SEB_VEC_values(op.join(pout, str_seb_vec))
+        if extension == ".shp":
+            str_final_mask_vec_shp = op.join(pout, str_seb_vec)
                 
-    #copyfile(xmltemplate, "metadata.xml")
-    tree = etree.parse(xmltemplate)
-    root = tree.getroot()
-    root.find('metadataFile').find('generationDateOfMetadatafile').text = str(datetime.datetime.now())
-    root.find('link').find('snowExtentBinaryFile').text = final_mask 
-    root.find('link').find('snowExtentBinaryVectorFile').text = str_final_mask_vec_shp
-    root.find('processingInfo').find('softwareVersion').text = str(version)
-    root.find('productInfo').find('productID').text = productID
-    root.find('productInfo').find('mode').text = mode
-    root.find('productInfo').find('ZS').text = str(zs)
-    ds = gdal.Open(final_mask)
-    prj = ds.GetProjection()
-    root.find('mapProjection').text = str(prj)
-    tree.write(op.join(pout, "metadata.xml"))
+    #tree.write(op.join(pout, "metadata.xml"))
     
 
 def format_SEB_values(final_mask_path, ram):

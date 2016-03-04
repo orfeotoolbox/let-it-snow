@@ -87,7 +87,7 @@ class snow_detector :
         self.mode=data["general"]["mode"]
         self.generate_vector=data["general"]["generate_vector"]
         self.do_preprocessing=data["general"]["preprocessing"]
-        self.do_postprocessing=data["general"]["postprocessing"]
+        self.do_postprocessing=True
         self.do_quicklook=True
         self.shadow_value=data["general"]["shadow_value"]
         #Parse cloud data
@@ -163,7 +163,7 @@ class snow_detector :
     
         #External postprocessing
         if self.do_postprocessing:
-            format_output.format_ESA(self) 
+            format_output.format_LIS(self) 
 
     def pass0(self):
         #Pass -1 : generate custom cloud mask
@@ -254,13 +254,6 @@ class snow_detector :
         condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(self.rRed_backtocloud) + ")))?2:0"
                         
         call(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
- 
-        #Build 8 bits snow_all tif
-        # 1st bit : pass1 snow
-        # 2nd bit : pass2 snow
-        # 3rd bit : cloud pass1
-        # 4th bit : cloud refine 
-        #expr = "(im1b1>0?0b00000001:0b00000000)|(im2b1>0?0b00000010:0b00000000)|(im3b1>0?0b00000100:0b00000000)|(im4b1>0?0b00001000:0b00000000)"
         
         call(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
         
