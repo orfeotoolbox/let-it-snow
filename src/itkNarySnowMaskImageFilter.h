@@ -35,7 +35,7 @@ public:
   inline TOutput operator()(const std::vector< TInput > & B) const
   {
   std::bitset<8> bits(0x0);
-//std::cout << "val : " << B[0] << std::endl;
+
   for ( unsigned int i = 0; i < B.size(); i++ )
     { 
     if ( B[i]>0 )
@@ -102,8 +102,8 @@ protected:
   virtual ~NarySnowMaskImageFilter() {}
 
 private:
-  NarySnowMaskImageFilter(const Self &) ITK_DELETE_FUNCTION;
-  void operator=(const Self &) ITK_DELETE_FUNCTION;
+  NarySnowMaskImageFilter(const Self &);
+  void operator=(const Self &);
 };
 } // end namespace itk
 
