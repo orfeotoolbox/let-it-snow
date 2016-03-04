@@ -32,6 +32,35 @@ There is a Bash script in app directory which allows to set the env variable and
 ```
 runLis.sh param.json
 ```
+## Products format
+
+* COMPO: RGB composition with snow mask 
+* SNOW_ALL: Binary mask of snow and clouds.
+  * 1st bit: Snow detected from pass1
+  * 2nd bit: Snow detected from pass2
+  * 3rd bit: Clouds detected from pass1 
+  * 4th bit: Clouds refined  from pass2
+
+For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do: 
+````
+pixel_value & 00000101  
+````
+* SEB: Raster image of the snow mask and cloud mask. 
+  * 0: No-snow
+  * 100: Snow
+  * 205: Cloud including cloud shadow
+  * 254: No data
+* SEB_VEC: Vector image of the snow mask and cloud mask. Two fields of information are embbeded in this product. DN (for Data Neige) and type.
+  * DN field :
+     * 0: No-snow
+     * 100: Snow
+     * 205: Cloud including cloud shadow
+     * 254: No data
+  * Type field:
+     * no-snow
+     * snow
+     * cloud
+     * no-data
 
 ## Motivation
 
@@ -58,9 +87,8 @@ Python package dependencies: sys, subprocess, glob, os, json, gdal
 #### General
 
 Use cmake to configure your build. 
-Set
 ```` 
-LIS_DATA_ROOT
+Set LIS_DATA_ROOT
 ````
 For OTB superbuild users these cmake variables need to be set:
 ````
@@ -69,12 +97,10 @@ ITK_DIR
 GDAL_INCLUDE_DIR
 GDAL_LIBRARY
 ````
-Set these environnement variables:
+Run make in your build folder.
 ````
-PATH=/OTB/install/folder/bin/
-LD_LIBRARY_PATH=/OTB/install/folder/lib/:/let-it-snow/build/folder/bin/
+make
 ````
-Run make.
 To install s2snow python module. 
 In your build folder:
 ````
@@ -85,7 +111,11 @@ or
 ````
 python setup.py install --user
 ````
-
+Update these environnement variables:
+````
+export PATH=/OTB/install/folder/bin/:$PATH
+export LD_LIBRARY_PATH=/OTB/install/folder/lib/:/let-it-snow/build/folder/bin/:$LD_LIBRARY_PATH
+````
 let-it-snow is now installed.
 
 
