@@ -42,14 +42,6 @@ add_test(NAME compare_snow_output_pass3_test
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
-
-add_test(NAME compare_snow_output_final_mask_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/final_mask.tif" 
-  "${BASELINE}/final_mask.tif"
-  )
-set_tests_properties(compare_snow_output_final_mask_test PROPERTIES DEPENDS s2snow_test)
-
 add_test(NAME preprocessing_test
   COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/s2snow/dem_builder.py 
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
