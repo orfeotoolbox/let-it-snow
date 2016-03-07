@@ -29,30 +29,30 @@ def format_LIS(snow_detector):
    
     #TODO associate product name with let-it-snow results to make a loop
     code_snow_all = "_SNOW_ALL_"
-    str_snow_all = product_id+"_"+code_snow_all+"."+ext 
+    str_snow_all = product_id+code_snow_all+"."+ext 
     str_snow_all = str_snow_all.upper()
     copyfile(op.join(pout, "snow_all.tif"), op.join(pout, str_snow_all))
 
     code_compo = "_COMPO_"
-    str_compo = product_id+"_"+code_compo+"."+ext
+    str_compo = product_id+code_compo+"."+ext
     str_compo = str_compo.upper()
-    copyfile(op.join(pout, "quicklook.tif"), op.join(pout, str_compo))
+    copyfile(op.join(pout, "composition.tif"), op.join(pout, str_compo))
     
     code_seb = "_SEB_"
-    str_seb = product_id+"_"+code_seb+"."+ext 
+    str_seb = product_id+code_seb+"."+ext 
     str_seb = str_seb.upper()
+    format_SEB_values(op.join(pout, "final_mask.tif"), ram)
     copyfile(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
-    format_SEB_values(op.join(pout, str_seb), ram)
-    
+
     code_seb_vec = "_SEB_VEC_"
     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
         extension = op.splitext(f)[1]
-        str_seb_vec = product_id+"_"+code_seb_vec+extension
+        str_seb_vec = product_id+code_seb_vec+extension
         str_seb_vec = str_seb_vec.upper()
-        copyfile(f, op.join(pout, str_seb_vec))
         if extension == ".dbf":
-            format_SEB_VEC_values(op.join(pout, str_seb_vec))
-    
+            format_SEB_VEC_values(f)
+        copyfile(f, op.join(pout, str_seb_vec))
+        
     root = etree.Element("Source_Product")
     etree.SubElement(root, "PRODUCT_ID").text = product_id
     egil = etree.SubElement(root, "Global_Index_List")

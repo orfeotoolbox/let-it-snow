@@ -54,12 +54,28 @@ add_test(NAME compare_preprocessing_output_test
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
   "${BASELINE}/landsat_bassies_srtm.tif"
   )
+set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
+
+add_test(NAME compare_final_mask_output_test
+  COMMAND ${CMAKE_COMMAND} -E compare_files
+  "${OUTPUT_TEST}/final_mask.tif" 
+  "${BASELINE}/final_mask.tif"
+  )
+set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_test)
+
+add_test(NAME compare_final_mask_vec_output_test
+  COMMAND ${CMAKE_COMMAND} -E compare_files
+  "${OUTPUT_TEST}/final_mask_vec.dbf" 
+  "${BASELINE}/final_mask_vec.dbf"
+  )
+set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_all_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
   "${OUTPUT_TEST}/snow_all.tif" 
   "${BASELINE}/snow_all.tif"
   )
+set_tests_properties(compare_snow_all_output_test PROPERTIES DEPENDS s2snow_test)
 
 ADD_EXECUTABLE(histo_utils_test histo_utils_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_test histo_utils)
