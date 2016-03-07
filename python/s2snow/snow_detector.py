@@ -50,8 +50,8 @@ def polygonize(input_img,input_mask,output_vec):
     """Helper function to polygonize raster mask using gdal polygonize"""
     call(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
-def quicklook_RGB(input_img,output_img, nRed, nGreen, nSWIR):
-    """Make a RGB quicklook to highlight the snow cover
+def composition_RGB(input_img,output_img, nRed, nGreen, nSWIR):
+    """Make a RGB composition to highlight the snow cover
      
     input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color
     composite RGB image (GTiff).nRed,nGreen,nSWIR are index of red, green and
@@ -88,7 +88,6 @@ class snow_detector :
         self.generate_vector=data["general"]["generate_vector"]
         self.do_preprocessing=data["general"]["preprocessing"]
         self.do_postprocessing=True
-        self.do_quicklook=True
         self.shadow_value=data["general"]["shadow_value"]
         #Parse cloud data
         self.rf=data["cloud_mask"]["rf"]
@@ -149,18 +148,17 @@ class snow_detector :
         if nbPass == 2 :
             self.pass2()
         
-        if self.do_quicklook:
-            #Gdal polygonize (needed to produce quicklook)
-            #TODO: Study possible loss and issue with vectorization product
-            polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
-
-            #RGB quicklook (quality insurance)
-            quicklook_RGB(self.img,op.join(self.path_tmp,"quicklook.tif"),self.nRed,self.nGreen,self.nSWIR)
-
-            #Burn polygons edges on the quicklook
-            #TODO add pass1 snow polygon in yellow
-            burn_polygons_edges(op.join(self.path_tmp,"quicklook.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
+        #Gdal polygonize (needed to produce composition)
+        #TODO: Study possible loss and issue with vectorization product
+        polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
     
+        #RGB composition
+        composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"),self.nRed,self.nGreen,self.nSWIR)
+        
+        #Burn polygons edges on the composition
+        #TODO add pass1 snow polygon in yellow
+        burn_polygons_edges(op.join(self.path_tmp,"composition.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
+        
         #External postprocessing
         if self.do_postprocessing:
             format_output.format_LIS(self) 

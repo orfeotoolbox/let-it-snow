@@ -31,17 +31,17 @@ def format_LIS(snow_detector):
     code_snow_all = "_SNOW_ALL_"
     str_snow_all = product_id+"_"+code_snow_all+"."+ext 
     str_snow_all = str_snow_all.upper()
-    os.rename(op.join(pout, "snow_all.tif"), op.join(pout, str_snow_all))
+    copyfile(op.join(pout, "snow_all.tif"), op.join(pout, str_snow_all))
 
     code_compo = "_COMPO_"
     str_compo = product_id+"_"+code_compo+"."+ext
     str_compo = str_compo.upper()
-    os.rename(op.join(pout, "quicklook.tif"), op.join(pout, str_compo))
+    copyfile(op.join(pout, "quicklook.tif"), op.join(pout, str_compo))
     
     code_seb = "_SEB_"
     str_seb = product_id+"_"+code_seb+"."+ext 
     str_seb = str_seb.upper()
-    os.rename(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
+    copyfile(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
     format_SEB_values(op.join(pout, str_seb), ram)
     
     code_seb_vec = "_SEB_VEC_"
@@ -49,7 +49,7 @@ def format_LIS(snow_detector):
         extension = op.splitext(f)[1]
         str_seb_vec = product_id+"_"+code_seb_vec+extension
         str_seb_vec = str_seb_vec.upper()
-        os.rename(f, op.join(pout, str_seb_vec))
+        copyfile(f, op.join(pout, str_seb_vec))
         if extension == ".dbf":
             format_SEB_VEC_values(op.join(pout, str_seb_vec))
     
