@@ -13,6 +13,8 @@ def format_LIS(snow_detector):
     path_img = snow_detector.img
     pout = snow_detector.path_tmp
     zs = snow_detector.zs
+    snow_percent = snow_detector.snow_percent
+    cloud_percent = snow_detector.cloud_percent
     ram = snow_detector.ram
     mode = snow_detector.mode
     
@@ -50,8 +52,15 @@ def format_LIS(snow_detector):
         os.rename(f, op.join(pout, str_seb_vec))
         if extension == ".dbf":
             format_SEB_VEC_values(op.join(pout, str_seb_vec))
-        
-    #tree.write(op.join(pout, "metadata.xml"))
+    
+    root = etree.Element("Source_Product")
+    etree.SubElement(root, "PRODUCT_ID").text = product_id
+    egil = etree.SubElement(root, "Global_Index_List")
+    etree.SubElement(egil, "QUALITY_INDEX", name='ZS').text = str(zs)
+    etree.SubElement(egil, "QUALITY_INDEX", name='SnowPercent').text = str(snow_percent)
+    etree.SubElement(egil, "QUALITY_INDEX", name='CloudPercent').text = str(cloud_percent)
+    et = etree.ElementTree(root)
+    et.write(op.join(pout, "metadata.xml"), pretty_print = True)
     
 
 def format_SEB_values(path, ram):
