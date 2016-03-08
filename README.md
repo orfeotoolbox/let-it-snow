@@ -131,7 +131,7 @@ make
 ````
 ## Tests
 
-Enable tests with BUILD_TESTING cmake option.
+Enable tests with BUILD_TESTING cmake option. Use ctest to run tests. Do not forget to clean your output test directory when you run a new set of tests.
 
 Download LIS-Data folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files. 
 Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated. 

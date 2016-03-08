@@ -28,23 +28,23 @@ def format_LIS(snow_detector):
     ext = "TIF"
    
     #TODO associate product name with let-it-snow results to make a loop
-    code_snow_all = "_SNOW_ALL_"
+    code_snow_all = "_SNOW_ALL"
     str_snow_all = product_id+code_snow_all+"."+ext 
     str_snow_all = str_snow_all.upper()
     copyfile(op.join(pout, "snow_all.tif"), op.join(pout, str_snow_all))
 
-    code_compo = "_COMPO_"
+    code_compo = "_COMPO"
     str_compo = product_id+code_compo+"."+ext
     str_compo = str_compo.upper()
     copyfile(op.join(pout, "composition.tif"), op.join(pout, str_compo))
     
-    code_seb = "_SEB_"
+    code_seb = "_SEB"
     str_seb = product_id+code_seb+"."+ext 
     str_seb = str_seb.upper()
     format_SEB_values(op.join(pout, "final_mask.tif"), ram)
     copyfile(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
 
-    code_seb_vec = "_SEB_VEC_"
+    code_seb_vec = "_SEB_VEC"
     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
         extension = op.splitext(f)[1]
         str_seb_vec = product_id+code_seb_vec+extension
@@ -61,7 +61,10 @@ def format_LIS(snow_detector):
     etree.SubElement(egil, "QUALITY_INDEX", name='CloudPercent').text = str(cloud_percent)
     et = etree.ElementTree(root)
     et.write(op.join(pout, "metadata.xml"), pretty_print = True)
-    
+    code_metadata = "_METADATA"
+    str_metadata = product_id+code_metadata+".xml"
+    str_metadata = str_metadata.upper()
+    copyfile(op.join(pout, "metadata.xml"), op.join(pout, str_metadata))
 
 def format_SEB_values(path, ram):
     call(["otbcli_BandMath", "-il", path, "-out", path, "uint8", "-ram",str(ram), "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
