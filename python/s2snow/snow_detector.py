@@ -77,6 +77,12 @@ def burn_polygons_edges(input_img,input_vec):
     # 4) remove tmp_line files
     call(["rm"]+glob.glob(tmp_line+"*"))
 
+def get_total_pixels(imgpath):
+    dataset = gdal.Open(imgpath, GA_ReadOnly)
+    #assume that snow and cloud images are of the same size
+    total_pixels=dataset.RasterXSize*dataset.RasterYSize
+    return total_pixels
+
 class snow_detector :
     def __init__(self, data):
         
@@ -210,7 +216,7 @@ class snow_detector :
     def pass2(self):
         ndsi_formula= "(im1b"+str(self.nGreen)+"-im1b"+str(self.nSWIR)+")/(im1b"+str(self.nGreen)+"+im1b"+str(self.nSWIR)+")"
         #Pass 2: compute snow fraction (c++)
-        nb_snow_pixels = histo_utils_ext.compute_snow_fraction(self.ndsi_pass1_path)
+        nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(self.ndsi_pass1_path, 0 , 255)
         print "Number of snow pixels ", nb_snow_pixels
         
         if (nb_snow_pixels > self.fsnow_total_lim):
@@ -255,16 +261,11 @@ class snow_detector :
         
         call(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
         
-        dataset = gdal.Open(generic_snow_path, GA_ReadOnly)
-        #assume that snow and coloud images are of the same size
-        total_pixels=dataset.RasterXSize*dataset.RasterYSize
-        print total_pixels
+        self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels(generic_snow_path)
+        print self.snow_percent
         
-        self.snow_percent = float(histo_utils_ext.compute_snow_fraction(generic_snow_path) * 100)/total_pixels
-        print "snow percent: " + str(self.snow_percent)
-        # snow = cloud
-        self.cloud_percent = float(histo_utils_ext.compute_snow_fraction(op.join(self.path_tmp,"cloud_refine.tif")) * 100)/total_pixels
-        print "cloud percent: " + str(self.cloud_percent)
+        self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels(op.join(self.path_tmp,"cloud_refine.tif"))
+        print self.cloud_percent
 
     def pass3(self):
         #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)

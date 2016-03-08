@@ -33,10 +33,10 @@
 int compute_zs(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim);
 
 /**
- * \fn int compute_snow_fraction(const std::string & infname)
- * \brief Compute snow fraction from snow mask
+ * \f int compute_nb_pixels_between_bounds(const std::string & infname, const int lowerbound, const int upperbound)
+ * \brief Compute number of pixels between bounds
  */
-int compute_snow_fraction(const std::string & infname);
+int compute_nb_pixels_between_bounds(const std::string & infname, const int lowerbound, const int upperbound);
 
 /**
  * \fn short compute_zs_ng(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const char * histo_file=NULL)

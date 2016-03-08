@@ -141,7 +141,7 @@ int compute_zs(const std::string & infname, const std::string & inmasksnowfname,
   return -1;
 }
 
-int compute_snow_fraction(const std::string & infname)
+int compute_nb_pixels_between_bounds(const std::string & infname, const int lowerbound, const int upperbound)
 {
 
   /** Filters typedef */
@@ -164,10 +164,10 @@ int compute_snow_fraction(const std::string & infname)
   HistogramFilterType::HistogramMeasurementVectorType lowerBound(1);
   HistogramFilterType::HistogramMeasurementVectorType upperBound(1);
 
-  lowerBound.Fill(0);
+  lowerBound.Fill(lowerbound);
   //Bound set to 255 because of bad handling of tif 1 bits in OTB!
   //FIXME Change 255 to 0 when bug Mantis 1079 will be fixed
-  upperBound.Fill(255);
+  upperBound.Fill(upperbound);
   
   histogramFilter->SetHistogramBinMinimum( lowerBound );
   histogramFilter->SetHistogramBinMaximum( upperBound );
