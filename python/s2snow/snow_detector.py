@@ -90,6 +90,7 @@ class snow_detector :
         #Parse general parameters
         self.path_tmp=str(data["general"]["pout"])
         self.ram=data["general"]["ram"]
+        self.nbThreads=data["general"]["nbThreads"]
         self.mode=data["general"]["mode"]
         self.generate_vector=data["general"]["generate_vector"]
         self.do_preprocessing=data["general"]["preprocessing"]
@@ -143,6 +144,8 @@ class snow_detector :
             sys.exit("Supported modes are spot4,landsat and s2.")
     
     def detect_snow(self, nbPass):
+        #Set maximum ITK threads
+        os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"]=str(self.nbThreads)
         #External preprocessing
         if self.do_preprocessing: 
             preprocessing.build_dem(vrt, img, dem)
