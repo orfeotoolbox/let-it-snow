@@ -17,8 +17,7 @@ set -e
 # move to config path to build the json file.
 cd $configPath
 
-rm -f paramTest.json
-cp param_full_Take5_template.json param_test.json
+cp param_test_template.json param_test.json
 
 # modify only three parameters: image file, cloud file, dem file, output dir
 inputimage=$(find $dataPath -name *ORTHO_SURF_CORR_PENTE*.TIF)
