@@ -246,10 +246,14 @@ class snow_detector :
                 #No zs elevation found, take result of pass1 in the output product
                 print "did not find zs, keep pass 1 result."
                 generic_snow_path=self.ndsi_pass1_path
-                    
+                #empty image pass2 is needed for computing snow_all
+                call(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
+
         else:
             generic_snow_path=self.ndsi_pass1_path
-                    
+            #empty image pass2 is needed for computing snow_all
+            call(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
+            
         if self.generate_vector:
             #Generate polygons for pass3 (useful for quality check)
             polygonize(generic_snow_path,generic_snow_path,op.join(self.path_tmp,"pass3_vec.shp"))
@@ -258,7 +262,7 @@ class snow_detector :
         condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(self.rRed_backtocloud) + ")))?2:0"
                         
         call(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
-        
+
         call(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
         
         self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels(generic_snow_path)
