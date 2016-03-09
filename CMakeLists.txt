@@ -72,7 +72,8 @@ endif(NOT lis_INSTALL_INCLUDE_DIR)
 SET(BUILD_SHARED_LIBS ON)
 
 add_subdirectory(src)
-
+add_subdirectory(python)
+add_subdirectory(app)
 # Add Testing subdirectory
 option(BUILD_TESTING  "Build testing." OFF)
 

@@ -19,7 +19,7 @@
 
 int main(int argc, char * argv [])
 {
-const int result = compute_snow_fraction(argv[1]);
+  const int result = compute_nb_pixels_between_bounds(argv[1], 0, 255);
 const int expected = atoi(argv[2]);
 std::cout << "result: " << result << std::endl;
 

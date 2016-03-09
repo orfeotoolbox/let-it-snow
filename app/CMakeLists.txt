@@ -1,0 +1,1 @@
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/run_snow_detector.py DESTINATION ${CMAKE_BINARY_DIR}/app)

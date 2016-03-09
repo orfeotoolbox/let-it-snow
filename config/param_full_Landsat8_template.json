@@ -4,15 +4,18 @@
         "pout":"outputdir",
         "shadow_value":64,
         "ram":1024,
+	"nbThreads":1,
 	"mode":"landsat",
 	"generate_vector":false,
-	"preprocessing":false
+	"preprocessing":false,
+	"postprocessing":false
         },
     "inputs":{ 
 	"vrt":"inputvrt",
         "image":"inputimage",
         "dem":"inputdem",
-        "cloud_mask":"inputcloud"
+        "cloud_mask":"inputcloud",
+	"xml":"inputxml"
     },
     "cloud_mask":{
         "rf":8,

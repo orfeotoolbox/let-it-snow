@@ -32,5 +32,5 @@ BOOST_PYTHON_MODULE(histo_utils_ext)
 
     
 
-    def( "compute_snow_fraction", compute_snow_fraction );
+    def( "compute_nb_pixels_between_bounds", compute_nb_pixels_between_bounds );
 }

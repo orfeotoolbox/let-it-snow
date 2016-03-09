@@ -10,14 +10,14 @@ set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
 add_test(NAME test_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
-	"${CMAKE_SOURCE_DIR}/config"
+	"${DATA_TEST}"
 	"${DATA_TEST}/Take5/AOI_test_CESNeige"
 	"${OUTPUT_TEST}"
 	)
 
 add_test(NAME s2snow_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/s2snow.py ${CMAKE_SOURCE_DIR}/config/param_test.json
+  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST}/param_test.json
   )
 set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test)
 	
@@ -42,26 +42,40 @@ add_test(NAME compare_snow_output_pass3_test
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
-
-add_test(NAME compare_snow_output_final_mask_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/final_mask.tif" 
-  "${BASELINE}/final_mask.tif"
-  )
-set_tests_properties(compare_snow_output_final_mask_test PROPERTIES DEPENDS s2snow_test)
-
 add_test(NAME preprocessing_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/utils/preprocessing.py 
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/s2snow/dem_builder.py 
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
   "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20150312_N2A_ORTHO_SURF_CORR_PENTE_France-MetropoleD0005H0001.TIF"
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
   )
 
-add_test(NAME compare_preprocessing_output_test
+# add_test(NAME compare_preprocessing_output_test
+#   COMMAND ${CMAKE_COMMAND} -E compare_files
+#   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
+#   "${BASELINE}/landsat_bassies_srtm.tif"
+#   )
+# set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
+
+add_test(NAME compare_final_mask_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
-  "${BASELINE}/landsat_bassies_srtm.tif"
+  "${OUTPUT_TEST}/final_mask.tif" 
+  "${BASELINE}/final_mask.tif"
   )
+set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_test)
+
+add_test(NAME compare_final_mask_vec_output_test
+  COMMAND ${CMAKE_COMMAND} -E compare_files
+  "${OUTPUT_TEST}/final_mask_vec.dbf" 
+  "${BASELINE}/final_mask_vec.dbf"
+  )
+set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
+
+add_test(NAME compare_snow_all_output_test
+  COMMAND ${CMAKE_COMMAND} -E compare_files
+  "${OUTPUT_TEST}/snow_all.tif" 
+  "${BASELINE}/snow_all.tif"
+  )
+set_tests_properties(compare_snow_all_output_test PROPERTIES DEPENDS s2snow_test)
 
 ADD_EXECUTABLE(histo_utils_test histo_utils_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_test histo_utils)
@@ -120,4 +134,13 @@ add_test(NAME histo_utils_snow_fraction_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snow_fraction_test
     "${BASELINE}/pass1.tif"
     127784
+    )
+
+add_test(NAME compute_snow_mask_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/compute_snow_mask
+    "${BASELINE}/pass1.tif"
+    "${BASELINE}/pass2.tif"
+    "${BASELINE}/cloud_pass1.tif"
+    "${BASELINE}/cloud_refine.tif"
+    "${OUTPUT_TEST}/snow_all_test.tif" 
     )
