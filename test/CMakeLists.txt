@@ -49,12 +49,12 @@ add_test(NAME preprocessing_test
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
   )
 
-add_test(NAME compare_preprocessing_output_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
-  "${BASELINE}/landsat_bassies_srtm.tif"
-  )
-set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
+# add_test(NAME compare_preprocessing_output_test
+#   COMMAND ${CMAKE_COMMAND} -E compare_files
+#   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
+#   "${BASELINE}/landsat_bassies_srtm.tif"
+#   )
+# set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_final_mask_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files

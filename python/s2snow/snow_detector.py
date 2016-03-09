@@ -148,7 +148,7 @@ class snow_detector :
         os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"]=str(self.nbThreads)
         #External preprocessing
         if self.do_preprocessing: 
-            preprocessing.build_dem(vrt, img, dem)
+            dem_builder.build_dem(self.vrt, self.img, self.dem)
         
         if nbPass >= 0 :
             self.pass0()
