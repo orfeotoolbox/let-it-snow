@@ -17,7 +17,7 @@ add_test(NAME test_json_builder_test
 
 add_test(NAME s2snow_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${CMAKE_SOURCE_DIR}/config/param_test.json
+  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST}/param_test.json
   )
 set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test)
 	

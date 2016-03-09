@@ -45,7 +45,6 @@ public:
   }
 
   return static_cast< TOutput >( bits.to_ulong() );
-
   }
 
   bool operator==(const SnowMask &) const
