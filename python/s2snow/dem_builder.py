@@ -8,6 +8,13 @@ import ast
 def show_help():
 	print "This script is used to compute srtm mask from a vrt file to a region extent"
 	print "Usage: preprocessing.py srtm.vrt img.tif output.tif"
+
+# run subprocess and write to stdout and stderr
+def call_subprocess(process_list):
+    process = subprocess.Popen(process_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    print out
+    sys.stderr.write(err)
 	
 def get_extent(geotransform, cols, rows):
     extent=[]
@@ -53,7 +60,7 @@ def build_dem(psrtm, pimg, pout):
     print(spatial_ref_projection)
 
     #gdalwarp call
-    call(["gdalwarp -dstnodata -32768 -tr "+str(resolution)+" "+str(resolution)+" -r cubicspline -te "+te+" -t_srs '"+spatial_ref_projection+"' "+psrtm+" "+pout], shell=True)
+    call_subprocess(["gdalwarp -dstnodata -32768 -tr "+str(resolution)+" "+str(resolution)+" -r cubicspline -te "+te+" -t_srs '"+spatial_ref_projection+"' "+psrtm+" "+pout], shell=True)
 
 def main(argv):
 	#parse files path

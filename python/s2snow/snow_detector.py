@@ -18,6 +18,7 @@
 
 import sys
 from subprocess import call
+import subprocess
 import glob
 import os
 import os.path as op
@@ -44,11 +45,16 @@ GDAL_OPT="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 #syntax
 GDAL_OPT_2B="?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
-#TODO add temporaty directory
+# run subprocess and write to stdout and stderr
+def call_subprocess(process_list):
+    process = subprocess.Popen(process_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    print out
+    sys.stderr.write(err)
 
 def polygonize(input_img,input_mask,output_vec):
     """Helper function to polygonize raster mask using gdal polygonize"""
-    call(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
+    call_subprocess(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
 def composition_RGB(input_img,output_img, nRed, nGreen, nSWIR):
     """Make a RGB composition to highlight the snow cover
@@ -58,7 +64,7 @@ def composition_RGB(input_img,output_img, nRed, nGreen, nSWIR):
     SWIR in in put images.
 
     """
-    call(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
+    call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
 
 def burn_polygons_edges(input_img,input_vec):
     """Burn polygon borders onto an image with the following symbology:
@@ -69,13 +75,13 @@ def burn_polygons_edges(input_img,input_vec):
 
     """
     tmp_line="tmp_line"
-    call(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
+    call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
     # 2) rasterize cloud and cloud shadows polygon borders in green
-    call(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l","tmp_line",tmp_line+".shp",input_img])
+    call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l","tmp_line",tmp_line+".shp",input_img])
     # 3) rasterize snow polygon borders in magenta
-    call(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
+    call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
     # 4) remove tmp_line files
-    call(["rm"]+glob.glob(tmp_line+"*"))
+    call_subprocess(["rm"]+glob.glob(tmp_line+"*"))
 
 def get_total_pixels(imgpath):
     dataset = gdal.Open(imgpath, GA_ReadOnly)
@@ -175,7 +181,7 @@ class snow_detector :
     def pass0(self):
         #Pass -1 : generate custom cloud mask
         #Extract red band
-        call(["gdal_translate","-ot","Int16","-b",str(self.nRed),self.img,self.redBand_path])
+        call_subprocess(["gdal_translate","-ot","Int16","-b",str(self.nRed),self.img,self.redBand_path])
         dataset = gdal.Open( self.redBand_path, GA_ReadOnly )
         
         xSize=dataset.RasterXSize
@@ -185,20 +191,19 @@ class snow_detector :
         geotransform = dataset.GetGeoTransform() 
         
         #resample red band using multiresolution pyramid
-        #call(["otbcli_MultiResolutionPyramid","-in",redBand_path,"-out",op.join(path_tmp,"red_warped.tif"),"int16","-sfactor",str(rf)])
-        call(["gdalwarp","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
+        call_subprocess(["gdalwarp","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
         
         #Resample red band nn
         #FIXME: use MACCS resampling filter contribute by J. Michel here
-        call(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
+        call_subprocess(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
         
         #edit result to set the resolution to the input image resolution
         #TODO need to find a better solution and also guess the input spacing (using maccs resampling filter)
-        call(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
+        call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
         
         #Extract shadow mask
         condition_shadow= "(im1b1>0 and im2b1>" + str(self.rRed_darkcloud) + ") or (im1b1 >= " + str(self.shadow_value) + ")"
-        call(["otbcli_BandMath","-il",self.cloud_init,op.join(self.path_tmp,"red_nn.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow + "?1:0"])
+        call_subprocess(["otbcli_BandMath","-il",self.cloud_init,op.join(self.path_tmp,"red_nn.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow + "?1:0"])
 
     def pass1(self):
         #Pass1 : NDSI threshold
@@ -208,13 +213,13 @@ class snow_detector :
         #Use 255 not 1 here because of bad handling of 1 byte tiff by otb)
         #FIXME
         condition_pass1= "(im2b1!=255 and ("+ndsi_formula+")>"+ str(self.ndsi_pass1) + " and im1b"+str(self.nRed)+"> " + str(self.rRed_pass1) + ")"
-        call(["otbcli_BandMath","-il",self.img,self.cloud_refine,"-out",self.ndsi_pass1_path+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_pass1 + "?1:0"])
+        call_subprocess(["otbcli_BandMath","-il",self.img,self.cloud_refine,"-out",self.ndsi_pass1_path+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_pass1 + "?1:0"])
         
         #Update the cloud mask (again)
         #Use 255 not 1 here because of bad handling of 1 byte tiff by otb)
         #FIXME
         condition_cloud_pass1= "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + str(self.rRed_backtocloud) + "))"
-        call(["otbcli_BandMath","-il",self.cloud_refine,self.ndsi_pass1_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"cloud_pass1.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_cloud_pass1 + "?1:0"])
+        call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,self.ndsi_pass1_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"cloud_pass1.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_cloud_pass1 + "?1:0"])
         
     def pass2(self):
         ndsi_formula= "(im1b"+str(self.nGreen)+"-im1b"+str(self.nSWIR)+")/(im1b"+str(self.nGreen)+"+im1b"+str(self.nSWIR)+")"
@@ -237,7 +242,7 @@ class snow_detector :
                 #Use 255 not 1 here because of bad handling of 1 byte tiff by otb)
                 #FIXME
                 condition_pass2= "(im3b1 != 255) and (im2b1>" + str(self.zs) + ") and (" + ndsi_formula + "> " + str(self.ndsi_pass2) + ") and (im1b"+str(self.nRed)+">" + str(self.rRed_pass2) + ")"
-                call(["otbcli_BandMath","-il",self.img,self.dem,self.cloud_refine,"-out",op.join(self.path_tmp,"pass2.tif")+GDAL_OPT,"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
+                call_subprocess(["otbcli_BandMath","-il",self.img,self.dem,self.cloud_refine,"-out",op.join(self.path_tmp,"pass2.tif")+GDAL_OPT,"uint8","-ram",str(1024),"-exp",condition_pass2 + "?1:0"])
 
                 if self.generate_vector:
                     #Generate polygons for pass2 (useful for quality check)
@@ -250,12 +255,12 @@ class snow_detector :
                 print "did not find zs, keep pass 1 result."
                 generic_snow_path=self.ndsi_pass1_path
                 #empty image pass2 is needed for computing snow_all
-                call(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
+                call_subprocess(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
 
         else:
             generic_snow_path=self.ndsi_pass1_path
             #empty image pass2 is needed for computing snow_all
-            call(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
+            call_subprocess(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
             
         if self.generate_vector:
             #Generate polygons for pass3 (useful for quality check)
@@ -264,9 +269,9 @@ class snow_detector :
         # Final update of the cloud mask (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
         condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(self.rRed_backtocloud) + ")))?2:0"
                         
-        call(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
+        call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
 
-        call(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
+        call_subprocess(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
         
         self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels(generic_snow_path)
         print self.snow_percent
@@ -278,7 +283,7 @@ class snow_detector :
         #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
         #FIXME
         condition_pass3= "(im1b1 == 255 or im2b1 == 255)"
-        call(["otbcli_BandMath","-il",self.ndsi_pass1_path,op.join(self.path_tmp,"pass2.tif"),"-out",op.join(self.path_tmp,"pass3.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_pass3 + "?1:0"])
+        call_subprocess(["otbcli_BandMath","-il",self.ndsi_pass1_path,op.join(self.path_tmp,"pass2.tif"),"-out",op.join(self.path_tmp,"pass3.tif")+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_pass3 + "?1:0"])
 
     def sentinel_2_preprocessing(self):
         #Handle Sentinel-2 case here. Sentinel-2 images are in 2 separates tif. R1
@@ -318,20 +323,20 @@ class snow_detector :
                         
         #Extract green bands and resample to 20 meters
         #FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
-        call(["gdal_translate","-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
-        call(["gdalwarp","-r","cubicspline","-tr","20","-20",greenBand_path,greenBand_resample_path])
+        call_subprocess(["gdal_translate","-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
+        call_subprocess(["gdalwarp","-r","cubicspline","-tr","20","-20",greenBand_path,greenBand_resample_path])
 
         #Extract red bands and sample to 20 meters
         #FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
-        call(["gdal_translate","-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
-        call(["gdalwarp","-r","cubicspline","-tr","20","-20",redBand_path,redBand_resample_path])
+        call_subprocess(["gdal_translate","-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
+        call_subprocess(["gdalwarp","-r","cubicspline","-tr","20","-20",redBand_path,redBand_resample_path])
     
         #Extract SWIR
-        call(["gdal_translate","-ot","Int16","-b",str(nSWIR),s2_r2_img_path[0],swirBand_path])
+        call_subprocess(["gdal_translate","-ot","Int16","-b",str(nSWIR),s2_r2_img_path[0],swirBand_path])
                         
         #Concatenate all bands in a single image
         concat_s2=op.join(path_tmp,"concat_s2.tif")
-        call(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,swirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
+        call_subprocess(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,swirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
                         
         #img variable is used later to compute snow mask
         self.img=concat_s2
