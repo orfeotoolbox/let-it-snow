@@ -1,5 +1,5 @@
 import sys
-from subprocess import call
+import subprocess 
 import glob
 import os
 import os.path as op
@@ -8,6 +8,14 @@ import datetime
 from lxml import etree
 from shutil import copyfile
 import gdal
+
+# run subprocess and write to stdout and stderr
+def call_subprocess(process_list):
+    process = subprocess.Popen(process_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    print out
+    sys.stderr.write(err)
+
 
 def format_LIS(snow_detector):
     path_img = snow_detector.img
@@ -67,12 +75,12 @@ def format_LIS(snow_detector):
     copyfile(op.join(pout, "metadata.xml"), op.join(pout, str_metadata))
 
 def format_SEB_values(path, ram):
-    call(["otbcli_BandMath", "-il", path, "-out", path, "uint8", "-ram",str(ram), "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
+    call_subprocess(["otbcli_BandMath", "-il", path, "-out", path, "uint8", "-ram",str(ram), "-exp", "(im1b1==1)?100:(im1b1==2)?205:255"])    
 
 def format_SEB_VEC_values(path):
     table = op.splitext(op.basename(path))[0]
-    call(["ogrinfo", path, "-sql", "ALTER TABLE "+table+" ADD COLUMN type varchar(15)"]) 
-    call(["ogrinfo", path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=100, type='snow' WHERE DN=1"])
-    call(["ogrinfo", path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=205, type='cloud' WHERE DN=2"])
-    call(["ogrinfo", path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=255, type='no data' WHERE DN != 100 AND DN != 205"])
+    call_subprocess(["ogrinfo", path, "-sql", "ALTER TABLE "+table+" ADD COLUMN type varchar(15)"]) 
+    call_subprocess(["ogrinfo", path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=100, type='snow' WHERE DN=1"])
+    call_subprocess(["ogrinfo", path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=205, type='cloud' WHERE DN=2"])
+    call_subprocess(["ogrinfo", path, "-dialect", "SQLite", "-sql", "UPDATE '"+table+"' SET DN=255, type='no data' WHERE DN != 100 AND DN != 205"])
         

@@ -2,13 +2,13 @@
 
 from osgeo import gdal, gdalconst, osr
 import sys
-from subprocess import call
+import subprocess
 import ast
 
 def show_help():
 	print "This script is used to compute srtm mask from a vrt file to a region extent"
 	print "Usage: preprocessing.py srtm.vrt img.tif output.tif"
-	
+
 def get_extent(geotransform, cols, rows):
     extent=[]
     xarr=[0, cols]
@@ -52,8 +52,9 @@ def build_dem(psrtm, pimg, pout):
     spatial_ref_projection = spatial_ref.ExportToProj4()
     print(spatial_ref_projection)
 
+    
     #gdalwarp call
-    call(["gdalwarp -dstnodata -32768 -tr "+str(resolution)+" "+str(resolution)+" -r cubicspline -te "+te+" -t_srs '"+spatial_ref_projection+"' "+psrtm+" "+pout], shell=True)
+    subprocess.check_output("gdalwarp -dstnodata -32768 -tr "+str(resolution)+" "+str(resolution)+" -r cubicspline -te "+te+" -t_srs '"+spatial_ref_projection+"' "+psrtm+" "+pout, stderr=subprocess.STDOUT, shell=True)
 
 def main(argv):
 	#parse files path
