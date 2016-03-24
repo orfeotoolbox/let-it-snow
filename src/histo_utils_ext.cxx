@@ -19,6 +19,7 @@
  
 //Declare overloaded functions to allow to pass null value for the histogram
 BOOST_PYTHON_FUNCTION_OVERLOADS(compute_zs_ng_overloads, compute_zs_ng, 5, 6)
+BOOST_PYTHON_FUNCTION_OVERLOADS(compute_zs_max_overloads, compute_zs_max, 5, 6)
 
 BOOST_PYTHON_MODULE(histo_utils_ext)
 {
@@ -30,7 +31,10 @@ BOOST_PYTHON_MODULE(histo_utils_ext)
             args("infname", "inmasksnowfname", "inmaskcloudfname", "dz", "fsnow_lim", "histo_file"), "This is compute_zs_ng functions"
         ));
 
-    
+    def( "compute_zs_max", compute_zs_max, compute_zs_max_overloads(
+            args("infname", "inmasksnowfname", "inmaskcloudfname", "dz", "fsnow_lim", "histo_file"), "This is compute_zs_max functions"
+        ));
+
 
     def( "compute_nb_pixels_between_bounds", compute_nb_pixels_between_bounds );
 }

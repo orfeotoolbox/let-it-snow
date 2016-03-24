@@ -57,6 +57,9 @@ short compute_zs_ng(const std::string & infname, const std::string & inmasksnowf
  */
 short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const char * histo_file=NULL);
 
+short compute_zs_max(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const char * histo_file=NULL);
+short compute_zs_max_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const char * histo_file=NULL);
+
 /**
  * \fn void print_histogram (const itk::Statistics::ImageToHistogramFilter<itk::VectorImage<short, 2> >::HistogramType & histogram, const char * histo_file)
  * \brief Print histogram values to file (useful to validate)

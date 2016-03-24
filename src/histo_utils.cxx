@@ -250,7 +250,7 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
 
   myfile << "z_center, Nz, fcloud_z, fsnow_z" << std::endl;
 
-  for (unsigned int i=0; i< histogram.GetSize()[0];++i)
+  for (unsigned int i=0;i<histogram.GetSize()[0]; ++i)
     {
     HistogramType::IndexType idx1(3);
     idx1[0] = i;
@@ -364,3 +364,129 @@ short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_i
   //don't find zs
   return -1;
 }
+
+short compute_zs_max(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const char * histo_file)
+{
+  /** Filters typedef */
+  typedef otb::Image<short, 2>                           ImageType;
+  typedef otb::ImageFileReader<ImageType>                ReaderType;
+  typedef otb::StreamingMinMaxImageFilter<ImageType>     StreamingMinMaxImageFilterType;
+
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetFileName(infname);
+
+  // Instantiating object (compute min/max from dem image)
+  StreamingMinMaxImageFilterType::Pointer filter = StreamingMinMaxImageFilterType::New();
+
+  filter->GetStreamer()->SetNumberOfLinesStrippedStreaming( 10 );
+  filter->SetInput(reader->GetOutput());
+  filter->Update();
+
+  ImageType::PixelType min;
+  ImageType::PixelType max;
+
+  min=filter->GetMinimum();
+  max=filter->GetMaximum();
+
+  typedef itk::ComposeImageFilter<ImageType> ImageToVectorImageFilterType;
+
+  ReaderType::Pointer reader_snow = ReaderType::New();
+  reader_snow->SetFileName(inmasksnowfname);
+
+  ReaderType::Pointer reader_cloud = ReaderType::New();
+  reader_cloud->SetFileName(inmaskcloudfname);
+
+  //Concatenate dem, snow and cloud mask in one VectorImage
+  ImageToVectorImageFilterType::Pointer imageToVectorImageFilter = ImageToVectorImageFilterType::New();
+  imageToVectorImageFilter->SetInput(0, reader->GetOutput());
+  imageToVectorImageFilter->SetInput(1, reader_snow->GetOutput());
+  imageToVectorImageFilter->SetInput(2, reader_cloud->GetOutput());
+
+  //Compute and return zs
+  return compute_zs_max_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim, histo_file);
+}
+
+short compute_zs_max_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const char* histo_file)
+{
+  typedef itk::VectorImage<short, 2>  VectorImageType;
+  typedef itk::Statistics::ImageToHistogramFilter<
+    VectorImageType >   HistogramFilterType;
+
+  HistogramFilterType::Pointer histogramFilter =
+    HistogramFilterType::New();
+  histogramFilter->SetInput(  compose_image  );
+
+  histogramFilter->SetAutoMinimumMaximum( false );
+  histogramFilter->SetMarginalScale( 10000 );
+
+  HistogramFilterType::HistogramMeasurementVectorType lowerBound( 3 );
+  HistogramFilterType::HistogramMeasurementVectorType upperBound( 3 );
+
+  lowerBound[0] = min;
+  lowerBound[1] = 0;
+  lowerBound[2] = 0;
+  upperBound[0] = max;
+  //Bound set to 255 because of bad handling of tif 1 bits in OTB!
+  //FIXME Change 255 to 0 when bug Mantis 1079 will be fixed
+  upperBound[1] = 255;
+  upperBound[2] = 255;
+
+  histogramFilter->SetHistogramBinMinimum( lowerBound );
+  histogramFilter->SetHistogramBinMaximum( upperBound );
+  
+  typedef HistogramFilterType::HistogramSizeType   SizeType;
+  SizeType size( 3 );
+
+  size[0] = (upperBound[0]-lowerBound[0]) / dz;        // number of bins for the altitude   channel
+  size[1] =   2;        // number of bins for the snow channel
+  size[2] =   2;        // number of bins for the cloud  channel
+
+  histogramFilter->SetHistogramSize( size );
+  
+  histogramFilter->Update();
+
+  typedef HistogramFilterType::HistogramType  HistogramType;
+  const HistogramType * histogram = histogramFilter->GetOutput();
+
+  const unsigned int channel = 0;  // elevation channel
+
+  //Print the histogram (log and debug info)
+  if ( histo_file != NULL )
+    {
+    print_histogram(*histogram,histo_file);
+    }
+  
+  short zs_max = -1;
+  for (unsigned int i=histogram->GetSize()[0]-1; i>0 ;i--)
+    {
+    HistogramType::IndexType idx1(3);
+    idx1[0] = i;
+    idx1[1] = 0;
+    idx1[2] = 0;
+
+    HistogramType::IndexType idx2(3);
+    idx2[0] = i;
+    idx2[1] = 1;
+    idx2[2] = 0;
+
+    //Compute the total number of pixels (snow+no snow) cloud free in the elevation cell
+    const HistogramType::AbsoluteFrequencyType z=histogram->GetFrequency(idx1) + histogram->GetFrequency(idx2);
+    //If there are pixels in this elevation cell and Check if there is enough snow pixel
+    if ( (z != 0) && ( ( static_cast<double> (histogram->GetFrequency(idx2)) / static_cast<double> (z) ) > fsnow_lim ) )
+      {	
+
+	HistogramType::IndexType idx_res(3);
+	idx_res[0] = std::max(static_cast<int>(i),0);
+	idx_res[1] = 1;
+	idx_res[2] = 0;
+	
+	zs_max = vcl_floor(histogram->GetMeasurementVector(idx_res)[channel]);
+      }
+    else
+      {
+	return zs_max;
+      }
+    }
+
+  }
+
