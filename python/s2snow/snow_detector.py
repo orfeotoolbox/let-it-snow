@@ -16,8 +16,7 @@
 #
 #=========================================================================
 
-import sys
-from subprocess import call
+import sys 
 import subprocess
 import glob
 import os
@@ -25,7 +24,6 @@ import os.path as op
 import json
 import gdal
 from gdalconst import *
-import glob
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -39,7 +37,7 @@ import format_output
 VERSION="0.1"
 
 #Build gdal option to generate maks of 1 byte using otb extended filename
-#syntax
+#syntaxx
 GDAL_OPT="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 #Build gdal option to generate maks of 2 bytes using otb extended filename
 #syntax
@@ -278,6 +276,11 @@ class snow_detector :
         
         self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels(op.join(self.path_tmp,"cloud_refine.tif"))
         print self.cloud_percent
+        
+        if (self.cloud_percent <= 30.0):
+            self.zs_max = histo_utils_ext.compute_zs_max(self.dem,self.ndsi_pass1_path,op.join(self.path_tmp,"cloud_pass1.tif"), self.dz, 0.70, op.join(self.path_tmp, "histo_log_zsmax.txt")) 
+            print self.zs_max
+
 
     def pass3(self):
         #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
