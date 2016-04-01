@@ -82,7 +82,7 @@ def main(argv):
     band_dem = dataset_dem.GetRasterBand(1)
     array_dem = band_dem.ReadAsArray(0, 0, wide, high)
     
-    # Get west, north, east & south elements for [1:-1,1:-1] region of input array
+    # Get 8 neighboring pixels for raster and dem 
     W = array_pass6[1:-1,:-2]
     NW = array_pass6[:-2,:-2]
     N  = array_pass6[:-2,1:-1]
@@ -101,12 +101,12 @@ def main(argv):
     Sdem  = array_dem[2:,1:-1]
     SWdem = array_dem[2:,:-2]
 
-    # Check if all four arrays have 100 for that same element in that region
-    mask2 =((((W == 100) & (array_dem[1:-1,1:-1] > Wdem)) | ((N == 100) & (array_dem[1:-1,1:-1] > Ndem)) | ((E == 100) & (array_dem[1:-1,1:-1] > Edem)) | ((S == 100) & (array_dem[1:-1,1:-1] > Sdem))  | ((NW == 100) & (array_dem[1:-1,1:-1] > NWdem)) | ((NE == 100) & (array_dem[1:-1,1:-1] > NEdem)) | ((SE == 100) & (array_dem[1:-1,1:-1] > SEdem)) | ((SW == 100) & (array_dem[1:-1,1:-1] > SWdem))) & (array_pass5[1:-1,1:-1] == 205))
+    
+    mask1 =((((W == 100) & (array_dem[1:-1,1:-1] > Wdem)) | ((N == 100) & (array_dem[1:-1,1:-1] > Ndem)) | ((E == 100) & (array_dem[1:-1,1:-1] > Edem)) | ((S == 100) & (array_dem[1:-1,1:-1] > Sdem))  | ((NW == 100) & (array_dem[1:-1,1:-1] > NWdem)) | ((NE == 100) & (array_dem[1:-1,1:-1] > NEdem)) | ((SE == 100) & (array_dem[1:-1,1:-1] > SEdem)) | ((SW == 100) & (array_dem[1:-1,1:-1] > SWdem))) & (array_pass5[1:-1,1:-1] == 205))
     
     # Use the mask to set corresponding elements in a copy version as 100
     array_pass7 = array_pass6.copy()
-    array_pass7[1:-1,1:-1][mask2] = 100
+    array_pass7[1:-1,1:-1][mask] = 100
 
     #create file
     output_pass7 = gdal.GetDriverByName('GTiff').Create(op.join(output_path, "cloud_removal_pass7.tif"), wide, high, 1 ,gdal.GDT_Byte)
