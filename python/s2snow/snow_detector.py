@@ -110,7 +110,6 @@ class snow_detector :
         self.vrt=str(data["inputs"]["vrt"]) 
         self.img=str(data["inputs"]["image"])
         self.dem=str(data["inputs"]["dem"])
-        self.xmltemplate = str(data["inputs"]["xml"])
         self.cloud_init=str(data["inputs"]["cloud_mask"])
         #Parse snow parameters
         self.dz=data["snow"]["dz"]
