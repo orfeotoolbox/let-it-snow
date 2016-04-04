@@ -248,7 +248,7 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
          << " Total frequency = " << histogram.GetTotalFrequency()
          << " Dimension sizes = " << histogram.GetSize() << std::endl;
 
-  myfile << "z_center, Nz, fcloud_z, fsnow_z" << std::endl;
+  myfile << "z_center, Nz, fcloud_z, fsnow_z, fnosnow_z" << std::endl;
 
   for (unsigned int i=0; i< histogram.GetSize()[0];++i)
     {
@@ -276,8 +276,9 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
     const int Nz = histogram.GetFrequency(idx1) + histogram.GetFrequency(idx2);
     const int fcloud_z = histogram.GetFrequency(idx3) + histogram.GetFrequency(idx4);
     const int fsnow_z = histogram.GetFrequency(idx2) + histogram.GetFrequency(idx4);
+    const int fnosnow_z = Nz - (fcloud_z + fsnow_z);
      
-    myfile << z_center << ", " << Nz << ", "<< fcloud_z << ", "<< fsnow_z << std::endl;
+    myfile << z_center << ", " << Nz << ", "<< fcloud_z << ", "<< fsnow_z << ", "<< fnosnow_z << std::endl;
     }
 
   myfile.close();
