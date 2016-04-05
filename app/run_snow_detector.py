@@ -25,9 +25,15 @@ def main(argv):
     #load json_file from json files
     with open(json_file) as json_data_file:
       data = json.load(json_data_file)
-    pout = data["general"]["pout"]
-    sys.stdout = open(op.join(pout, "stdout.log"), 'w')
-    sys.stderr = open(op.join(pout, "stderr.log"), 'w')
+    
+    general = data["general"]
+    pout = general.get("pout")
+    
+    log = general.get("log", True)
+    if log:
+        sys.stdout = open(op.join(pout, "stdout.log"), 'w')
+        sys.stderr = open(op.join(pout, "stderr.log"), 'w')
+    
     sd = snow_detector.snow_detector(data)
       
     sd.detect_snow(2)
