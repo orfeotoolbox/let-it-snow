@@ -1,0 +1,27 @@
+{
+    "general":{
+        "pout":"outputdir",
+        "ram":512,
+	"nbThreads":1
+         },
+    "inputs":{
+	"m2Path":"m2path",
+        "m1Path":"m1path",
+        "t0Path":"t0path",
+        "p1Path":"p1path",
+	"p2Path":"p2path",
+	"demPath":"dempath"
+    },
+    "steps":{
+	"s1":true,
+	"s2":true,
+	"s3":true,
+	"s4":true,
+	"s5":true
+    },
+    "parameters":{
+	"hsMin":0,
+	"hsMax":0,
+	"windowSize":0
+    }
+}
