@@ -49,17 +49,17 @@ def format_LIS(snow_detector):
     code_seb = "_SEB"
     str_seb = product_id+code_seb+"."+ext 
     str_seb = str_seb.upper()
+    format_SEB_values(op.join(pout, "final_mask.tif"), ram)
     copyfile(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
-    format_SEB_values(op.join(pout, str_seb), ram)
 
     code_seb_vec = "_SEB_VEC"
     for f in glob.glob(op.join(pout, "final_mask_vec.*")):
         extension = op.splitext(f)[1]
         str_seb_vec = product_id+code_seb_vec+extension
         str_seb_vec = str_seb_vec.upper()
-        copyfile(f, op.join(pout, str_seb_vec))
         if extension == ".dbf":
             format_SEB_VEC_values(f)
+        copyfile(f, op.join(pout, str_seb_vec))
         
     root = etree.Element("Source_Product")
     etree.SubElement(root, "PRODUCT_ID").text = product_id
