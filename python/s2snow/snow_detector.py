@@ -243,7 +243,7 @@ class snow_detector :
             #Save histogram values for logging
             histo_log=op.join(self.path_tmp,"histogram.txt")
             #c++ function
-            self.zs=histo_utils_ext.compute_zs_ng(self.dem,self.ndsi_pass1_path,op.join(self.path_tmp,"cloud_pass1.tif"), self.dz, self.fsnow_lim, histo_log) 
+            self.zs=histo_utils_ext.compute_snowline(self.dem,self.ndsi_pass1_path,op.join(self.path_tmp,"cloud_pass1.tif"), self.dz, self.fsnow_lim, False, -2, -self.dz/2, histo_log) 
             
             print "computed ZS:", self.zs
             
