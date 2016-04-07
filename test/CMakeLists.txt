@@ -111,6 +111,19 @@ add_test(NAME histo_utils_snowline_internal_test
     "${BASELINE}/histogram.txt"
     40
     )
+add_test(NAME histo_utils_snowline_reverse_internal_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_internal_test
+    0
+    100
+    20
+    0.99
+    1
+    0
+    0
+    "${BASELINE}/histogram_reverse.txt"
+    90
+    )
+
 
 add_test(NAME histo_utils_snowline_full_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
