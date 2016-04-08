@@ -36,7 +36,21 @@ def step4(t0_path, output_path, window_size):
 	high = dataset.RasterYSize
 	band = dataset.GetRasterBand(1)
 	array = band.ReadAsArray(0, 0, wide, high)
+	
+	#compute 4 pixel snow neighboring
+	step4_internal(array)
+	
+	#create file
+	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
+	output.GetRasterBand(1).WriteArray(array)
+	
+	# georeference the image and set the projection
+	output.SetGeoTransform(dataset.GetGeoTransform())
+	output.SetProjection(dataset.GetProjection()) 
+	output = None
+	print "End of step 4"
 
+def step4_internal(array):
 	# Get west, north, east & south elements for [1:-1,1:-1] region of input array
 	W = array[1:-1,:-2]
 	N  = array[:-2,1:-1]
@@ -46,20 +60,9 @@ def step4(t0_path, output_path, window_size):
 	# Check if all four arrays have 100 for that same element in that region
 	mask = (W == 100) & (N == 100) & (E == 100) & (S == 100) & (array[1:-1,1:-1] == 205)
 	
-	# Use the mask to set corresponding elements in a copy version as 100
-	array_out = array.copy()
-	array_out[1:-1,1:-1][mask] = 100
+	# Use the mask to set corresponding elements
+	array[1:-1,1:-1][mask] = 100
 	
-	#create file
-	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
-	output.GetRasterBand(1).WriteArray(array_out)
-	
-	# georeference the image and set the projection
-	output.SetGeoTransform(dataset.GetGeoTransform())
-	output.SetProjection(dataset.GetProjection()) 
-	output = None
-	print "End of step 4"
-
 def step5(t0_path, dem_path, output_path, window_size):
 	# S(y,x,t) = 1 if (S(y+k,x+k,t)(kc(-1,1)) = 1 and H(y+k,x+k)(kc(-1,1)) < H(y,x))
 	print "Starting step 5"
@@ -72,7 +75,21 @@ def step5(t0_path, dem_path, output_path, window_size):
 	dataset_dem = gdal.Open(dem_path, gdalconst.GA_ReadOnly)
 	band_dem = dataset_dem.GetRasterBand(1)
 	array_dem = band_dem.ReadAsArray(0, 0, wide, high)
+
+	#compute step5
+	step5_internal(array, array_dem)
+
+	#create file
+	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
+	output.GetRasterBand(1).WriteArray(array) 
 	
+	# georeference the image and set the projection
+	output.SetGeoTransform(dataset.GetGeoTransform())
+	output.SetProjection(dataset.GetProjection()) 
+	output = None
+	print "End of step 5"
+
+def step5_internal(array, array_dem):
 	# Get 8 neighboring pixels for raster and dem 
 	W = array[1:-1,:-2]
 	NW = array[:-2,:-2]
@@ -95,20 +112,9 @@ def step5(t0_path, dem_path, output_path, window_size):
 	arrdem = array_dem[1:-1,1:-1]
 	mask =((((W == 100) & (arrdem > Wdem)) | ((N == 100) & (arrdem > Ndem)) | ((E == 100) & (arrdem > Edem)) | ((S == 100) & (arrdem > Sdem))  | ((NW == 100) & (arrdem > NWdem)) | ((NE == 100) & (arrdem > NEdem)) | ((SE == 100) & (arrdem > SEdem)) | ((SW == 100) & (arrdem > SWdem))) & (array[1:-1,1:-1] == 205))
 
-	# Use the mask to set corresponding elements in a copy version as 100
-	array_out = array.copy()
-	array_out[1:-1,1:-1][mask] = 100
+	# Use the mask to set corresponding elements
+	array[1:-1,1:-1][mask] = 100
 	
-	#create file
-	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
-	output.GetRasterBand(1).WriteArray(array) 
-	
-	# georeference the image and set the projection
-	output.SetGeoTransform(dataset.GetGeoTransform())
-	output.SetProjection(dataset.GetProjection()) 
-	output = None
-	print "End of step 5"
-
 def main(argv):
 
 	json_file=argv[1]

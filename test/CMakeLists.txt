@@ -150,4 +150,11 @@ add_test(NAME compute_snow_mask_test
     "${BASELINE}/pass2.tif"
     "${BASELINE}/cloud_pass1.tif"
     "${BASELINE}/cloud_refine.tif"
-    "${OUTPUT_TEST}/snow_all_test.tif"     )
+    "${OUTPUT_TEST}/snow_all_test.tif"
+     )
+
+add_test(NAME cloud_removal_step4_test
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py) 
+
+add_test(NAME cloud_removal_step5_test
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step5_test.py)
