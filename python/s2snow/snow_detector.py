@@ -72,7 +72,7 @@ def burn_polygons_edges(input_img,input_vec):
 	- cloud and cloud shadows: green
 	- snow: magenta
 	- convert mask polygons to lines
-
+	
 	"""
 	tmp_line="tmp_line"
 	call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
@@ -101,20 +101,20 @@ def get_total_pixels_without_nodata(nodata_mask):
 
 class snow_detector :
 	def __init__(self, data):
-
+		
 		self.version = VERSION
 		#Parse general parameters
 		general=data["general"]
 		self.path_tmp=str(general.get("pout"))
 		self.ram=general.get("ram", 512)
-
+		
 		try:
 			nbDefaultThreads = multiprocessing.cpu_count()
 		except NotImplementedError:
 			print "Cannot get max number of CPU on the system. nbDefaultThreads set to 1."  
 			nbDefaultThreads = 1
 		self.nbThreads=general.get("nbThreads", nbDefaultThreads)
-
+		
 		self.mode=general.get("mode")
 		self.generate_vector=general.get("generate_vector", False)
 		self.do_preprocessing=general.get("preprocessing", False)
@@ -129,7 +129,7 @@ class snow_detector :
 		inputs=data["inputs"]
 		if(self.do_preprocessing):
 			self.vrt=str(inputs.get("vrt")) 
-
+		
 		self.img=str(inputs.get("image"))
 		self.dem=str(inputs.get("dem"))
 		self.cloud_init=str(inputs.get("cloud_mask"))
@@ -147,13 +147,13 @@ class snow_detector :
 		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
 		self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
 		self.nodata_path=op.join(self.path_tmp, "nodata_mask.tif")
-
+		
 		#Set bands parameters
 		self.nGreen=0
 		self.nSWIR=0
 		self.nRed=0 
 		self.nodata=0
-        if self.mode == "spot"
+		if self.mode == "spot":
 			self.nGreen=1 # Index of green band
 			self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
 			self.nRed=2 # Index of red band
