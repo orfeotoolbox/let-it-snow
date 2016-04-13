@@ -237,6 +237,7 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<itk::VectorI
   myfile.close();
 }
 
+// compute and return snowline
 
 short compute_snowline(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const bool reverse, const int offset, const int center_offset, const char * histo_file)
 {
@@ -275,7 +276,7 @@ short compute_snowline(const std::string & infname, const std::string & inmasksn
   imageToVectorImageFilter->SetInput(1, reader_snow->GetOutput());
   imageToVectorImageFilter->SetInput(2, reader_cloud->GetOutput());
 
-  //Compute and return zs
+  //Compute and return snowline
   return compute_snowline_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim, reverse, offset, center_offset, histo_file);
 }
 

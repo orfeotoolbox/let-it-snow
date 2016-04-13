@@ -90,13 +90,14 @@ def get_total_pixels(imgpath):
 	return total_pixels
 
 def get_total_pixels_without_nodata(nodata_mask):
-	dataset = gdal.Open(imgpath, GA_ReadOnly)
+	dataset = gdal.Open(nodata_mask, GA_ReadOnly)
 	#assume that snow and cloud images are of the same size
 	wide = dataset.RasterXSize
 	high = dataset.RasterYSize
 	band = dataset.GetRasterBand(1)
 	array = band.ReadAsArray(0, 0, wide, high)
-	return np.sum(array == 0) 
+	l = list(array.flatten())
+	return l.count(0)
 
 class snow_detector :
 	def __init__(self, data):
@@ -145,6 +146,7 @@ class snow_detector :
 		self.redBand_path=op.join(self.path_tmp,"red.tif")
 		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
 		self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
+		self.nodata_path=op.join(self.path_tmp, "nodata_mask.tif")
 
 		#Set bands parameters
 		self.nGreen=0
@@ -177,15 +179,15 @@ class snow_detector :
 		if self.do_preprocessing: 
 			dem_builder.build_dem(self.vrt, self.img, self.dem)
 			
-			#Compute NoData mask
-			call_subprocess(["otbcli_BandMath","-il",self.img ,"-out", op.join(self.path_tmp, "nodata_mask.tif") ,"uint8","-ram",str(self.ram),"-exp", "im1b1=="+str(self.nodata)+"?1:0"])
+		#Compute NoData mask
+		call_subprocess(["otbcli_BandMath","-il",self.img ,"-out", self.nodata_path ,"uint8","-ram",str(self.ram),"-exp", "im1b1=="+str(self.nodata)+"?1:0"])
 			
-			if nbPass >= 0 :
-				self.pass0()
-			if nbPass >= 1 :
-				self.pass1()
-			if nbPass == 2 :
-				self.pass2()
+		if nbPass >= 0 :
+			self.pass0()
+		if nbPass >= 1 :
+			self.pass1()
+		if nbPass == 2 :
+			self.pass2()
 				
 		#Gdal polygonize (needed to produce composition)
 		#TODO: Study possible loss and issue with vectorization product
@@ -296,11 +298,10 @@ class snow_detector :
 		call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
 		call_subprocess(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"), op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
 		
-		nodata_mask_path = op.join(self.path_tmp, "nodata_mask.tif")
-		self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels(nodata_mask_path)
+		self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
 		print self.snow_percent
 		
-		self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels(nodata_mask_path)
+		self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
 		print self.cloud_percent
 
 	def pass3(self):
