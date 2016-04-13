@@ -9,7 +9,7 @@ To read more about this product (in French):
 
 * [Slides Séminaire GEOSUD](http://www.equipex-geosud.fr/documents/10180/233868/7_GascoinHagolle2015-THEIA+CES+surface+enneigee_S%C3%A9minaire+Theia+Geosud+2015.pdf)
 
-The input files are SPOT-4 or Landsat-8 Level-2A images from Theia Land and the SRTM digital elevation model.
+The input files are SPOT  or Landsat-8 Level-2A images from Theia Land and the SRTM digital elevation model.
 
 ## Code Example
 
