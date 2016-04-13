@@ -143,7 +143,7 @@ class snow_detector :
         self.nSWIR=0
         self.nRed=0 
         self.nodata=0
-        if self.mode == "spot"
+        if self.mode == "spot":
             self.nGreen=1 # Index of green band
             self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
             self.nRed=2 # Index of red band
