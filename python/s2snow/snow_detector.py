@@ -85,111 +85,121 @@ def burn_polygons_edges(input_img,input_vec):
     call_subprocess(["rm"]+glob.glob(tmp_line+"*"))
 
 def get_total_pixels(imgpath):
-    dataset = gdal.Open(imgpath, GA_ReadOnly)
-    #assume that snow and cloud images are of the same size
-    total_pixels=dataset.RasterXSize*dataset.RasterYSize
-    return total_pixels
+	dataset = gdal.Open(imgpath, GA_ReadOnly)
+	#assume that snow and cloud images are of the same size
+	total_pixels=dataset.RasterXSize*dataset.RasterYSize
+	return total_pixels
+
+def get_total_pixels_without_nodata(nodata_mask):
+	dataset = gdal.Open(nodata_mask, GA_ReadOnly)
+	#assume that snow and cloud images are of the same size
+	wide = dataset.RasterXSize
+	high = dataset.RasterYSize
+	band = dataset.GetRasterBand(1)
+	array = band.ReadAsArray(0, 0, wide, high)
+	l = list(array.flatten())
+	return l.count(0)
 
 class snow_detector :
-    def __init__(self, data):
-        
-        self.version = VERSION
-        #Parse general parameters
-        general=data["general"]
-        self.path_tmp=str(general.get("pout"))
-        self.ram=general.get("ram", 512)
-        
-        try:
-            nbDefaultThreads = multiprocessing.cpu_count()
-        except NotImplementedError:
-            print "Cannot get max number of CPU on the system. nbDefaultThreads set to 1."  
-            nbDefaultThreads = 1
-        self.nbThreads=general.get("nbThreads", nbDefaultThreads)
-        
-        self.mode=general.get("mode")
-        self.generate_vector=general.get("generate_vector", False)
-        self.do_preprocessing=general.get("preprocessing", False)
-        self.do_postprocessing=True
-        self.shadow_value=general.get("shadow_value")
-        #Parse cloud data
-        cloud_mask=data["cloud_mask"]
-        self.rf=cloud_mask.get("rf")
-        self.rRed_darkcloud=cloud_mask.get("rRed_darkcloud")
-        self.rRed_backtocloud=cloud_mask.get("rRed_backtocloud")
-        #Parse input parameters
-        inputs=data["inputs"]
-        if(self.do_preprocessing):
-            self.vrt=str(inputs.get("vrt")) 
-        
-        self.img=str(inputs.get("image"))
-        self.dem=str(inputs.get("dem"))
-        self.cloud_init=str(inputs.get("cloud_mask"))
-        #Parse snow parameters
-        snow=data["snow"]
-        self.dz=snow.get("dz")
-        self.ndsi_pass1=snow.get("ndsi_pass1")
-        self.rRed_pass1=snow.get("rRed_pass1")
-        self.ndsi_pass2=snow.get("ndsi_pass2")
-        self.rRed_pass2=snow.get("rRed_pass2")
-        self.fsnow_lim=snow.get("fsnow_lim")
-        self.fsnow_total_lim=snow.get("fsnow_total_lim")
-        #Build useful paths
-        self.redBand_path=op.join(self.path_tmp,"red.tif")
-        self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
-        self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
-        
-        #Set bands parameters
-        self.nGreen=0
-        self.nSWIR=0
-        self.nRed=0 
-        self.nodata=0
-        if self.mode == "spot":
-            self.nGreen=1 # Index of green band
-            self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
-            self.nRed=2 # Index of red band
-            self.nodata=-10000 # no-data value
-        elif self.mode == "landsat":
-            self.nGreen=3
-            self.nSWIR=6
-            self.nRed=4 
-            self.nodata=-10000
-        elif self.mode == "s2":
-            sentinel_2_preprocessing()
-            #Set generic band index for Sentinel-2
-            self.nGreen=1
-            self.nRed=2
-            self.nSWIR=3
-        else:
-            sys.exit("Supported modes are spot4,landsat and s2.")
-    
-    def detect_snow(self, nbPass):
-        #Set maximum ITK threads
-        os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"]=str(self.nbThreads)
-        #External preprocessing
-        if self.do_preprocessing: 
-            dem_builder.build_dem(self.vrt, self.img, self.dem)
-        
-        if nbPass >= 0 :
-            self.pass0()
-        if nbPass >= 1 :
-            self.pass1()
-        if nbPass == 2 :
-            self.pass2()
-        
-        #Gdal polygonize (needed to produce composition)
-        #TODO: Study possible loss and issue with vectorization product
-        polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
-    
-        #RGB composition
-        composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"),self.nRed,self.nGreen,self.nSWIR)
-        
-        #Burn polygons edges on the composition
-        #TODO add pass1 snow polygon in yellow
-        burn_polygons_edges(op.join(self.path_tmp,"composition.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
-        
-        #External postprocessing
-        if self.do_postprocessing:
-            format_output.format_LIS(self) 
+	def __init__(self, data):
+
+		self.version = VERSION
+		#Parse general parameters
+		general=data["general"]
+		self.path_tmp=str(general.get("pout"))
+		self.ram=general.get("ram", 512)
+
+		try:
+			nbDefaultThreads = multiprocessing.cpu_count()
+		except NotImplementedError:
+			print "Cannot get max number of CPU on the system. nbDefaultThreads set to 1."  
+			nbDefaultThreads = 1
+		self.nbThreads=general.get("nbThreads", nbDefaultThreads)
+
+		self.mode=general.get("mode")
+		self.generate_vector=general.get("generate_vector", False)
+		self.do_preprocessing=general.get("preprocessing", False)
+		self.do_postprocessing=True
+		self.shadow_value=general.get("shadow_value")
+		#Parse cloud data
+		cloud_mask=data["cloud_mask"]
+		self.rf=cloud_mask.get("rf")
+		self.rRed_darkcloud=cloud_mask.get("rRed_darkcloud")
+		self.rRed_backtocloud=cloud_mask.get("rRed_backtocloud")
+		#Parse input parameters
+		inputs=data["inputs"]
+		if(self.do_preprocessing):
+			self.vrt=str(inputs.get("vrt")) 
+
+		self.img=str(inputs.get("image"))
+		self.dem=str(inputs.get("dem"))
+		self.cloud_init=str(inputs.get("cloud_mask"))
+		#Parse snow parameters
+		snow=data["snow"]
+		self.dz=snow.get("dz")
+		self.ndsi_pass1=snow.get("ndsi_pass1")
+		self.rRed_pass1=snow.get("rRed_pass1")
+		self.ndsi_pass2=snow.get("ndsi_pass2")
+		self.rRed_pass2=snow.get("rRed_pass2")
+		self.fsnow_lim=snow.get("fsnow_lim")
+		self.fsnow_total_lim=snow.get("fsnow_total_lim")
+		#Build useful paths
+		self.redBand_path=op.join(self.path_tmp,"red.tif")
+		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
+		self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
+		self.nodata_path=op.join(self.path_tmp, "nodata_mask.tif")
+
+		#Set bands parameters
+		self.nGreen=0
+		self.nSWIR=0
+		self.nRed=0 
+		self.nodata=0
+		if self.mode == "spot4" or mode == "spot5":
+			self.nGreen=1 # Index of green band
+			self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
+			self.nRed=2 # Index of red band
+			self.nodata=-10000 # no-data value
+		elif self.mode == "landsat":
+			self.nGreen=3
+			self.nSWIR=6
+			self.nRed=4 
+			self.nodata=-10000
+		elif self.mode == "s2":
+			sentinel_2_preprocessing()
+			#Set generic band index for Sentinel-2
+			self.nGreen=1
+			self.nRed=2
+			self.nSWIR=3
+		else:
+			sys.exit("Supported modes are spot4,landsat and s2.")
+
+	def detect_snow(self, nbPass):
+		#Set maximum ITK threads
+		os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"]=str(self.nbThreads)
+		#External preprocessing
+		if self.do_preprocessing: 
+			dem_builder.build_dem(self.vrt, self.img, self.dem)
+			
+		#Compute NoData mask
+		call_subprocess(["otbcli_BandMath","-il",self.img ,"-out", self.nodata_path ,"uint8","-ram",str(self.ram),"-exp", "im1b1=="+str(self.nodata)+"?1:0"])
+			
+		if nbPass >= 0 :
+			self.pass0()
+		if nbPass >= 1 :
+			self.pass1()
+		if nbPass == 2 :
+			self.pass2()
+				
+		#Gdal polygonize (needed to produce composition)
+		#TODO: Study possible loss and issue with vectorization product
+		polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
+
+		#RGB composition
+		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"),self.nRed,self.nGreen,self.nSWIR)
+
+		#Burn polygons edges on the composition
+		#TODO add pass1 snow polygon in yellow
+		burn_polygons_edges(op.join(self.path_tmp,"composition.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
 
     def pass0(self):
         #Pass -1 : generate custom cloud mask
@@ -270,27 +280,26 @@ class snow_detector :
                 #empty image pass2 is needed for computing snow_all
                 call_subprocess(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
 
-        else:
-            generic_snow_path=self.ndsi_pass1_path
-            #empty image pass2 is needed for computing snow_all
-            call_subprocess(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
-            
-        if self.generate_vector:
-            #Generate polygons for pass3 (useful for quality check)
-            polygonize(generic_snow_path,generic_snow_path,op.join(self.path_tmp,"pass3_vec.shp"))
-            
-        # Final update of the cloud mask (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
-        condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(self.rRed_backtocloud) + ")))?2:0"
-                        
-        call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
-
-        call_subprocess(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"),  op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
-        
-        self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels(generic_snow_path)
-        print self.snow_percent
-        
-        self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels(op.join(self.path_tmp,"cloud_refine.tif"))
-        print self.cloud_percent
+		else:
+			generic_snow_path=self.ndsi_pass1_path
+			#empty image pass2 is needed for computing snow_all
+			call_subprocess(["otbcli_BandMath", "-il", op.join(self.path_tmp,"pass1.tif"), "-out", op.join(self.path_tmp,"pass2.tif")+GDAL_OPT, "uint8", "-ram", str(1024), "-exp", "0"])
+			
+		if self.generate_vector:
+			#Generate polygons for pass3 (useful for quality check)
+			polygonize(generic_snow_path,generic_snow_path,op.join(self.path_tmp,"pass3_vec.shp"))
+			
+		# Final update of the cloud mask (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
+		condition_final= "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + str(self.rRed_backtocloud) + ")))?2:0"
+						
+		call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
+		call_subprocess(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"), op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
+		
+		self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
+		print self.snow_percent
+		
+		self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
+		print self.cloud_percent
 
     def pass3(self):
         #Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)

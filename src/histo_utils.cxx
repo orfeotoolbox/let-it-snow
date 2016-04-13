@@ -284,7 +284,50 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<
   myfile.close();
 }
 
-short compute_zs_ng_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const char* histo_file)
+
+// compute and return snowline
+short compute_snowline(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const bool reverse, const int offset, const int center_offset, const char * histo_file)
+{
+  /** Filters typedef */
+  typedef otb::Image<short, 2>                           ImageType;
+  typedef otb::ImageFileReader<ImageType>                ReaderType;
+  typedef otb::StreamingMinMaxImageFilter<ImageType>     StreamingMinMaxImageFilterType;
+
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetFileName(infname);
+
+  // Instantiating object (compute min/max from dem image)
+  StreamingMinMaxImageFilterType::Pointer filter = StreamingMinMaxImageFilterType::New();
+
+  filter->GetStreamer()->SetNumberOfLinesStrippedStreaming( 10 );
+  filter->SetInput(reader->GetOutput());
+  filter->Update();
+
+  ImageType::PixelType min;
+  ImageType::PixelType max;
+
+  min=filter->GetMinimum();
+  max=filter->GetMaximum();
+
+  typedef itk::ComposeImageFilter<ImageType> ImageToVectorImageFilterType;
+
+  ReaderType::Pointer reader_snow = ReaderType::New();
+  reader_snow->SetFileName(inmasksnowfname);
+
+  ReaderType::Pointer reader_cloud = ReaderType::New();
+  reader_cloud->SetFileName(inmaskcloudfname);
+
+  //Concatenate dem, snow and cloud mask in one VectorImage
+  ImageToVectorImageFilterType::Pointer imageToVectorImageFilter = ImageToVectorImageFilterType::New();
+  imageToVectorImageFilter->SetInput(0, reader->GetOutput());
+  imageToVectorImageFilter->SetInput(1, reader_snow->GetOutput());
+  imageToVectorImageFilter->SetInput(2, reader_cloud->GetOutput());
+
+  //Compute and return snowline
+  return compute_snowline_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim, reverse, offset, center_offset, histo_file);
+}
+
+short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const bool reverse, const int offset, const int center_offset,  const char* histo_file)
 {
   typedef itk::VectorImage<short, 2>  VectorImageType;
   typedef itk::Statistics::ImageToHistogramFilter<
