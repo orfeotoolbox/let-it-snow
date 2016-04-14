@@ -86,9 +86,13 @@ Python package dependencies: sys, subprocess, glob, os, json, gdal
 
 #### General
 
-Use cmake to configure your build. 
+In your build directory, use cmake to configure your build.
 ```` 
-Set LIS_DATA_ROOT
+cmake -C config.cmake source/lis/
+````
+In your config.cmake you need to set :
+````
+LIS_DATA_ROOT
 ````
 For OTB superbuild users these cmake variables need to be set:
 ````
@@ -111,24 +115,41 @@ or
 ````
 python setup.py install --user
 ````
-Update these environnement variables:
+Update LD_LIBRARY_PATH. Make sure that OTB and other dependencies directories are set in your environment variables:
 ````
-export PATH=/OTB/install/folder/bin/:$PATH
-export LD_LIBRARY_PATH=/OTB/install/folder/lib/:/let-it-snow/build/folder/bin/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/let-it-snow/build/folder/bin/:$LD_LIBRARY_PATH
 ````
 let-it-snow is now installed.
 
+#### On venuscalc
 
-#### To configure OTB on venuscalc
+To configure OTB :
 ````
 source /mnt/data/home/otbtest/config_otb.sh
 ````
-#### Then build the lis project using cmake
+Then build the lis project using cmake
 ````
 cd $build_dir
 cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
 make
 ````
+To install s2snow python module. 
+In your build folder:
+````
+cd python
+python setup.py install
+```` 
+or
+````
+python setup.py install --user
+````
+Update LD_LIBRARY_PATH. Make sure that OTB and other dependencies directories are set in your environment variables:
+````
+export LD_LIBRARY_PATH=/let-it-snow/build/folder/bin/:$LD_LIBRARY_PATH
+````
+
+let-it-snow is now installed.
+
 ## Tests
 
 Enable tests with BUILD_TESTING cmake option. Use ctest to run tests. Do not forget to clean your output test directory when you run a new set of tests.
