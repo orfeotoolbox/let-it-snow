@@ -6,11 +6,11 @@ from s2snow import snow_detector
 VERSION="0.1"
 
 def show_help():
-    """Show help of the s2snow script"""
-    print "This script is used to compute snow mask using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
-    print "Usage: s2snow.py param.json"
-    print "s2snow.py version to show version"
-    print "s2snow.py help to show help"
+    """Show help of the run_snow_detector script"""
+    print "This script is used to run the snow detector module that compute snow mask using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
+    print "Usage: python run_snow_detector.py param.json"
+    print "python run_snow_detector.py version to show version"
+    print "python run_snow_detector.py help to show help"
 
 def show_version():
     print VERSION
