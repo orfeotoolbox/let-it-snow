@@ -4,7 +4,7 @@
         "shadow_value":64,
         "ram":1024,
 	"nbThreads":1,
-	"mode":"spot4",
+	"mode":"spot",
 	"generate_vector":false,
 	"preprocessing":false,
 	"postprocessing":false
@@ -13,8 +13,7 @@
 	"vrt":"inputvrt",
         "image":"inputimage",
         "dem":"inputdem",
-        "cloud_mask":"inputcloud",
-	"xml":"inputxml"
+        "cloud_mask":"inputcloud"
     },
     "cloud_mask":{
         "rf":8,

@@ -26,6 +26,7 @@ import json
 import gdal
 from gdalconst import *
 import glob
+import multiprocessing
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -94,32 +95,44 @@ class snow_detector :
         
         self.version = VERSION
         #Parse general parameters
-        self.path_tmp=str(data["general"]["pout"])
-        self.ram=data["general"]["ram"]
-        self.nbThreads=data["general"]["nbThreads"]
-        self.mode=data["general"]["mode"]
-        self.generate_vector=data["general"]["generate_vector"]
-        self.do_preprocessing=data["general"]["preprocessing"]
+        general=data["general"]
+        self.path_tmp=str(general.get("pout"))
+        self.ram=general.get("ram", 512)
+        
+        try:
+            nbDefaultThreads = multiprocessing.cpu_count()
+        except NotImplementedError:
+            print "Cannot get max number of CPU on the system. nbDefaultThreads set to 1."  
+            nbDefaultThreads = 1
+        self.nbThreads=general.get("nbThreads", nbDefaultThreads)
+        
+        self.mode=general.get("mode")
+        self.generate_vector=general.get("generate_vector", False)
+        self.do_preprocessing=general.get("preprocessing", False)
         self.do_postprocessing=True
-        self.shadow_value=data["general"]["shadow_value"]
+        self.shadow_value=general.get("shadow_value")
         #Parse cloud data
-        self.rf=data["cloud_mask"]["rf"]
-        self.rRed_darkcloud=data["cloud_mask"]["rRed_darkcloud"]
-        self.rRed_backtocloud=data["cloud_mask"]["rRed_backtocloud"]
+        cloud_mask=data["cloud_mask"]
+        self.rf=cloud_mask.get("rf")
+        self.rRed_darkcloud=cloud_mask.get("rRed_darkcloud")
+        self.rRed_backtocloud=cloud_mask.get("rRed_backtocloud")
         #Parse input parameters
-        self.vrt=str(data["inputs"]["vrt"]) 
-        self.img=str(data["inputs"]["image"])
-        self.dem=str(data["inputs"]["dem"])
-        self.xmltemplate = str(data["inputs"]["xml"])
-        self.cloud_init=str(data["inputs"]["cloud_mask"])
+        inputs=data["inputs"]
+        if(self.do_preprocessing):
+            self.vrt=str(inputs.get("vrt")) 
+        
+        self.img=str(inputs.get("image"))
+        self.dem=str(inputs.get("dem"))
+        self.cloud_init=str(inputs.get("cloud_mask"))
         #Parse snow parameters
-        self.dz=data["snow"]["dz"]
-        self.ndsi_pass1=data["snow"]["ndsi_pass1"]
-        self.rRed_pass1=data["snow"]["rRed_pass1"]
-        self.ndsi_pass2=data["snow"]["ndsi_pass2"]
-        self.rRed_pass2=data["snow"]["rRed_pass2"]
-        self.fsnow_lim=data["snow"]["fsnow_lim"]
-        self.fsnow_total_lim=data["snow"]["fsnow_total_lim"]
+        snow=data["snow"]
+        self.dz=snow.get("dz")
+        self.ndsi_pass1=snow.get("ndsi_pass1")
+        self.rRed_pass1=snow.get("rRed_pass1")
+        self.ndsi_pass2=snow.get("ndsi_pass2")
+        self.rRed_pass2=snow.get("rRed_pass2")
+        self.fsnow_lim=snow.get("fsnow_lim")
+        self.fsnow_total_lim=snow.get("fsnow_total_lim")
         #Build useful paths
         self.redBand_path=op.join(self.path_tmp,"red.tif")
         self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
@@ -130,7 +143,7 @@ class snow_detector :
         self.nSWIR=0
         self.nRed=0 
         self.nodata=0
-        if self.mode == "spot4":
+        if self.mode == "spot":
             self.nGreen=1 # Index of green band
             self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
             self.nRed=2 # Index of red band
