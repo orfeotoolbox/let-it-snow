@@ -115,9 +115,10 @@ or
 ````
 python setup.py install --user
 ````
-Update LD_LIBRARY_PATH. Make sure that OTB and other dependencies directories are set in your environment variables:
+Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
 ````
-export LD_LIBRARY_PATH=/let-it-snow/build/folder/bin/:$LD_LIBRARY_PATH
+export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
+export PATH=/your/build/directory/bin:$PATH
 ````
 let-it-snow is now installed.
 
@@ -143,11 +144,11 @@ or
 ````
 python setup.py install --user
 ````
-Update LD_LIBRARY_PATH. Make sure that OTB and other dependencies directories are set in your environment variables:
+Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
 ````
-export LD_LIBRARY_PATH=/let-it-snow/build/folder/bin/:$LD_LIBRARY_PATH
+export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
+export PATH=/your/build/directory/bin:$PATH
 ````
-
 let-it-snow is now installed.
 
 ## Tests
