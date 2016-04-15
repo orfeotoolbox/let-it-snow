@@ -10,7 +10,8 @@
         "t0Path":"t0path",
         "p1Path":"p1path",
 	"p2Path":"p2path",
-	"demPath":"dempath"
+	"demPath":"dempath",
+	"refPath":"refpath",
     },
     "steps":{
 	"s1":true,

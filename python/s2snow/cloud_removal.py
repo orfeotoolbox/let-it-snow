@@ -1,4 +1,5 @@
-import sys, numpy, json, multiprocessing
+import sys, json, multiprocessing, csv
+import numpy as np
 from scipy import ndimage
 from subprocess import call
 import os
@@ -22,10 +23,10 @@ def step2(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 
 def step3(t0_path, dem_path, hs_min, hs_max, output_path, ram):
     #S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
-    call(["otbcli_BandMath","-ram", str(ram), "-il", t0_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1<"+str(hs_min)+"?255:im1b1):im1b1"])
+    call(["otbcli_BandMath","-ram", str(ram), "-il", t0_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1<"+str(hs_min)+"?0:im1b1):im1b1"])
  
     #S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
-    call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?255:im1b1):im1b1"])
+    call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?100:im1b1):im1b1"])
 
 def step4(t0_path, output_path, window_size):
     
@@ -114,7 +115,17 @@ def step5_internal(array, array_dem):
 
 	# Use the mask to set corresponding elements
 	array[1:-1,1:-1][mask] = 100
+
+def compute_stats(image, reference_image):
+
+	call(["otbcli_ComputeConfusionMatrix", "-in", image, "-out", "confmat.csv", "-ref.raster.in", reference_image])
+	confmat = np.genfromtxt("confmat.csv", delimiter=',')
 	
+	confmat_sum = np.sum(confmat)
+	confmat_overallacc = np.sum(np.diag(confmat))/confmat_sum
+	#confmat_snowacc = (confmat[0,0] + np.sum(confmat[1,1 ; 2,2]))/confmat_sum
+	return confmat_overallacc
+
 def main(argv):
 
 	json_file=argv[1]
@@ -141,6 +152,7 @@ def main(argv):
 	p1_path=inputs.get("p1Path")
 	p2_path=inputs.get("p2Path")
 	dem_path=inputs.get("demPath")
+	ref_path=inputs.get("refPath")
 
 	parameters=data["parameters"]
 	hs_min=parameters.get("hsMin")
@@ -154,27 +166,36 @@ def main(argv):
 	s4=steps.get("s4", True)
 	s5=steps.get("s5", True)
 	
+	stats = [0,0,0,0,0]
+	
 	latest_file_path=t0_path
 	if s1:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step1.tif")
 		step1(m1_path, latest_file_path, p1_path, temp_output_path, ram)
 		latest_file_path=temp_output_path
+		stats[0] = compute_stats(latest_file_path, ref_path)
 	if s2:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step2.tif")
 		step2(m2_path, m1_path, latest_file_path, p1_path, p2_path, temp_output_path, ram)
 		latest_file_path=temp_output_path
+		stats[1] = compute_stats(latest_file_path, ref_path)
 	if s3:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step3.tif")
 		step3(latest_file_path, dem_path, hs_min, hs_max, temp_output_path, ram)
 		latest_file_path=temp_output_path
+		stats[2] = compute_stats(latest_file_path, ref_path)
 	if s4:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step4.tif")
 		step4(latest_file_path, temp_output_path, window_size)
 		latest_file_path=temp_output_path
+		stats[3] = compute_stats(latest_file_path, ref_path)
 	if s5:
 		output_path=op.join(output_path, "cloud_removal_output_step5.tif")
 		step5(latest_file_path, dem_path, output_path, window_size)
 		latest_file_path=temp_output_path
+		stats[4] = compute_stats(latest_file_path, ref_path)
+	
+	print stats
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
