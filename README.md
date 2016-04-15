@@ -128,18 +128,8 @@ To configure OTB 5.2.1 :
 
 Create a bash file which contains:
 ````
-#!/bin/bash
-export ITK_AUTOLOAD_PATH=""
-export OTB_HOME=/mnt/data/home/otbtest/OTB/SuperBuild-5.2.1
-export PATH=${OTB_HOME}/bin:$PATH
-export LD_LIBRARY_PATH=${OTB_HOME}/lib:${OTB_HOME}/lib/otb/python
-export PYTHONPATH=${OTB_HOME}/lib/otb/python:${PYTHONPATH}
+source /mnt/data/home/otbtest/config_otb_5.2.1.sh
 ````
-Source the bash script to set otb variables
-````
-source bash_file.sh
-````
-There will probably a /mnt/data/home/otbtest/config_otb_5.2.1.sh soon available on venuscalc.
 
 Then build the lis project using cmake
 ````
