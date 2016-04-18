@@ -7,6 +7,23 @@ import os.path as op
 import gdal
 import gdalconst
 
+def get_raster_as_array(raster_file_name):
+	dataset = gdal.Open(raster_file_name, gdalconst.GA_ReadOnly)    
+	wide = dataset.RasterXSize
+	high = dataset.RasterYSize
+	band = dataset.GetRasterBand(1)
+	array = band.ReadAsArray(0, 0, wide, high)
+	return array, dataset
+def set_array_as_raster(array, dataset, output_path):
+	high, wide = array.shape
+	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
+	output.GetRasterBand(1).WriteArray(array)
+	
+	# georeference the image and set the projection
+	output.SetGeoTransform(dataset.GetGeoTransform())
+	output.SetProjection(dataset.GetProjection()) 
+	output = None
+
 def show_help():
 	print "This script is used to remove clouds from snow data"
 	print "Usage: cloud_removal.py config.json"
@@ -32,23 +49,13 @@ def step4(t0_path, output_path, window_size):
     
 	# four-pixels neighboring    
 	print "Starting step 4"
-	dataset = gdal.Open(t0_path, gdalconst.GA_ReadOnly)
-	wide = dataset.RasterXSize
-	high = dataset.RasterYSize
-	band = dataset.GetRasterBand(1)
-	array = band.ReadAsArray(0, 0, wide, high)
+	array, dataset = get_raster_as_array(t0_path)
 	
 	#compute 4 pixel snow neighboring
 	step4_internal(array)
 	
+	set_array_as_raster(array, dataset, output_path)
 	#create file
-	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
-	output.GetRasterBand(1).WriteArray(array)
-	
-	# georeference the image and set the projection
-	output.SetGeoTransform(dataset.GetGeoTransform())
-	output.SetProjection(dataset.GetProjection()) 
-	output = None
 	print "End of step 4"
 
 def step4_internal(array):
@@ -67,27 +74,14 @@ def step4_internal(array):
 def step5(t0_path, dem_path, output_path, window_size):
 	# S(y,x,t) = 1 if (S(y+k,x+k,t)(kc(-1,1)) = 1 and H(y+k,x+k)(kc(-1,1)) < H(y,x))
 	print "Starting step 5"
-	dataset = gdal.Open(t0_path, gdalconst.GA_ReadOnly)    
-	wide = dataset.RasterXSize
-	high = dataset.RasterYSize
-	band = dataset.GetRasterBand(1)
-	array = band.ReadAsArray(0, 0, wide, high)
-
-	dataset_dem = gdal.Open(dem_path, gdalconst.GA_ReadOnly)
-	band_dem = dataset_dem.GetRasterBand(1)
-	array_dem = band_dem.ReadAsArray(0, 0, wide, high)
-
-	#compute step5
+	array, dataset = get_raster_as_array(t0_path) 
+	array_dem, dataset_dem = get_raster_as_array(dem_path)
+	
+	# step5
 	step5_internal(array, array_dem)
 
 	#create file
-	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
-	output.GetRasterBand(1).WriteArray(array) 
-	
-	# georeference the image and set the projection
-	output.SetGeoTransform(dataset.GetGeoTransform())
-	output.SetProjection(dataset.GetProjection()) 
-	output = None
+	set_array_as_raster(array, dataset, output_path)
 	print "End of step 5"
 
 def step5_internal(array, array_dem):
@@ -116,18 +110,39 @@ def step5_internal(array, array_dem):
 	# Use the mask to set corresponding elements
 	array[1:-1,1:-1][mask] = 100
 
-def compute_stats(image, reference_image):
-
-	call(["otbcli_ComputeConfusionMatrix", "-in", image, "-out", "confmat.csv", "-ref.raster.in", reference_image])
-	confmat = np.genfromtxt("confmat.csv", delimiter=',')
+def compute_stats(image, image_relative, image_reference):
+	array, dataset = get_raster_as_array(image)
+	array_relative, dataset = get_raster_as_array(image_relative)
+	array_reference, dataset = get_raster_as_array(image_reference)
 	
-	confmat_sum = np.sum(confmat)
-	confmat_overallacc = np.sum(np.diag(confmat))/confmat_sum
-	#confmat_snowacc = (confmat[0,0] + np.sum(confmat[1,1 ; 2,2]))/confmat_sum
-	return confmat_overallacc
+	# Relative Cloud Elimination
+	msk_cloud_elim = (array_relative == 205) & (array != 205)
+	cloud_elim = np.sum(msk_cloud_elim)
+	# Various stats from paper
+	#TODO Facto
+	msk_StoS = (array == 100) & (array_reference == 100) & (array_relative == 205) & (array != 205)
+	msk_LtoL = (array == 0) & (array_reference == 0) & (array_relative == 205) & (array != 205)
+	msk_StoL = (array == 0) & (array_reference == 100) & (array_relative == 205) & (array != 205)
+	msk_LtoS = (array == 100) & (array_reference == 0) & (array_relative == 205) & (array != 205)
+	
+	StoS = np.sum(msk_StoS)
+	LtoL = np.sum(msk_LtoL)
+	StoL = np.sum(msk_StoL)
+	LtoS = np.sum(msk_LtoS)
+	
+	TRUE = StoS + LtoL
+	FALSE = StoL + LtoS
+
+	# return all the result
+	return cloud_elim, TRUE, FALSE, StoS, LtoL, StoL, LtoS
+	
+def compute_cloud(image):
+	array, dataset = get_raster_as_array(image)
+	msk_cloud = (array == 205)
+	return np.sum(msk_cloud)
 
 def main(argv):
-
+	
 	json_file=argv[1]
 	with open(json_file) as json_data_file:
 		data = json.load(json_data_file)
@@ -166,37 +181,45 @@ def main(argv):
 	s4=steps.get("s4", True)
 	s5=steps.get("s5", True)
 	
-	stats = [0,0,0,0,0]
+	stats = []
 	
+	#TODO FACTO. Generic step ? arg function
 	latest_file_path=t0_path
 	if s1:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step1.tif")
 		step1(m1_path, latest_file_path, p1_path, temp_output_path, ram)
+		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
-		stats[0] = compute_stats(latest_file_path, ref_path)
 	if s2:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step2.tif")
 		step2(m2_path, m1_path, latest_file_path, p1_path, p2_path, temp_output_path, ram)
+		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
-		stats[1] = compute_stats(latest_file_path, ref_path)
 	if s3:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step3.tif")
 		step3(latest_file_path, dem_path, hs_min, hs_max, temp_output_path, ram)
+		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
-		stats[2] = compute_stats(latest_file_path, ref_path)
 	if s4:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step4.tif")
 		step4(latest_file_path, temp_output_path, window_size)
+		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
-		stats[3] = compute_stats(latest_file_path, ref_path)
 	if s5:
-		output_path=op.join(output_path, "cloud_removal_output_step5.tif")
-		step5(latest_file_path, dem_path, output_path, window_size)
+		temp_output_path=op.join(output_path, "cloud_removal_output_step5.tif")
+		step5(latest_file_path, dem_path, temp_output_path, window_size)
+		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
-		stats[4] = compute_stats(latest_file_path, ref_path)
+		
+	stats_array = np.array(stats)
+	print stats_array
 	
-	print stats
+	# Python list supported not numpy array
+	statsf = open('stats.json', 'w')
+	json.dump(stats, statsf)
+	statsf.close()
 
+	
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         show_help()
