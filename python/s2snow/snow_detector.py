@@ -153,7 +153,7 @@ class snow_detector :
 		self.nSWIR=0
 		self.nRed=0 
 		self.nodata=0
-        if self.mode == "spot":
+		if self.mode == "spot":
 			self.nGreen=1 # Index of green band
 			self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
 			self.nRed=2 # Index of red band
@@ -171,7 +171,7 @@ class snow_detector :
 			self.nSWIR=3
 		else:
 			sys.exit("Supported modes are spot4,landsat and s2.")
-
+		
 	def detect_snow(self, nbPass):
 		#Set maximum ITK threads
 		os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"]=str(self.nbThreads)
