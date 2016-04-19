@@ -1,8 +1,8 @@
-import sys, json, multiprocessing, csv
+import os, sys, json, multiprocessing, csv
 import numpy as np
+import matplotlib.pyplot as plot
 from scipy import ndimage
 from subprocess import call
-import os
 import os.path as op
 import gdal
 import gdalconst
@@ -30,13 +30,13 @@ def show_help():
 
 def step1(m1_path, t0_path, p1_path, output_path, ram):
     #S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
-    call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==100?100:(im1b1==100&&im3b1==100)?100:im2b1"])
+    call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:im2b1):im2b1"])
 
 def step2(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
     #S(y,x,t) = 1 if (S(y,x,t-2) = 1 and S(y,x,t+1) = 1)
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m2_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==100?100:(im1b1==100&&im3b1==100)?100:im2b1"])
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m2_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:im2b1):im2b1"])
     #S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+2) = 1)
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", "im2b1==100?100:(im1b1==100&&im3b1==100)?100:im2b1"])
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:im2b1):im2b1"])
 
 def step3(t0_path, dem_path, hs_min, hs_max, output_path, ram):
     #S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
@@ -110,20 +110,26 @@ def step5_internal(array, array_dem):
 	# Use the mask to set corresponding elements
 	array[1:-1,1:-1][mask] = 100
 
+def compute_cloud(image):
+	array, dataset = get_raster_as_array(image)
+	msk_cloud = (array == 205)
+	return np.sum(msk_cloud)
+
+
 def compute_stats(image, image_relative, image_reference):
 	array, dataset = get_raster_as_array(image)
 	array_relative, dataset = get_raster_as_array(image_relative)
 	array_reference, dataset = get_raster_as_array(image_reference)
 	
 	# Relative Cloud Elimination
-	msk_cloud_elim = (array_relative == 205) & (array != 205)
+	msk_cloud_elim = (array_relative == 205) & (array != 205) & (array_reference != 205)
 	cloud_elim = np.sum(msk_cloud_elim)
 	# Various stats from paper
 	#TODO Facto
-	msk_StoS = (array == 100) & (array_reference == 100) & (array_relative == 205) & (array != 205)
-	msk_LtoL = (array == 0) & (array_reference == 0) & (array_relative == 205) & (array != 205)
-	msk_StoL = (array == 0) & (array_reference == 100) & (array_relative == 205) & (array != 205)
-	msk_LtoS = (array == 100) & (array_reference == 0) & (array_relative == 205) & (array != 205)
+	msk_StoS = (array == 100) & (array_reference == 100) & (array_relative == 205)
+	msk_LtoL = (array == 0) & (array_reference == 0) & (array_relative == 205)
+	msk_StoL = (array == 0) & (array_reference == 100) & (array_relative == 205)
+	msk_LtoS = (array == 100) & (array_reference == 0) & (array_relative == 205)
 	
 	StoS = np.sum(msk_StoS)
 	LtoL = np.sum(msk_LtoL)
@@ -135,12 +141,15 @@ def compute_stats(image, image_relative, image_reference):
 
 	# return all the result
 	return cloud_elim, TRUE, FALSE, StoS, LtoL, StoL, LtoS
-	
-def compute_cloud(image):
-	array, dataset = get_raster_as_array(image)
-	msk_cloud = (array == 205)
-	return np.sum(msk_cloud)
 
+def plot_stats(array):
+	steps = range(0,array.shape[0])
+	TCE = array[:,0]
+	TRUE = array[:,1]
+	FALSE = array[:,2]
+	plot.plot(steps, TCE, TRUE, FALSE)
+	plot.show()
+	
 def main(argv):
 	
 	json_file=argv[1]
@@ -213,6 +222,8 @@ def main(argv):
 		
 	stats_array = np.array(stats)
 	print stats_array
+	
+	#plot_stats(stats_array)
 	
 	# Python list supported not numpy array
 	statsf = open('stats.json', 'w')
