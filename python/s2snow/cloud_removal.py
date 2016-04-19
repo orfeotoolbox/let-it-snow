@@ -120,7 +120,9 @@ def compute_stats(image, image_relative, image_reference):
 	array, dataset = get_raster_as_array(image)
 	array_relative, dataset = get_raster_as_array(image_relative)
 	array_reference, dataset = get_raster_as_array(image_reference)
+	return compute_stats_internal(array, array_relative, array_reference)
 	
+def compute_stats_internal(array, array_relative, array_reference):
 	# Relative Cloud Elimination
 	msk_cloud_elim = (array_relative == 205) & (array != 205) & (array_reference != 205)
 	cloud_elim = np.sum(msk_cloud_elim)
@@ -141,6 +143,25 @@ def compute_stats(image, image_relative, image_reference):
 
 	# return all the result
 	return cloud_elim, TRUE, FALSE, StoS, LtoL, StoL, LtoS
+def format_percent(array, total_cloud):
+	#TODO FACTO
+	stats_array_percent = np.copy(array.astype(float))
+	stats_array_percent[:,6] = np.divide(stats_array_percent[:,6], stats_array_percent[:,2])
+	stats_array_percent[:,5] = np.divide(stats_array_percent[:,5], stats_array_percent[:,2])
+	stats_array_percent[:,4] = np.divide(stats_array_percent[:,4], stats_array_percent[:,1])
+	stats_array_percent[:,3] = np.divide(stats_array_percent[:,3], stats_array_percent[:,1]) 
+	stats_array_percent[:,2] = np.divide(stats_array_percent[:,2], stats_array_percent[:,0])
+	stats_array_percent[:,1] = np.divide(stats_array_percent[:,1], stats_array_percent[:,0]) 
+	stats_array_percent[:,0] /= total_cloud
+	stats_array_percent[:,1] = np.multiply(stats_array_percent[:,1], stats_array_percent[:,0])
+	stats_array_percent[:,2] = np.multiply(stats_array_percent[:,2], stats_array_percent[:,0]) 
+	stats_array_percent[:,3] = np.multiply(stats_array_percent[:,3], stats_array_percent[:,1])
+	stats_array_percent[:,4] = np.multiply(stats_array_percent[:,4], stats_array_percent[:,1]) 
+	stats_array_percent[:,5] = np.multiply(stats_array_percent[:,5], stats_array_percent[:,2])
+	stats_array_percent[:,6] = np.multiply(stats_array_percent[:,6], stats_array_percent[:,2]) 
+
+	stats_array_percent *= 100
+	return stats_array_percent
 
 def plot_stats(array):
 	steps = range(0,array.shape[0])
@@ -221,7 +242,14 @@ def main(argv):
 		latest_file_path=temp_output_path
 		
 	stats_array = np.array(stats)
+	stats_array_percent = format_percent(stats_array, compute_cloud(t0_path))
+	stats_array = np.vstack([stats_array, np.sum(stats_array, axis=0)]) #add total to array
+	stats_array_percent = np.vstack([stats_array_percent, np.sum(stats_array_percent, axis=0)]) #add total to array
+	
 	print stats_array
+	np.set_printoptions(precision=3)
+	np.set_printoptions(suppress=True)
+	print stats_array_percent
 	
 	#plot_stats(stats_array)
 	
@@ -229,7 +257,12 @@ def main(argv):
 	statsf = open('stats.json', 'w')
 	json.dump(stats, statsf)
 	statsf.close()
-
+	
+	statsp = stats_array_percent.tolist() 
+	statspf = open('stats_percent.json', 'w')
+	json.dump(statsp, statspf)
+	statspf.close()
+	
 	
 if __name__ == "__main__":
     if len(sys.argv) != 2:
