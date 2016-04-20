@@ -7,6 +7,10 @@ import os.path as op
 import gdal
 import gdalconst
 
+def show_help():
+	print "This script is used to remove clouds from snow data"
+	print "Usage: cloud_removal.py config.json"
+
 def get_raster_as_array(raster_file_name):
 	dataset = gdal.Open(raster_file_name, gdalconst.GA_ReadOnly)    
 	wide = dataset.RasterXSize
@@ -23,10 +27,6 @@ def set_array_as_raster(array, dataset, output_path):
 	output.SetGeoTransform(dataset.GetGeoTransform())
 	output.SetProjection(dataset.GetProjection()) 
 	output = None
-
-def show_help():
-	print "This script is used to remove clouds from snow data"
-	print "Usage: cloud_removal.py config.json"
 
 def step1(m1_path, t0_path, p1_path, output_path, ram):
     #S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
@@ -170,13 +170,9 @@ def plot_stats(array):
 	FALSE = array[:,2]
 	plot.plot(steps, TCE, TRUE, FALSE)
 	plot.show()
-	
-def main(argv):
-	
-	json_file=argv[1]
-	with open(json_file) as json_data_file:
-		data = json.load(json_data_file)
-		
+
+def run(data):
+
 	general=data["general"]
 	output_path=general.get("pout")
 	ram=general.get("ram", 512)
@@ -263,6 +259,8 @@ def main(argv):
 	json.dump(statsp, statspf)
 	statspf.close()
 	
+def main(argv):
+	run(argv)
 	
 if __name__ == "__main__":
     if len(sys.argv) != 2:
