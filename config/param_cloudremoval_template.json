@@ -2,7 +2,8 @@
     "general":{
         "pout":"outputdir",
         "ram":512,
-	"nbThreads":1
+	"nbThreads":1,
+	"stats":true
          },
     "inputs":{
 	"m2Path":"m2path",

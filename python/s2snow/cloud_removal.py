@@ -168,7 +168,11 @@ def plot_stats(array):
 	TCE = array[:,0]
 	TRUE = array[:,1]
 	FALSE = array[:,2]
-	plot.plot(steps, TCE, TRUE, FALSE)
+	StoS = array[:,3]
+	LtoL = array[:,4]
+	StoL = array[:,5]
+	LtoS = array[:,6]
+	plot.plot(steps, TCE, TRUE, FALSE, StoS, LtoL, StoL, LtoS)
 	plot.show()
 
 def run(data):
@@ -176,7 +180,8 @@ def run(data):
 	general=data["general"]
 	output_path=general.get("pout")
 	ram=general.get("ram", 512)
-
+	stats=general.get("stats", True)
+	
 	try:
 		nb_defaultThreads = multiprocessing.cpu_count()
 	except NotImplementedError:
@@ -214,50 +219,56 @@ def run(data):
 	if s1:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step1.tif")
 		step1(m1_path, latest_file_path, p1_path, temp_output_path, ram)
-		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+		if stats:
+			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s2:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step2.tif")
 		step2(m2_path, m1_path, latest_file_path, p1_path, p2_path, temp_output_path, ram)
-		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+		if stats:
+			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s3:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step3.tif")
 		step3(latest_file_path, dem_path, hs_min, hs_max, temp_output_path, ram)
-		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+		if stats:
+			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s4:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step4.tif")
 		step4(latest_file_path, temp_output_path, window_size)
-		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+		if stats:
+			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s5:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step5.tif")
 		step5(latest_file_path, dem_path, temp_output_path, window_size)
-		stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+		if stats:
+			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
+	
+	if stats:
+		stats_array = np.array(stats)
+		stats_array_percent = format_percent(stats_array, compute_cloud(t0_path))
+		stats_array = np.vstack([stats_array, np.sum(stats_array, axis=0)]) #add total to array
+		stats_array_percent = np.vstack([stats_array_percent, np.sum(stats_array_percent, axis=0)]) #add total to array
+	
+		print stats_array
+		np.set_printoptions(precision=3)
+		np.set_printoptions(suppress=True)
+		print stats_array_percent
+	
+		#plot_stats(stats_array)
 		
-	stats_array = np.array(stats)
-	stats_array_percent = format_percent(stats_array, compute_cloud(t0_path))
-	stats_array = np.vstack([stats_array, np.sum(stats_array, axis=0)]) #add total to array
-	stats_array_percent = np.vstack([stats_array_percent, np.sum(stats_array_percent, axis=0)]) #add total to array
-	
-	print stats_array
-	np.set_printoptions(precision=3)
-	np.set_printoptions(suppress=True)
-	print stats_array_percent
-	
-	#plot_stats(stats_array)
-	
-	# Python list supported not numpy array
-	statsf = open('stats.json', 'w')
-	json.dump(stats, statsf)
-	statsf.close()
-	
-	statsp = stats_array_percent.tolist() 
-	statspf = open('stats_percent.json', 'w')
-	json.dump(statsp, statspf)
-	statspf.close()
+		# Python list supported not numpy array
+		statsf = open('stats.json', 'w')
+		json.dump(stats, statsf)
+		statsf.close()
+		
+		statsp = stats_array_percent.tolist() 
+		statspf = open('stats_percent.json', 'w')
+		json.dump(statsp, statspf)
+		statspf.close()
 	
 def main(argv):
 	run(argv)
