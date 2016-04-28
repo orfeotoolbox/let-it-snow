@@ -74,7 +74,6 @@ fi
 cat << EOF >> $lis_job_script_PBS
 #copy input data to tmp
 
-rm -r $data_tmp
 mkdir -p $data_tmp
 mkdir -p $data_input_tmp/\$tile/\$(basename \$imgdir_path)
 mkdir -p $data_input_tmp/SRTM/\$tile
