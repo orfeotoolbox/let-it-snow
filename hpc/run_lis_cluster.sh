@@ -52,7 +52,7 @@ cat << EOF > $lis_job_script_PBS
 #!/bin/bash
 #PBS -N lis
 #PBS -l select=1:ncpus=1
-#PBS -l walltime=00:08:00
+#PBS -l walltime=00:15:00
 #PBS -o $lis_log
 #PBS -e $lis_log
 EOF
