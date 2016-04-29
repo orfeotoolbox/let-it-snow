@@ -329,7 +329,7 @@ short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compos
   short snowline = -1;
   if(reverse)
     {
-      for (unsigned int i=histogram->GetSize()[0]-1; i>=0; i--)
+      for (int i=histogram->GetSize()[0]-1; i>=0; i--)
 	{
 	  snowline = get_elev_snowline_from_bin(histogram, i, fsnow_lim, offset, center_offset);
 	  if(snowline != -1)
