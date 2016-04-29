@@ -41,11 +41,6 @@ done
 echo "Done"
 echo "Number of images to compute: $tiles_nb"
 
-#tmp directories
-data_tmp=$TMPCI/test_lis
-data_input_tmp=$data_tmp/input
-data_input_dem_tmp=$data_input_tmp/SRTM
-data_output_tmp=$data_tmp/output
 echo "Generating pbs script..."
 #Create job pbs script
 cat << EOF > $lis_job_script_PBS
@@ -73,13 +68,17 @@ EOF
 fi
 cat << EOF >> $lis_job_script_PBS
 #copy input data to tmp
+#tmp directories
+rm -r \$TMPCI/\$(basename \$imgdir_path)_LIS
+data_tmp=\$TMPCI/\$(basename \$imgdir_path)_LIS
+data_input_tmp=\$data_tmp/input
+data_output_tmp=\$data_tmp/output
 
-mkdir -p $data_tmp
-mkdir -p $data_input_tmp/\$tile/\$(basename \$imgdir_path)
-mkdir -p $data_input_tmp/SRTM/\$tile
+mkdir -p \$data_input_tmp/\$tile/\$(basename \$imgdir_path)
+mkdir -p \$data_input_tmp/SRTM/\$tile
 
-cp -r \$imgdir_path $data_input_tmp/\$tile/\$(basename \$imgdir_path)
-cp -r \$dem_path $data_input_tmp/SRTM/\$tile/\$(basename \$dem_path)
+cp -r \$imgdir_path/* $data_input_tmp/\$tile/\$(basename \$imgdir_path)
+cp \$dem_path $data_input_tmp/SRTM/\$tile/\$(basename \$dem_path)
 
 imgdir_path=$data_input_tmp/\$tile/\$(basename \$imgdir_path)
 dem_path=$data_input_tmp/SRTM/\$tile/\$(basename \$dem_path)
@@ -91,7 +90,6 @@ cp $lis_config \$config
 inputimage=\$(find \$imgdir_path -name *ORTHO_SURF_CORR_PENTE*.TIF)
 inputcloud=\$(find \$imgdir_path -name *NUA.TIF)
 inputdem=\$dem_path
-mkdir -p $data_output_tmp/\$tile
 pout=$data_output_tmp/\$tile/\$(basename \$imgdir_path)
 mkdir -p \$pout
 sed -i -e "s|inputimage|\$inputimage|g" \$config
