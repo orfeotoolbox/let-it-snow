@@ -10,7 +10,7 @@ set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
 add_test(NAME test_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
-	"${DATA_TEST}"
+	"${CMAKE_CURRENT_SOURCE_DIR}"
 	"${DATA_TEST}/Take5/AOI_test_CESNeige"
 	"${OUTPUT_TEST}"
 	)
