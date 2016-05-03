@@ -180,7 +180,7 @@ def run(data):
 	general=data["general"]
 	output_path=general.get("pout")
 	ram=general.get("ram", 512)
-	stats=general.get("stats", True)
+	stats=general.get("stats", False)
 	
 	try:
 		nb_defaultThreads = multiprocessing.cpu_count()
@@ -198,8 +198,8 @@ def run(data):
 	p1_path=inputs.get("p1Path")
 	p2_path=inputs.get("p2Path")
 	dem_path=inputs.get("demPath")
-	ref_path=inputs.get("refPath")
-
+	if stats:
+		ref_path=inputs.get("refPath")
 	parameters=data["parameters"]
 	hs_min=parameters.get("hsMin")
 	hs_max=parameters.get("hsMax")
