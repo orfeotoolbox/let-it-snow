@@ -26,6 +26,8 @@ import gdal
 from gdalconst import *
 import multiprocessing
 import numpy as np
+import uuid
+
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -74,7 +76,16 @@ def burn_polygons_edges(input_img,input_vec):
 	- convert mask polygons to lines
 	
 	"""
-	tmp_line="tmp_line"
+        
+        #Save temporary file in working directory
+        
+        #Retrieve directory from input vector file
+        input_dir=os.path.dirname(input_vec)
+        #TODO move to snowdetector class?
+        #Get unique identifier for the temporary file
+        unique_filename=uuid.uuid4()
+	tmp_line=op.join(input_dir,str(unique_filename))
+
 	call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
 	# 2) rasterize cloud and cloud shadows polygon borders in green
 	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l","tmp_line",tmp_line+".shp",input_img])
