@@ -1,7 +1,6 @@
 import os, sys, json, multiprocessing, csv
 import numpy as np
 import matplotlib.pyplot as plot
-from scipy import ndimage
 from subprocess import call
 import os.path as op
 import gdal
