@@ -3,7 +3,7 @@
         "pout":"outputdir",
         "ram":512,
 	"nbThreads":1,
-	"stats":true
+	"stats":false
          },
     "inputs":{
 	"m2Path":"m2path",
