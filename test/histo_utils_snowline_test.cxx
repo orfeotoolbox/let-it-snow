@@ -18,10 +18,9 @@
 #include <iostream>
 int main(int argc, char * argv [])
 {
-const int result = compute_zs(argv[1],argv[2],argv[3],atoi(argv[4]),atof(argv[5]));
-const int expected = atoi(argv[6]);
+  const int result = compute_snowline(argv[1],argv[2],argv[3],atoi(argv[4]),atof(argv[5]),atoi(argv[6]),atoi(argv[7]),atoi(argv[8]));
+ const int expected = atoi(argv[9]); 
 std::cout << "result: " << result << std::endl;
-
 if (result == expected)
   {
   return EXIT_SUCCESS;

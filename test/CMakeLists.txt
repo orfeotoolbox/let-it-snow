@@ -10,7 +10,7 @@ set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
 add_test(NAME test_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
-	"${DATA_TEST}"
+	"${CMAKE_CURRENT_SOURCE_DIR}"
 	"${DATA_TEST}/Take5/AOI_test_CESNeige"
 	"${OUTPUT_TEST}"
 	)
@@ -77,56 +77,64 @@ add_test(NAME compare_snow_all_output_test
   )
 set_tests_properties(compare_snow_all_output_test PROPERTIES DEPENDS s2snow_test)
 
-ADD_EXECUTABLE(histo_utils_test histo_utils_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_test histo_utils)
+ADD_EXECUTABLE(histo_utils_snowline_test histo_utils_snowline_test.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_snowline_test histo_utils)
 
-ADD_EXECUTABLE(histo_utils_ng_test histo_utils_ng_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_ng_test histo_utils)
-
-ADD_EXECUTABLE(histo_utils_ng_internal_test histo_utils_ng_internal_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_ng_internal_test histo_utils)
-
+ADD_EXECUTABLE(histo_utils_snowline_internal_test histo_utils_snowline_internal_test.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test histo_utils)
 
 ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
 
-add_test(NAME histo_utils_ng_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_test
+add_test(NAME histo_utils_snowline_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
     "${DATA_TEST}/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif"
     "${BASELINE}/pass1.tif"
     "${BASELINE}/cloud_refine.tif"
     100
     0.1
+    0
+    -2
+    -50
     2721
     )
 
-add_test(NAME histo_utils_ng_internal_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_internal_test
+add_test(NAME histo_utils_snowline_internal_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_internal_test
     0
     100
     20
     0.1
+    0
+    -2
+    -10
     "${BASELINE}/histogram.txt"
     40
     )
-
-add_test(NAME histo_utils_full_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_test
-    "${BASELINE}/srtm_superimpose.tif"
-    "${BASELINE}/pass1_full.tif"
-    "${BASELINE}/cloud_refine_full.tif"
+add_test(NAME histo_utils_snowline_reverse_internal_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_internal_test
+    0
     100
-    0.1
-    2920
+    20
+    0.99
+    1
+    0
+    0
+    "${BASELINE}/histogram_reverse.txt"
+    90
     )
 
-add_test(NAME histo_utils_ng_full_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_ng_test
+
+add_test(NAME histo_utils_snowline_full_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
     "${BASELINE}/srtm_superimpose.tif"
     "${BASELINE}/pass1_full.tif"
     "${BASELINE}/cloud_refine_full.tif"
     100
     0.1
+    0
+    -2
+    -50
     2920
     )
 
@@ -142,5 +150,11 @@ add_test(NAME compute_snow_mask_test
     "${BASELINE}/pass2.tif"
     "${BASELINE}/cloud_pass1.tif"
     "${BASELINE}/cloud_refine.tif"
-    "${OUTPUT_TEST}/snow_all_test.tif" 
-    )
+    "${OUTPUT_TEST}/snow_all_test.tif"
+     )
+
+add_test(NAME cloud_removal_step4_test
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py) 
+
+add_test(NAME cloud_removal_step5_test
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step5_test.py)

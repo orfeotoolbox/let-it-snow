@@ -28,13 +28,16 @@ int main(int argc, char * argv [])
   const short maxValue = atoi(argv[2]);
   const int dz = atoi(argv[3]);
   const float fsnow_lim = atoi(argv[4]);
-  const char * histo_path = argv[5];
+  const bool reverse = atoi(argv[5]);
+  const int offset = atoi(argv[6]);
+  const int center_offset = atoi(argv[7]);
+  const char * histo_path = argv[8];
   std::cout << "histo_path " << histo_path << std::endl;
   ImageType::Pointer image = ImageType::New();
   CreateImage(image);
 
-  const int result = compute_zs_ng_internal(image,minValue,maxValue,dz,fsnow_lim,histo_path);
-  const int expected = atoi(argv[6]); 
+  const int result = compute_snowline_internal(image,minValue,maxValue,dz,fsnow_lim,reverse,offset,center_offset,histo_path);
+  const int expected = atoi(argv[9]); 
   std::cout << "Computed zs: " << result << std::endl;
 
   if (result == expected)
