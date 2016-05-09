@@ -27,37 +27,35 @@ def set_array_as_raster(array, dataset, output_path):
 	output.SetProjection(dataset.GetProjection()) 
 	output = None
 
-def step1(m1_path, t0_path, p1_path, output_path, ram):
-    #S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
-    call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:im2b1):im2b1"])
+def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
+	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
+	#S(y,x,t) = 1 if (S(y,x,t-2) = 1 and S(y,x,t+1) = 1)
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m2_path, output_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
+	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+2) = 1)
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
 
-def step2(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
-    #S(y,x,t) = 1 if (S(y,x,t-2) = 1 and S(y,x,t+1) = 1)
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m2_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:im2b1):im2b1"])
-    #S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+2) = 1)
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:im2b1):im2b1"])
-
-def step3(t0_path, dem_path, hs_min, hs_max, output_path, ram):
+def step2(t0_path, dem_path, hs_min, hs_max, output_path, ram):
     #S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
     call(["otbcli_BandMath","-ram", str(ram), "-il", t0_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1<"+str(hs_min)+"?0:im1b1):im1b1"])
  
     #S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
     call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?100:im1b1):im1b1"])
 
-def step4(t0_path, output_path, window_size):
+def step3(t0_path, output_path, window_size):
     
 	# four-pixels neighboring    
-	print "Starting step 4"
+	print "Starting step 3"
 	array, dataset = get_raster_as_array(t0_path)
 	
 	#compute 4 pixel snow neighboring
-	step4_internal(array)
+	step3_internal(array)
 	
 	set_array_as_raster(array, dataset, output_path)
 	#create file
-	print "End of step 4"
+	print "End of step 3"
 
-def step4_internal(array):
+def step3_internal(array):
 	# Get west, north, east & south elements for [1:-1,1:-1] region of input array
 	W = array[1:-1,:-2]
 	N  = array[:-2,1:-1]
@@ -70,20 +68,20 @@ def step4_internal(array):
 	# Use the mask to set corresponding elements
 	array[1:-1,1:-1][mask] = 100
 	
-def step5(t0_path, dem_path, output_path, window_size):
+def step4(t0_path, dem_path, output_path, window_size):
 	# S(y,x,t) = 1 if (S(y+k,x+k,t)(kc(-1,1)) = 1 and H(y+k,x+k)(kc(-1,1)) < H(y,x))
-	print "Starting step 5"
+	print "Starting step 4"
 	array, dataset = get_raster_as_array(t0_path) 
 	array_dem, dataset_dem = get_raster_as_array(dem_path)
 	
 	# step5
-	step5_internal(array, array_dem)
+	step4_internal(array, array_dem)
 
 	#create file
 	set_array_as_raster(array, dataset, output_path)
-	print "End of step 5"
+	print "End of step 4"
 
-def step5_internal(array, array_dem):
+def step4_internal(array, array_dem):
 	# Get 8 neighboring pixels for raster and dem 
 	W = array[1:-1,:-2]
 	NW = array[:-2,:-2]
@@ -114,7 +112,6 @@ def compute_cloud(image):
 	msk_cloud = (array == 205)
 	return np.sum(msk_cloud)
 
-
 def compute_stats(image, image_relative, image_reference):
 	array, dataset = get_raster_as_array(image)
 	array_relative, dataset = get_raster_as_array(image_relative)
@@ -142,6 +139,7 @@ def compute_stats_internal(array, array_relative, array_reference):
 
 	# return all the result
 	return cloud_elim, TRUE, FALSE, StoS, LtoL, StoL, LtoS
+
 def format_percent(array, total_cloud):
 	#TODO FACTO
 	stats_array_percent = np.copy(array.astype(float))
@@ -197,8 +195,7 @@ def run(data):
 	p1_path=inputs.get("p1Path")
 	p2_path=inputs.get("p2Path")
 	dem_path=inputs.get("demPath")
-	if stats:
-		ref_path=inputs.get("refPath")
+	ref_path=inputs.get("refPath","norefpath")
 	parameters=data["parameters"]
 	hs_min=parameters.get("hsMin")
 	hs_max=parameters.get("hsMax")
@@ -209,45 +206,38 @@ def run(data):
 	s2=steps.get("s2", True)
 	s3=steps.get("s3", True)
 	s4=steps.get("s4", True)
-	s5=steps.get("s5", True)
 	
-	stats = []
+	statsarr = []
 	
 	#TODO FACTO. Generic step ? arg function
 	latest_file_path=t0_path
 	if s1:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step1.tif")
-		step1(m1_path, latest_file_path, p1_path, temp_output_path, ram)
+		step1(m2_path, m1_path, latest_file_path, p1_path, p2_path, temp_output_path, ram)
 		if stats:
-			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s2:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step2.tif")
-		step2(m2_path, m1_path, latest_file_path, p1_path, p2_path, temp_output_path, ram)
+		step2(latest_file_path, dem_path, hs_min, hs_max, temp_output_path, ram)
 		if stats:
-			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s3:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step3.tif")
-		step3(latest_file_path, dem_path, hs_min, hs_max, temp_output_path, ram)
+		step3(latest_file_path, temp_output_path, window_size)
 		if stats:
-			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s4:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step4.tif")
-		step4(latest_file_path, temp_output_path, window_size)
+		step4(latest_file_path, dem_path, temp_output_path, window_size)
 		if stats:
-			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
-		latest_file_path=temp_output_path
-	if s5:
-		temp_output_path=op.join(output_path, "cloud_removal_output_step5.tif")
-		step5(latest_file_path, dem_path, temp_output_path, window_size)
-		if stats:
-			stats.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	
 	if stats:
-		stats_array = np.array(stats)
+		stats_array = np.array(statsarr)
 		stats_array_percent = format_percent(stats_array, compute_cloud(t0_path))
 		stats_array = np.vstack([stats_array, np.sum(stats_array, axis=0)]) #add total to array
 		stats_array_percent = np.vstack([stats_array_percent, np.sum(stats_array_percent, axis=0)]) #add total to array
