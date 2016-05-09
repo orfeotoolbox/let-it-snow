@@ -92,7 +92,8 @@ def burn_polygons_edges(input_img,input_vec):
 	# 3) rasterize snow polygon borders in magenta
 	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
 	# 4) remove tmp_line files
-	call_subprocess(["rm"]+glob.glob(tmp_line+"*"))
+        for shp in glob.glob(tmp_line+"*"):
+                os.remove(shp)
 
 def get_total_pixels(imgpath):
 	dataset = gdal.Open(imgpath, GA_ReadOnly)
