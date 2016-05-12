@@ -17,6 +17,7 @@ def get_raster_as_array(raster_file_name):
 	band = dataset.GetRasterBand(1)
 	array = band.ReadAsArray(0, 0, wide, high)
 	return array, dataset
+
 def set_array_as_raster(array, dataset, output_path):
 	high, wide = array.shape
 	output = gdal.GetDriverByName('GTiff').Create(output_path, wide, high, 1 ,gdal.GDT_Byte)
@@ -26,6 +27,24 @@ def set_array_as_raster(array, dataset, output_path):
 	output.SetGeoTransform(dataset.GetGeoTransform())
 	output.SetProjection(dataset.GetProjection()) 
 	output = None
+def compute_HSmin(image_path, dem_path):
+	array_image, dataset_image = get_raster_as_array(image_path)
+	array_dem, dataset_dem = get_raster_as_array(dem_path)
+
+	return array_dem[array_image == 100].min()
+
+def compute_HSmax(image_path, dem_path):
+	array_image, dataset_image = get_raster_as_array(image_path)
+	array_dem, dataset_dem = get_raster_as_array(dem_path)
+
+	elev_max_nosnow = array_dem[array_image == 0].max()
+	return array_dem[(array_image == 100) & (array_dem > elev_max_nosnow)].min()
+
+def compute_cloudpercent(image_path):
+	array_image, dataset_image = get_raster_as_array(image_path)
+	cloud = np.sum(array_image == 205)
+	tot_pix = np.sum(array_image != 254)
+	return (float(cloud)/float(tot_pix))*100
 
 def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
@@ -35,13 +54,20 @@ def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+2) = 1)
 	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
 
-def step2(t0_path, dem_path, hs_min, hs_max, output_path, ram):
-    #S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
-    call(["otbcli_BandMath","-ram", str(ram), "-il", t0_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1<"+str(hs_min)+"?0:im1b1):im1b1"])
- 
-    #S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
-    call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?100:im1b1):im1b1"])
-
+def step2(t0_path, dem_path, output_path, ram):
+	
+	percentage_cloud = compute_cloudpercent(t0_path)
+	print "cloud percent : " + str(percentage_cloud)
+	if percentage_cloud < 30:
+		#S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
+		hs_min=compute_HSmin(t0_path, dem_path)
+		print "hs_min: " + str(hs_min)
+		call(["otbcli_BandMath","-ram", str(ram), "-il", t0_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1<"+str(hs_min)+"?0:im1b1):im1b1"])
+		hs_max=compute_HSmax(t0_path, dem_path)
+		print "hs_max: " + str(hs_max)
+		#S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
+		call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?100:im1b1):im1b1"])
+	
 def step3(t0_path, output_path, window_size):
     
 	# four-pixels neighboring    
@@ -197,8 +223,8 @@ def run(data):
 	dem_path=inputs.get("demPath")
 	ref_path=inputs.get("refPath","norefpath")
 	parameters=data["parameters"]
-	hs_min=parameters.get("hsMin")
-	hs_max=parameters.get("hsMax")
+	#hs_min=parameters.get("hsMin")
+	#hs_max=parameters.get("hsMax")
 	window_size=parameters.get("windowSize")
 	
 	steps=data["steps"]
@@ -219,7 +245,7 @@ def run(data):
 		latest_file_path=temp_output_path
 	if s2:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step2.tif")
-		step2(latest_file_path, dem_path, hs_min, hs_max, temp_output_path, ram)
+		step2(latest_file_path, dem_path, temp_output_path, ram)
 		if stats:
 			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
