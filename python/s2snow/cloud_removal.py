@@ -165,16 +165,20 @@ def compute_stats_internal(array, array_relative, array_reference):
 
 	# return all the result
 	return cloud_elim, TRUE, FALSE, StoS, LtoL, StoL, LtoS
-
+#Set percentage based on the cloud removal percent
 def format_percent(array, total_cloud):
 	#TODO FACTO
 	stats_array_percent = np.copy(array.astype(float))
-	stats_array_percent[:,6] = np.divide(stats_array_percent[:,6], stats_array_percent[:,2])
-	stats_array_percent[:,5] = np.divide(stats_array_percent[:,5], stats_array_percent[:,2])
-	stats_array_percent[:,4] = np.divide(stats_array_percent[:,4], stats_array_percent[:,1])
-	stats_array_percent[:,3] = np.divide(stats_array_percent[:,3], stats_array_percent[:,1]) 
-	stats_array_percent[:,2] = np.divide(stats_array_percent[:,2], stats_array_percent[:,0])
-	stats_array_percent[:,1] = np.divide(stats_array_percent[:,1], stats_array_percent[:,0]) 
+	# divide by zero => value set to 0
+	with np.errstate(divide='ignore', invalid='ignore'):
+		stats_array_percent[:,6] = np.divide(stats_array_percent[:,6], stats_array_percent[:,2])
+		stats_array_percent[:,5] = np.divide(stats_array_percent[:,5], stats_array_percent[:,2])
+		stats_array_percent[:,4] = np.divide(stats_array_percent[:,4], stats_array_percent[:,1])
+		stats_array_percent[:,3] = np.divide(stats_array_percent[:,3], stats_array_percent[:,1]) 
+		stats_array_percent[:,2] = np.divide(stats_array_percent[:,2], stats_array_percent[:,0])
+		stats_array_percent[:,1] = np.divide(stats_array_percent[:,1], stats_array_percent[:,0]) 
+		stats_array_percent[~np.isfinite(stats_array_percent)] = 0 #prevents nan
+	
 	stats_array_percent[:,0] /= total_cloud
 	stats_array_percent[:,1] = np.multiply(stats_array_percent[:,1], stats_array_percent[:,0])
 	stats_array_percent[:,2] = np.multiply(stats_array_percent[:,2], stats_array_percent[:,0]) 
