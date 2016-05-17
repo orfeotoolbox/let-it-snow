@@ -19,10 +19,5 @@
 	"s2":true,
 	"s3":true,
 	"s4":true
-    },
-    "parameters":{
-	"hsMin":0,
-	"hsMax":0,
-	"windowSize":0
     }
 }
