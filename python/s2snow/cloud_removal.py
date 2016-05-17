@@ -68,7 +68,7 @@ def step2(t0_path, dem_path, output_path, ram):
 		#S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
 		call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?100:im1b1):im1b1"])
 	
-def step3(t0_path, output_path, window_size):
+def step3(t0_path, output_path):
     
 	# four-pixels neighboring    
 	print "Starting step 3"
@@ -94,7 +94,7 @@ def step3_internal(array):
 	# Use the mask to set corresponding elements
 	array[1:-1,1:-1][mask] = 100
 	
-def step4(t0_path, dem_path, output_path, window_size):
+def step4(t0_path, dem_path, output_path):
 	# S(y,x,t) = 1 if (S(y+k,x+k,t)(kc(-1,1)) = 1 and H(y+k,x+k)(kc(-1,1)) < H(y,x))
 	print "Starting step 4"
 	array, dataset = get_raster_as_array(t0_path) 
@@ -229,7 +229,7 @@ def run(data):
 	parameters=data["parameters"]
 	#hs_min=parameters.get("hsMin")
 	#hs_max=parameters.get("hsMax")
-	window_size=parameters.get("windowSize")
+	#window_size=parameters.get("windowSize")
 	
 	steps=data["steps"]
 	s1=steps.get("s1", True)
@@ -255,13 +255,13 @@ def run(data):
 		latest_file_path=temp_output_path
 	if s3:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step3.tif")
-		step3(latest_file_path, temp_output_path, window_size)
+		step3(latest_file_path, temp_output_path)
 		if stats:
 			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
 	if s4:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step4.tif")
-		step4(latest_file_path, dem_path, temp_output_path, window_size)
+		step4(latest_file_path, dem_path, temp_output_path)
 		if stats:
 			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
 		latest_file_path=temp_output_path
@@ -280,8 +280,9 @@ def run(data):
 		#plot_stats(stats_array)
 		
 		# Python list supported not numpy array
+		statsabs = stats_array.tolist()
 		statsf = open('stats.json', 'w')
-		json.dump(stats, statsf)
+		json.dump(statsabs, statsf)
 		statsf.close()
 		
 		statsp = stats_array_percent.tolist() 
