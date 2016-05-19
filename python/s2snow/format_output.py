@@ -8,6 +8,8 @@ import datetime
 from lxml import etree
 from shutil import copyfile
 import gdal
+import gdalconst
+import numpy as np
 
 # run subprocess and write to stdout and stderr
 def call_subprocess(process_list):
@@ -16,13 +18,32 @@ def call_subprocess(process_list):
     print out
     sys.stderr.write(err)
 
+def get_raster_as_array(raster_file_name):
+	dataset = gdal.Open(raster_file_name, gdalconst.GA_ReadOnly)    
+	wide = dataset.RasterXSize
+	high = dataset.RasterYSize
+	band = dataset.GetRasterBand(1)
+	array = band.ReadAsArray(0, 0, wide, high)
+	return array, dataset
+
+def compute_cloudpercent(image_path):
+	array_image, dataset_image = get_raster_as_array(image_path)
+	cloud = np.sum(array_image == 205)
+	tot_pix = np.sum(array_image != 254)
+	return (float(cloud)/float(tot_pix))*100
+
+def compute_snowpercent(image_path):
+	array_image, dataset_image = get_raster_as_array(image_path)
+	cloud = np.sum(array_image == 100)
+	tot_pix = np.sum(array_image != 254)
+	return (float(cloud)/float(tot_pix))*100
 
 def format_LIS(snow_detector):
     path_img = snow_detector.img
     pout = snow_detector.path_tmp
     zs = snow_detector.zs
-    snow_percent = snow_detector.snow_percent
-    cloud_percent = snow_detector.cloud_percent
+    snow_percent = compute_snowpercent(op.join(pout, "final_mask.tif"))
+    cloud_percent = compute_cloudpercent(op.join(pout, "final_mask.tif"))
     ram = snow_detector.ram
     mode = snow_detector.mode
     nodata_path = snow_detector.nodata_path
@@ -61,7 +82,7 @@ def format_LIS(snow_detector):
         if extension == ".dbf":
             format_SEB_VEC_values(f)
         copyfile(f, op.join(pout, str_seb_vec))
-        
+	
     root = etree.Element("Source_Product")
     etree.SubElement(root, "PRODUCT_ID").text = product_id
     egil = etree.SubElement(root, "Global_Index_List")

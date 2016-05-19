@@ -77,13 +77,13 @@ def burn_polygons_edges(input_img,input_vec):
 	
 	"""
         
-        #Save temporary file in working directory
+	#Save temporary file in working directory
         
-        #Retrieve directory from input vector file
-        input_dir=os.path.dirname(input_vec)
-        #TODO move to snowdetector class?
-        #Get unique identifier for the temporary file
-        unique_filename=uuid.uuid4()
+	#Retrieve directory from input vector file
+	input_dir=os.path.dirname(input_vec)
+	#TODO move to snowdetector class?
+	#Get unique identifier for the temporary file
+	unique_filename=uuid.uuid4()
 	tmp_line=op.join(input_dir,str(unique_filename))
 
 	call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
@@ -94,22 +94,6 @@ def burn_polygons_edges(input_img,input_vec):
 	# 4) remove tmp_line files
         for shp in glob.glob(tmp_line+"*"):
                 os.remove(shp)
-
-def get_total_pixels(imgpath):
-	dataset = gdal.Open(imgpath, GA_ReadOnly)
-	#assume that snow and cloud images are of the same size
-	total_pixels=dataset.RasterXSize*dataset.RasterYSize
-	return total_pixels
-
-def get_total_pixels_without_nodata(nodata_mask):
-	dataset = gdal.Open(nodata_mask, GA_ReadOnly)
-	#assume that snow and cloud images are of the same size
-	wide = dataset.RasterXSize
-	high = dataset.RasterYSize
-	band = dataset.GetRasterBand(1)
-	array = band.ReadAsArray(0, 0, wide, high)
-	l = list(array.flatten())
-	return l.count(0)
 
 class snow_detector :
 	def __init__(self, data):
@@ -306,12 +290,6 @@ class snow_detector :
 						
 		call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
 		call_subprocess(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"), op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
-		
-		self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
-		print self.snow_percent
-		
-		self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
-		print self.cloud_percent
 
 	def pass3(self):
 		#Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)

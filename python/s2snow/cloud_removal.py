@@ -46,6 +46,11 @@ def compute_cloudpercent(image_path):
 	tot_pix = np.sum(array_image != 254)
 	return (float(cloud)/float(tot_pix))*100
 
+def compute_cloud(image):
+	array, dataset = get_raster_as_array(image)
+	msk_cloud = (array == 205)
+	return np.sum(msk_cloud)
+
 def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
 	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
@@ -132,11 +137,6 @@ def step4_internal(array, array_dem):
 
 	# Use the mask to set corresponding elements
 	array[1:-1,1:-1][mask] = 100
-
-def compute_cloud(image):
-	array, dataset = get_raster_as_array(image)
-	msk_cloud = (array == 205)
-	return np.sum(msk_cloud)
 
 def compute_stats(image, image_relative, image_reference):
 	array, dataset = get_raster_as_array(image)
@@ -226,7 +226,7 @@ def run(data):
 	p2_path=inputs.get("p2Path")
 	dem_path=inputs.get("demPath")
 	ref_path=inputs.get("refPath","norefpath")
-	parameters=data["parameters"]
+	#parameters=data["parameters"]
 	#hs_min=parameters.get("hsMin")
 	#hs_max=parameters.get("hsMax")
 	#window_size=parameters.get("windowSize")
