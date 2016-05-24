@@ -336,12 +336,12 @@ class snow_detector :
 		#Extract green bands and resample to 20 meters
 		#FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
 		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
-		call_subprocess(["gdalwarp","-r","cubicspline","-tr","20","-20",greenBand_path,greenBand_resample_path])
+		call_subprocess(["gdalwarp","-r","cubic","-tr","20","-20",greenBand_path,greenBand_resample_path])
 
 		#Extract red bands and sample to 20 meters
 		#FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
 		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
-		call_subprocess(["gdalwarp","-r","cubicspline","-tr","20","-20",redBand_path,redBand_resample_path])
+		call_subprocess(["gdalwarp","-r","cubic","-tr","20","-20",redBand_path,redBand_resample_path])
 
 		#Extract SWIR
 		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nSWIR),s2_r2_img_path[0],swirBand_path])
