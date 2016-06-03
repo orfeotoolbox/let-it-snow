@@ -9,7 +9,6 @@
 	"log":true
     },
     "inputs":{
-	"vrt":"inputvrt",
         {"green_band": "/filepath2/test2/green.tif", "nbBand":1},
         {"red_band": "/filepath1/test1/red.tif", "nbBand":1},
         {"swir_band": "/filepath3/test3/swir.tif","nbBand":1},
