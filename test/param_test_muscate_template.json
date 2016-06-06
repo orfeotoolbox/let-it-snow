@@ -9,9 +9,18 @@
 	"log":true
     },
     "inputs":{
-        {"green_band": "/filepath2/test2/green.tif", "nbBand":1},
-        {"red_band": "/filepath1/test1/red.tif", "nbBand":1},
-        {"swir_band": "/filepath3/test3/swir.tif","nbBand":1},
+	"green_band": {
+	    "path": "/filepath2/test2/green.tif",
+	    "noBand": 1
+	},
+	"red_band": {
+	    "path": "/filepath1/test1/red.tif",
+	    "noBand": 1
+	},
+	"swir_band": {
+	    "path": "/filepath3/test3/swir.tif",
+	    "noBand": 1
+	},
         "dem":"inputdem",
         "cloud_mask":"inputcloud"
     },
