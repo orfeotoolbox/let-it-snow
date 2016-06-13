@@ -100,6 +100,7 @@ class snow_detector :
 
 		self.version = VERSION
 		#Parse general parameters
+
 		general=data["general"]
 		self.path_tmp=str(general.get("pout"))
 		self.ram=general.get("ram", 512)
@@ -113,19 +114,49 @@ class snow_detector :
 		self.generate_vector=general.get("generate_vector", False)
 		self.do_preprocessing=general.get("preprocessing", False)
 		self.do_postprocessing=True
-		self.shadow_value=general.get("shadow_value")
 		#Parse cloud data
 		cloud_mask=data["cloud_mask"]
 		self.rf=cloud_mask.get("rf")
 		self.rRed_darkcloud=cloud_mask.get("rRed_darkcloud")
 		self.rRed_backtocloud=cloud_mask.get("rRed_backtocloud")
+		self.shadow_mask=cloud_mask.get("shadow_mask")
+		self.all_cloud_mask=cloud_mask.get("all_cloud_mask")
+		self.high_cloud_mask=cloud_mask.get("high_cloud_mask")
 		#Parse input parameters
 		inputs=data["inputs"]
 		if(self.do_preprocessing):
 			self.vrt=str(inputs.get("vrt")) 
-		self.img=str(inputs.get("image"))
+		#self.img=str(inputs.get("image"))
 		self.dem=str(inputs.get("dem"))
 		self.cloud_init=str(inputs.get("cloud_mask"))
+		
+		#bands paths
+		green_band=inputs["green_band"]
+		gb_path=green_band["path"]
+		red_band=inputs["red_band"]
+		rb_path=red_band["path"]
+		swir_band=inputs["swir_band"]
+		sb_path=swir_band["path"]
+
+		#check for same res
+		gb_dataset = gdal.Open(gb_path, gdalconst.GA_ReadOnly)
+		rb_dataset = gdal.Open(rb_path, gdalconst.GA_ReadOnly)
+		sb_dataset = gdal.Open(sb_path, gdalconst.GA_ReadOnly)
+		
+		gb_resolution = gb_dataset.GetGeoTransform()[1]
+		rb_resolution = rb_dataset.GetGeoTransform()[1]
+		sb_resolution = sb_dataset.GetGeoTransform()[1]
+		#test if different reso
+		if not gb_resolution == rb_resolution == sb_resolution:
+			#gdalwarp to max reso
+			max_res = max(gb_resolution, rb_resolution, sb_resolution)
+			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),gb_path,gb_path])
+			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),rb_path,rb_path])
+			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),sb_path,sb_path])
+		#build vrt
+		self.img=op.join(self.path_tmp, "grs.vrt")
+		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path, rb_path, sb_path])
+
 		#Parse snow parameters
 		snow=data["snow"]
 		self.dz=snow.get("dz")
@@ -141,29 +172,29 @@ class snow_detector :
 		self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
 		self.nodata_path=op.join(self.path_tmp, "nodata_mask.tif")
 		#Set bands parameters
-		self.nGreen=0
-		self.nSWIR=0
-		self.nRed=0 
-		self.nodata=0
+		self.nGreen=1
+		self.nRed=2
+		self.nSWIR=3
+		self.nodata=-10000
 
-		if self.mode == "spot":
-			self.nGreen=1 # Index of green band
-			self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
-			self.nRed=2 # Index of red band
-			self.nodata=-10000 # no-data value
-		elif self.mode == "landsat":
-			self.nGreen=3
-			self.nSWIR=6
-			self.nRed=4 
-			self.nodata=-10000
-		elif self.mode == "s2":
-			sentinel_2_preprocessing()
-			#Set generic band index for Sentinel-2
-			self.nGreen=1
-			self.nRed=2
-			self.nSWIR=3
-		else:
-			sys.exit("Supported modes are spot4,landsat and s2.")
+		# if self.mode == "spot":
+		# 	self.nGreen=1 # Index of green band
+		# 	self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
+		# 	self.nRed=2 # Index of red band
+		# 	self.nodata=-10000 # no-data value
+		# elif self.mode == "landsat":
+		# 	self.nGreen=3
+		# 	self.nSWIR=6
+		# 	self.nRed=4 
+		# 	self.nodata=-10000
+		# elif self.mode == "s2":
+		# 	sentinel_2_preprocessing()
+		# 	#Set generic band index for Sentinel-2
+		# 	self.nGreen=1
+		# 	self.nRed=2
+		# 	self.nSWIR=3
+		# else:
+		# 	sys.exit("Supported modes are spot4,landsat and s2.")
 
 	def detect_snow(self, nbPass):
 		#Set maximum ITK threads
@@ -221,7 +252,7 @@ class snow_detector :
 		call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#Extract shadow mask
-		condition_shadow= "(im1b1>0 and im2b1>" + str(self.rRed_darkcloud) + ") or (im1b1 >= " + str(self.shadow_value) + ")"
+		condition_shadow= "(im1b1>" + str(self.all_cloud_mask) +" and im2b1>" + str(self.rRed_darkcloud) + ") or (im1b1 >= " + str(self.shadow_mask) + ")"
 		call_subprocess(["otbcli_BandMath","-il",self.cloud_init,op.join(self.path_tmp,"red_nn.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow + "?1:0"])
 
 	def pass1(self):
@@ -353,3 +384,6 @@ class snow_detector :
 		#img variable is used later to compute snow mask
 		self.img=concat_s2
 		self.redBand_path=op.join(path_tmp,"red.tif")
+
+
+
