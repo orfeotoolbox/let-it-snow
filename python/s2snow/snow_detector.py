@@ -114,14 +114,15 @@ class snow_detector :
 		self.generate_vector=general.get("generate_vector", False)
 		self.do_preprocessing=general.get("preprocessing", False)
 		self.do_postprocessing=True
+		self.nodata=-10000 #TODO parse json if needed
 		#Parse cloud data
-		cloud_mask=data["cloud_mask"]
-		self.rf=cloud_mask.get("rf")
-		self.rRed_darkcloud=cloud_mask.get("rRed_darkcloud")
-		self.rRed_backtocloud=cloud_mask.get("rRed_backtocloud")
-		self.shadow_mask=cloud_mask.get("shadow_mask")
-		self.all_cloud_mask=cloud_mask.get("all_cloud_mask")
-		self.high_cloud_mask=cloud_mask.get("high_cloud_mask")
+		cloud=data["cloud"]
+		self.rf=cloud.get("rf")
+		self.rRed_darkcloud=cloud.get("red_darkcloud")
+		self.rRed_backtocloud=cloud.get("red_backtocloud")
+		self.shadow_mask=cloud.get("shadow_mask")
+		self.all_cloud_mask=cloud.get("all_cloud_mask")
+		self.high_cloud_mask=cloud.get("high_cloud_mask")
 		#Parse input parameters
 		inputs=data["inputs"]
 		if(self.do_preprocessing):
@@ -133,15 +134,27 @@ class snow_detector :
 		#bands paths
 		green_band=inputs["green_band"]
 		gb_path=green_band["path"]
+		gb_no=green_band["noBand"]
+		gb_path_extracted=op.join(self.path_tmp, "green_band_extracted.tif")
+		call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(gb_no),gb_path,gb_path_extracted])
+
 		red_band=inputs["red_band"]
 		rb_path=red_band["path"]
+		rb_no=red_band["noBand"]
+		rb_path_extracted=op.join(self.path_tmp, "red_band_extracted.tif")
+		call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(rb_no),rb_path,rb_path_extracted])
+
+
 		swir_band=inputs["swir_band"]
 		sb_path=swir_band["path"]
+		sb_no=swir_band["noBand"]
+		sb_path_extracted=op.join(self.path_tmp, "swir_band_extracted.tif")
+		call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(sb_no),sb_path,sb_path_extracted])
 
 		#check for same res
-		gb_dataset = gdal.Open(gb_path, gdalconst.GA_ReadOnly)
-		rb_dataset = gdal.Open(rb_path, gdalconst.GA_ReadOnly)
-		sb_dataset = gdal.Open(sb_path, gdalconst.GA_ReadOnly)
+		gb_dataset = gdal.Open(gb_path_extracted, GA_ReadOnly)
+		rb_dataset = gdal.Open(rb_path_extracted, GA_ReadOnly)
+		sb_dataset = gdal.Open(sb_path_extracted, GA_ReadOnly)
 		
 		gb_resolution = gb_dataset.GetGeoTransform()[1]
 		rb_resolution = rb_dataset.GetGeoTransform()[1]
@@ -153,17 +166,23 @@ class snow_detector :
 			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),gb_path,gb_path])
 			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),rb_path,rb_path])
 			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),sb_path,sb_path])
+			
 		#build vrt
 		self.img=op.join(self.path_tmp, "grs.vrt")
-		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path, rb_path, sb_path])
-
+		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path_extracted, rb_path_extracted, sb_path_extracted])
+		
+		#Set bands parameters
+		self.nGreen=1
+		self.nRed=2
+		self.nSWIR=3
+		
 		#Parse snow parameters
 		snow=data["snow"]
 		self.dz=snow.get("dz")
 		self.ndsi_pass1=snow.get("ndsi_pass1")
-		self.rRed_pass1=snow.get("rRed_pass1")
+		self.rRed_pass1=snow.get("red_pass1")
 		self.ndsi_pass2=snow.get("ndsi_pass2")
-		self.rRed_pass2=snow.get("rRed_pass2")
+		self.rRed_pass2=snow.get("red_pass2")
 		self.fsnow_lim=snow.get("fsnow_lim")
 		self.fsnow_total_lim=snow.get("fsnow_total_lim")
 		#Build useful paths
@@ -171,12 +190,7 @@ class snow_detector :
 		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
 		self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
 		self.nodata_path=op.join(self.path_tmp, "nodata_mask.tif")
-		#Set bands parameters
-		self.nGreen=1
-		self.nRed=2
-		self.nSWIR=3
-		self.nodata=-10000
-
+		
 		# if self.mode == "spot":
 		# 	self.nGreen=1 # Index of green band
 		# 	self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
