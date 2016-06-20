@@ -27,6 +27,7 @@ from gdalconst import *
 import multiprocessing
 import numpy as np
 import uuid
+from shutil import copyfile
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
@@ -135,21 +136,39 @@ class snow_detector :
 		green_band=inputs["green_band"]
 		gb_path=green_band["path"]
 		gb_no=green_band["noBand"]
+
+		gb_dataset = gdal.Open(gb_path, GA_ReadOnly)
 		gb_path_extracted=op.join(self.path_tmp, "green_band_extracted.tif")
-		call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(gb_no),gb_path,gb_path_extracted])
+		if gb_dataset.RasterCount > 1:
+			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(gb_no),gb_path,gb_path_extracted])
+		else:
+			copyfile(gb_path, gb_path_extracted)
 
 		red_band=inputs["red_band"]
 		rb_path=red_band["path"]
 		rb_no=red_band["noBand"]
+
+		rb_dataset = gdal.Open(rb_path, GA_ReadOnly)
 		rb_path_extracted=op.join(self.path_tmp, "red_band_extracted.tif")
-		call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(rb_no),rb_path,rb_path_extracted])
+		if rb_dataset.RasterCount > 1:
+			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(rb_no),rb_path,rb_path_extracted])
+		else:
+			copyfile(rb_path, rb_path_extracted)
+
 
 
 		swir_band=inputs["swir_band"]
 		sb_path=swir_band["path"]
 		sb_no=swir_band["noBand"]
+		
+		sb_dataset = gdal.Open(sb_path, GA_ReadOnly)
 		sb_path_extracted=op.join(self.path_tmp, "swir_band_extracted.tif")
-		call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(sb_no),sb_path,sb_path_extracted])
+		if sb_dataset.RasterCount > 1:
+			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(sb_no),sb_path,sb_path_extracted])
+
+		else:
+			copyfile(sb_path, sb_path_extracted)
+
 
 		#check for same res
 		gb_dataset = gdal.Open(gb_path_extracted, GA_ReadOnly)
