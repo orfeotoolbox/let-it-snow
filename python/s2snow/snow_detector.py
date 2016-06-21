@@ -140,6 +140,7 @@ class snow_detector :
 		gb_dataset = gdal.Open(gb_path, GA_ReadOnly)
 		gb_path_extracted=op.join(self.path_tmp, "green_band_extracted.tif")
 		if gb_dataset.RasterCount > 1:
+			print "extracting band"
 			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(gb_no),gb_path,gb_path_extracted])
 		else:
 			copyfile(gb_path, gb_path_extracted)
@@ -151,11 +152,10 @@ class snow_detector :
 		rb_dataset = gdal.Open(rb_path, GA_ReadOnly)
 		rb_path_extracted=op.join(self.path_tmp, "red_band_extracted.tif")
 		if rb_dataset.RasterCount > 1:
+			print "extracting band"
 			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(rb_no),rb_path,rb_path_extracted])
 		else:
 			copyfile(rb_path, rb_path_extracted)
-
-
 
 		swir_band=inputs["swir_band"]
 		sb_path=swir_band["path"]
@@ -164,11 +164,11 @@ class snow_detector :
 		sb_dataset = gdal.Open(sb_path, GA_ReadOnly)
 		sb_path_extracted=op.join(self.path_tmp, "swir_band_extracted.tif")
 		if sb_dataset.RasterCount > 1:
+			print "extracting band"
 			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(sb_no),sb_path,sb_path_extracted])
 
 		else:
 			copyfile(sb_path, sb_path_extracted)
-
 
 		#check for same res
 		gb_dataset = gdal.Open(gb_path_extracted, GA_ReadOnly)
@@ -179,16 +179,25 @@ class snow_detector :
 		rb_resolution = rb_dataset.GetGeoTransform()[1]
 		sb_resolution = sb_dataset.GetGeoTransform()[1]
 		#test if different reso
+		gb_path_resampled=op.join(self.path_tmp, "green_band_resampled.tif")
+		rb_path_resampled=op.join(self.path_tmp, "red_band_resampled.tif")
+		sb_path_resampled=op.join(self.path_tmp, "swir_band_resampled.tif")
 		if not gb_resolution == rb_resolution == sb_resolution:
 			#gdalwarp to max reso
+			print "setting resolution"
 			max_res = max(gb_resolution, rb_resolution, sb_resolution)
-			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),gb_path,gb_path])
-			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),rb_path,rb_path])
-			call_subprocess(["gdalwarp","-r","cubic","-tr", str(max_res),str(max_res),sb_path,sb_path])
+			print str(max_res)
+			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),gb_path_extracted,gb_path_resampled])
+			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),rb_path_extracted,rb_path_resampled])
+			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),sb_path_extracted,sb_path_resampled])
+		else:
+			gb_path_resampled=gb_path_extracted
+			rb_path_resampled=rb_path_extracted
+			sb_path_resampled=sb_path_extracted
 			
 		#build vrt
 		self.img=op.join(self.path_tmp, "grs.vrt")
-		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path_extracted, rb_path_extracted, sb_path_extracted])
+		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path_resampled, rb_path_resampled, sb_path_resampled])
 		
 		#Set bands parameters
 		self.nGreen=1
