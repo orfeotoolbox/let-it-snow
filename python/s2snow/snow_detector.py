@@ -294,7 +294,10 @@ class snow_detector :
 		call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#Extract shadow mask
-		condition_shadow= "(im1b1>" + str(self.all_cloud_mask) +" and im2b1>" + str(self.rRed_darkcloud) + ") or (im1b1 >= " + str(self.shadow_mask) + ")"
+		cond_cloud1="im1b1>" + str(self.all_cloud_mask)
+		cond_cloud2="im2b1>" + str(self.rRed_darkcloud)
+		cond_cloud3="im1b1 >= " + str(self.shadow_mask)
+		condition_shadow= "(" + cond_cloud1 + " and " + cond_cloud2 + ") or ("+ cond_cloud3 +")"
 		call_subprocess(["otbcli_BandMath","-il",self.cloud_init,op.join(self.path_tmp,"red_nn.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow + "?1:0"])
 
 	def pass1(self):
