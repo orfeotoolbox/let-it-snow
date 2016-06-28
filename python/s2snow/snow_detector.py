@@ -294,6 +294,8 @@ class snow_detector :
 		call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#Extract shadow mask
+		call_subprocess(["compute_cloud_mask", self.cloud_init, 32, op.join(self.path_tmp,"test.tif")])
+
 		cond_cloud1="im1b1>" + str(self.all_cloud_mask)
 		cond_cloud2="im2b1>" + str(self.rRed_darkcloud)
 		cond_cloud3="im1b1 >= " + str(self.shadow_mask)

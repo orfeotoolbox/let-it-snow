@@ -15,9 +15,10 @@ namespace itk
       typedef typename NumericTraits< TInput >::AccumulateType AccumulatorType;
       CloudMask() {}
       ~CloudMask(){}
-      void setCloudMask(const int cloud_mask)
+      
+      void SetCloudMask(const unsigned int val)
       {
-	m_cloud_mask_value = cloud_mask;
+	m_cloud_mask_value = val;
       }
       
       inline TOutput operator()(const TInput& B) const
@@ -25,10 +26,10 @@ namespace itk
 	std::bitset<8> bits(B);
 	std::bitset<8> mask_bits(m_cloud_mask_value);
 	std::bitset<8> result(bits & mask_bits);
-	if(result>0)
+	if(result.to_ulong()>0)
 	  return static_cast<TOutput>(1);
 	else
-	  return static_cast<TOutput>(0)
+	  return static_cast<TOutput>(0);
       }
       bool operator==(const CloudMask &) const
       {
@@ -46,8 +47,8 @@ namespace itk
   // Description functor
   template<typename TInputImage, typename TOutputImage> class UnaryCloudMaskImageFilter:
     public 
-    UnaryFunctorImageFilter<TInputImage, TOutputImage, 
-                            Functor::CloudMask<typename TInputimage::PixelType, typename TInputImage::PixelType > >
+    UnaryFunctorImageFilter< TInputImage, TOutputImage, 
+                            Functor::CloudMask< typename TInputImage::PixelType, typename TInputImage::PixelType > >
   {
   public:
     typedef UnaryCloudMaskImageFilter Self;
@@ -58,7 +59,11 @@ namespace itk
 
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
-
+  
+  void SetCloudMask(const unsigned int val)
+  {
+    this->GetFunctor().SetCloudMask(val);
+  }
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 

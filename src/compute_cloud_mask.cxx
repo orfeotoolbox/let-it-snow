@@ -1,4 +1,4 @@
-#include "itkUnaryFunctorImageFilter.h"
+#include "itkUnaryCloudMaskImageFilter.h"
 #include "otbImage.h"
 #include "otbImageFileReader.h"
 #include "otbImageFileWriter.h"
@@ -12,13 +12,13 @@ int main(int argc, char * argv[])
     }
 
   const std::string cloud_fname = argv[1];
-  const int cloud_mask_value = argv[2]
+  const int cloud_mask_value = atoi(argv[2]);
   const std::string output_fname = argv[3];
   
   typedef otb::Image<unsigned char, 2>  InputImageType;
   typedef otb::Image<unsigned char, 2>  OutputImageType;
 
-  typedef itk::UnarCloudMaskImageFilter<InputImageType,OutputImageType> CloudMaskFilterType;
+  typedef itk::UnaryCloudMaskImageFilter<InputImageType,OutputImageType> CloudMaskFilterType;
   typedef otb::ImageFileReader<InputImageType> ReaderType;
   typedef otb::ImageFileWriter<OutputImageType> WriterType;
   
@@ -26,6 +26,7 @@ int main(int argc, char * argv[])
   reader0->SetFileName(cloud_fname);
 
   CloudMaskFilterType::Pointer filter = CloudMaskFilterType::New();
+  filter->SetCloudMask(cloud_mask_value);
 
   filter->SetInput(0, reader0->GetOutput());
 
