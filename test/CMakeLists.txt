@@ -153,6 +153,13 @@ add_test(NAME compute_snow_mask_test
     "${OUTPUT_TEST}/snow_all_test.tif"
      )
 
+add_test(NAME compute_cloud_mask_test
+  COMMAND ${CMAKE_BINARY_DIR}/bin/compute_cloud_mask
+    "${DATA_TEST}/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
+    "1"
+    "${OUTPUT_TEST}/cloud_mask_test.tif"
+     )
+
 add_test(NAME cloud_removal_step3_test
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py) 
 

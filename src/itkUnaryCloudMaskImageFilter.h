@@ -25,11 +25,17 @@ namespace itk
       {
 	std::bitset<8> bits(B);
 	std::bitset<8> mask_bits(m_cloud_mask_value);
-	std::bitset<8> result(bits & mask_bits);
-	if(result.to_ulong()>0)
+	std::bitset<8> result;
+	result = bits & mask_bits;
+	if(result != 0)
 	  return static_cast<TOutput>(1);
 	else
 	  return static_cast<TOutput>(0);
+	
+	/* if(result.to_ulong()>0) */
+	/*   return static_cast<TOutput>(1); */
+	/* else */
+	/*   return static_cast<TOutput>(0); */
       }
       bool operator==(const CloudMask &) const
       {
