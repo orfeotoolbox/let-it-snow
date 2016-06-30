@@ -86,15 +86,16 @@ def burn_polygons_edges(input_img,input_vec):
 	#Get unique identifier for the temporary file
 	unique_filename=uuid.uuid4()
 	tmp_line=op.join(input_dir,str(unique_filename))
+	print "tmpline: " + str(tmp_line)
 
 	call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
 	# 2) rasterize cloud and cloud shadows polygon borders in green
-	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l","tmp_line",tmp_line+".shp",input_img])
+	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l",str(unique_filename),tmp_line+".shp",input_img])
 	# 3) rasterize snow polygon borders in magenta
-	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
+	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l",str(unique_filename),tmp_line+".shp",input_img])
 	# 4) remove tmp_line files
-        for shp in glob.glob(tmp_line+"*"):
-                os.remove(shp)
+	for shp in glob.glob(tmp_line+"*"):
+		os.remove(shp)
 
 class snow_detector :
 	def __init__(self, data):
