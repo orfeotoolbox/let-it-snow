@@ -22,23 +22,23 @@ add_test(NAME s2snow_test
 set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test)
 	
 add_test(NAME compare_snow_output_pass1_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/pass1.tif" 
+  COMMAND gdalcompare.py
   "${BASELINE}/pass1.tif"
+  "${OUTPUT_TEST}/pass1.tif" 
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_output_pass2_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/pass2.tif" 
+  COMMAND gdalcompare.py
   "${BASELINE}/pass2.tif"
+  "${OUTPUT_TEST}/pass2.tif" 
   )
 set_tests_properties(compare_snow_output_pass2_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_output_pass3_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/pass3.tif" 
+  COMMAND gdalcompare.py
   "${BASELINE}/pass3.tif"
+  "${OUTPUT_TEST}/pass3.tif" 
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
@@ -57,23 +57,24 @@ add_test(NAME preprocessing_test
 # set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_final_mask_output_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/final_mask.tif" 
+  COMMAND gdalcompare.py
   "${BASELINE}/final_mask.tif"
+  "${OUTPUT_TEST}/final_mask.tif" 
   )
 set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_test)
 
+#gdalcompare.py doesn't work on dbf files
 add_test(NAME compare_final_mask_vec_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/final_mask_vec.dbf" 
   "${BASELINE}/final_mask_vec.dbf"
+  "${OUTPUT_TEST}/final_mask_vec.dbf" 
   )
 set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_all_output_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${OUTPUT_TEST}/snow_all.tif" 
+  COMMAND gdalcompare.py
   "${BASELINE}/snow_all.tif"
+  "${OUTPUT_TEST}/snow_all.tif" 
   )
 set_tests_properties(compare_snow_all_output_test PROPERTIES DEPENDS s2snow_test)
 
