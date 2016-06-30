@@ -140,7 +140,7 @@ class snow_detector :
 		gb_dataset = gdal.Open(gb_path, GA_ReadOnly)
 		gb_path_extracted=op.join(self.path_tmp, "green_band_extracted.tif")
 		if gb_dataset.RasterCount > 1:
-			print "extracting band"
+			print "extracting green band"
 			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(gb_no),gb_path,gb_path_extracted])
 		else:
 			copyfile(gb_path, gb_path_extracted)
@@ -152,7 +152,7 @@ class snow_detector :
 		rb_dataset = gdal.Open(rb_path, GA_ReadOnly)
 		rb_path_extracted=op.join(self.path_tmp, "red_band_extracted.tif")
 		if rb_dataset.RasterCount > 1:
-			print "extracting band"
+			print "extracting red band"
 			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(rb_no),rb_path,rb_path_extracted])
 		else:
 			copyfile(rb_path, rb_path_extracted)
@@ -164,7 +164,7 @@ class snow_detector :
 		sb_dataset = gdal.Open(sb_path, GA_ReadOnly)
 		sb_path_extracted=op.join(self.path_tmp, "swir_band_extracted.tif")
 		if sb_dataset.RasterCount > 1:
-			print "extracting band"
+			print "extracting swir band"
 			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(sb_no),sb_path,sb_path_extracted])
 
 		else:
@@ -178,15 +178,18 @@ class snow_detector :
 		gb_resolution = gb_dataset.GetGeoTransform()[1]
 		rb_resolution = rb_dataset.GetGeoTransform()[1]
 		sb_resolution = sb_dataset.GetGeoTransform()[1]
+		print "green band resolution : " + str(gb_resolution)
+		print "red band resolution : " + str(rb_resolution)
+		print "swir band resolution : " + str(sb_resolution)
 		#test if different reso
 		gb_path_resampled=op.join(self.path_tmp, "green_band_resampled.tif")
 		rb_path_resampled=op.join(self.path_tmp, "red_band_resampled.tif")
 		sb_path_resampled=op.join(self.path_tmp, "swir_band_resampled.tif")
 		if not gb_resolution == rb_resolution == sb_resolution:
+			print "resolution is different among band files"
 			#gdalwarp to max reso
-			print "setting resolution"
 			max_res = max(gb_resolution, rb_resolution, sb_resolution)
-			print str(max_res)
+			print "cubic resampling to " + str(max_res) + "of resolution" 
 			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),gb_path_extracted,gb_path_resampled])
 			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),rb_path_extracted,rb_path_resampled])
 			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),sb_path_extracted,sb_path_resampled])
@@ -196,6 +199,7 @@ class snow_detector :
 			sb_path_resampled=sb_path_extracted
 			
 		#build vrt
+		print "building bands vrt"
 		self.img=op.join(self.path_tmp, "grs.vrt")
 		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path_resampled, rb_path_resampled, sb_path_resampled])
 		
