@@ -46,31 +46,30 @@ def format_LIS(snow_detector):
 	mode = snow_detector.mode
 	nodata_path = snow_detector.nodata_path
 	
-	if mode == "s2":
-        #ID corresponding to the parent folder of the img
-		product_id = op.basename(op.abspath(op.join(path_img, os.pardir)))
-	else:
-		#ID corresponding to the name of the img
-		product_id = op.splitext(op.basename(path_img))[0]
+	product_id = op.splitext(op.basename(path_img))[0]
+	path_products = op.join(pout, "LIS_PRODUCTS")
 
+	if not op.exists(path_products):
+		os.makedirs(path_products)		
+	
 	ext = "TIF"
    
     #TODO associate product name with let-it-snow results to make a loop
 	code_snow_all = "_SNOW_ALL"
 	str_snow_all = product_id+code_snow_all+"."+ext 
 	str_snow_all = str_snow_all.upper()
-	copyfile(op.join(pout, "snow_all.tif"), op.join(pout, str_snow_all))
+	copyfile(op.join(pout, "snow_all.tif"), op.join(path_products, str_snow_all))
 	
 	code_compo = "_COMPO"
 	str_compo = product_id+code_compo+"."+ext
 	str_compo = str_compo.upper()
-	copyfile(op.join(pout, "composition.tif"), op.join(pout, str_compo))
+	copyfile(op.join(pout, "composition.tif"), op.join(path_products, str_compo))
 	
 	code_seb = "_SEB"
 	str_seb = product_id+code_seb+"."+ext 
 	str_seb = str_seb.upper()
 	format_SEB_values(op.join(pout, "final_mask.tif"), nodata_path, ram)
-	copyfile(op.join(pout, "final_mask.tif"), op.join(pout, str_seb))
+	copyfile(op.join(pout, "final_mask.tif"), op.join(path_products, str_seb))
 	
 	code_seb_vec = "_SEB_VEC"
 	for f in glob.glob(op.join(pout, "final_mask_vec.*")):
@@ -79,7 +78,7 @@ def format_LIS(snow_detector):
 		str_seb_vec = str_seb_vec.upper()
 		if extension == ".dbf":
 			format_SEB_VEC_values(f)
-		copyfile(f, op.join(pout, str_seb_vec))
+		copyfile(f, op.join(path_products, str_seb_vec))
 	
 	snow_percent = compute_snowpercent(op.join(pout, "final_mask.tif"))
 	cloud_percent = compute_cloudpercent(op.join(pout, "final_mask.tif"))
@@ -95,7 +94,7 @@ def format_LIS(snow_detector):
 	code_metadata = "_METADATA"
 	str_metadata = product_id+code_metadata+".xml"
 	str_metadata = str_metadata.upper()
-	copyfile(op.join(pout, "metadata.xml"), op.join(pout, str_metadata))
+	copyfile(op.join(pout, "metadata.xml"), op.join(path_products, str_metadata))
 	
 def format_SEB_values(path, nodata_path, ram):
 	call_subprocess(["otbcli_BandMath", "-il", path, "-out", path, "uint8", "-ram",str(ram), "-exp", "(im1b1==1)?100:(im1b1==2)?205:0"])
