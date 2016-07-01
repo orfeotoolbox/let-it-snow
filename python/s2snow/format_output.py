@@ -53,17 +53,10 @@ def format_LIS(snow_detector):
 		os.makedirs(path_products)		
 	
 	ext = "TIF"
-   
-    #TODO associate product name with let-it-snow results to make a loop
 	code_snow_all = "_SNOW_ALL"
 	str_snow_all = product_id+code_snow_all+"."+ext 
 	str_snow_all = str_snow_all.upper()
 	copyfile(op.join(pout, "snow_all.tif"), op.join(path_products, str_snow_all))
-	
-	code_compo = "_COMPO"
-	str_compo = product_id+code_compo+"."+ext
-	str_compo = str_compo.upper()
-	copyfile(op.join(pout, "composition.tif"), op.join(path_products, str_compo))
 	
 	code_seb = "_SEB"
 	str_seb = product_id+code_seb+"."+ext 
@@ -80,6 +73,11 @@ def format_LIS(snow_detector):
 			format_SEB_VEC_values(f)
 		copyfile(f, op.join(path_products, str_seb_vec))
 	
+	code_compo = "_COMPO"
+	str_compo = product_id+code_compo+".png"
+	str_compo = str_compo.upper()
+	copyfile(op.join(pout, "composition.png"), op.join(path_products, str_compo))
+
 	snow_percent = compute_snowpercent(op.join(pout, "final_mask.tif"))
 	cloud_percent = compute_cloudpercent(op.join(pout, "final_mask.tif"))
 	

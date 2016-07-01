@@ -59,15 +59,16 @@ def polygonize(input_img,input_mask,output_vec):
 	"""Helper function to polygonize raster mask using gdal polygonize"""
 	call_subprocess(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
-def composition_RGB(input_img,output_img, nRed, nGreen, nSWIR):
+def composition_RGB(input_img,output_img):
 	"""Make a RGB composition to highlight the snow cover
 	 
-	input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color
+	input_img: multispectral tiff, output_img: false color
 	composite RGB image (GTiff).nRed,nGreen,nSWIR are index of red, green and
 	SWIR in in put images.
 
 	"""
-	call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
+	#call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
+	call_subprocess(["otbcli_Convert", "-in", input_img, "-out", output_img, "uint8", "-type", "linear"])
 
 def burn_polygons_edges(input_img,input_vec):
 	"""Burn polygon borders onto an image with the following symbology:
@@ -201,13 +202,13 @@ class snow_detector :
 			
 		#build vrt
 		print "building bands vrt"
-		self.img=op.join(self.path_tmp, "grs.vrt")
-		call_subprocess(["gdalbuildvrt","-separate", self.img, gb_path_resampled, rb_path_resampled, sb_path_resampled])
+		self.img=op.join(self.path_tmp, "srg.vrt")
+		call_subprocess(["gdalbuildvrt","-separate", self.img, sb_path_resampled, rb_path_resampled, gb_path_resampled])
 		
 		#Set bands parameters
-		self.nGreen=1
+		self.nGreen=3
 		self.nRed=2
-		self.nSWIR=3
+		self.nSWIR=1
 		
 		#Parse snow parameters
 		snow=data["snow"]
@@ -265,7 +266,7 @@ class snow_detector :
 		polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
 
 		#RGB composition
-		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"),self.nRed,self.nGreen,self.nSWIR)
+		composition_RGB(self.img,op.join(self.path_tmp,"composition.png"))
 
 		#Burn polygons edges on the composition
 		#TODO add pass1 snow polygon in yellow
