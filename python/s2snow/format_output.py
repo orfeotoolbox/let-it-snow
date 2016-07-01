@@ -74,9 +74,9 @@ def format_LIS(snow_detector):
 		copyfile(f, op.join(path_products, str_seb_vec))
 	
 	code_compo = "_COMPO"
-	str_compo = product_id+code_compo+".png"
+	str_compo = product_id+code_compo+".tif"
 	str_compo = str_compo.upper()
-	copyfile(op.join(pout, "composition.png"), op.join(path_products, str_compo))
+	copyfile(op.join(pout, "composition.tif"), op.join(path_products, str_compo))
 
 	snow_percent = compute_snowpercent(op.join(pout, "final_mask.tif"))
 	cloud_percent = compute_cloudpercent(op.join(pout, "final_mask.tif"))

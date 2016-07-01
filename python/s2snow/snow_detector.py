@@ -266,7 +266,7 @@ class snow_detector :
 		polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
 
 		#RGB composition
-		composition_RGB(self.img,op.join(self.path_tmp,"composition.png"))
+		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"))
 
 		#Burn polygons edges on the composition
 		#TODO add pass1 snow polygon in yellow
