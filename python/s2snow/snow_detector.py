@@ -202,7 +202,7 @@ class snow_detector :
 			
 		#build vrt
 		print "building bands vrt"
-		self.img=op.join(self.path_tmp, "srg.vrt")
+		self.img=op.join(self.path_tmp, "lis.vrt")
 		call_subprocess(["gdalbuildvrt","-separate", self.img, sb_path_resampled, rb_path_resampled, gb_path_resampled])
 		
 		#Set bands parameters
@@ -302,10 +302,11 @@ class snow_detector :
 		#Extract shadow mask
 		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.all_cloud_mask), op.join(self.path_tmp,"all_cloud_mask.tif")]) 
 		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.shadow_mask), op.join(self.path_tmp,"shadow_mask.tif")])
+		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.high_cloud_mask), op.join(self.path_tmp,"high_cloud_mask.tif")])
 		cond_cloud2="im3b1>" + str(self.rRed_darkcloud)
-		condition_shadow= "((im1b1==1 and " + cond_cloud2 + ") or (im2b1==1))"
+		condition_shadow= "((im1b1==1 and " + cond_cloud2 + ") or im2b1==1 or im4b1==1)"
 		print condition_shadow
-		call_subprocess(["otbcli_BandMath","-il",op.join(self.path_tmp,"all_cloud_mask.tif"), op.join(self.path_tmp,"shadow_mask.tif"),op.join(self.path_tmp,"red_nn.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow])
+		call_subprocess(["otbcli_BandMath","-il",op.join(self.path_tmp,"all_cloud_mask.tif"), op.join(self.path_tmp,"shadow_mask.tif"),op.join(self.path_tmp,"red_nn.tif"), op.join(self.path_tmp,"high_cloud_mask.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow])
 
 	def pass1(self):
 		#Pass1 : NDSI threshold
