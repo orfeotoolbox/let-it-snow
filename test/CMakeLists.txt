@@ -23,21 +23,21 @@ set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test)
 	
 add_test(NAME compare_snow_output_pass1_test
   COMMAND gdalcompare.py
-  "${BASELINE}/pass1.tif"
+  "${BASELINE}/pass1_highcloud.tif"
   "${OUTPUT_TEST}/pass1.tif" 
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_output_pass2_test
   COMMAND gdalcompare.py
-  "${BASELINE}/pass2.tif"
+  "${BASELINE}/pass2_highcloud.tif"
   "${OUTPUT_TEST}/pass2.tif" 
   )
 set_tests_properties(compare_snow_output_pass2_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_output_pass3_test
   COMMAND gdalcompare.py
-  "${BASELINE}/pass3.tif"
+  "${BASELINE}/pass3_highcloud.tif"
   "${OUTPUT_TEST}/pass3.tif" 
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
@@ -58,7 +58,7 @@ add_test(NAME preprocessing_test
 
 add_test(NAME compare_final_mask_output_test
   COMMAND gdalcompare.py
-  "${BASELINE}/final_mask.tif"
+  "${BASELINE}/final_mask_highcloud.tif"
   "${OUTPUT_TEST}/final_mask.tif" 
   )
 set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_test)
@@ -66,14 +66,14 @@ set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_te
 #gdalcompare.py doesn't work on dbf files
 add_test(NAME compare_final_mask_vec_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BASELINE}/final_mask_vec.dbf"
+  "${BASELINE}/final_mask_vec_highcloud.dbf"
   "${OUTPUT_TEST}/final_mask_vec.dbf" 
   )
 set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_all_output_test
   COMMAND gdalcompare.py
-  "${BASELINE}/snow_all.tif"
+  "${BASELINE}/snow_all_highcloud.tif"
   "${OUTPUT_TEST}/snow_all.tif" 
   )
 set_tests_properties(compare_snow_all_output_test PROPERTIES DEPENDS s2snow_test)
@@ -90,8 +90,8 @@ TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
 add_test(NAME histo_utils_snowline_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
     "${DATA_TEST}/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif"
-    "${BASELINE}/pass1.tif"
-    "${BASELINE}/cloud_refine.tif"
+    "${BASELINE}/pass1_highcloud.tif"
+    "${BASELINE}/cloud_refine_highcloud.tif"
     100
     0.1
     0
@@ -109,7 +109,7 @@ add_test(NAME histo_utils_snowline_internal_test
     0
     -2
     -10
-    "${BASELINE}/histogram.txt"
+    "${BASELINE}/histogram_highcloud.txt"
     40
     )
 add_test(NAME histo_utils_snowline_reverse_internal_test
@@ -121,16 +121,16 @@ add_test(NAME histo_utils_snowline_reverse_internal_test
     1
     0
     0
-    "${BASELINE}/histogram_reverse.txt"
+    "${BASELINE}/histogram_reverse_highcloud.txt"
     90
     )
 
 
 add_test(NAME histo_utils_snowline_full_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
-    "${BASELINE}/srtm_superimpose.tif"
-    "${BASELINE}/pass1_full.tif"
-    "${BASELINE}/cloud_refine_full.tif"
+    "${BASELINE}/srtm_superimpose_highcloud.tif"
+    "${BASELINE}/pass1_full_highcloud.tif"
+    "${BASELINE}/cloud_refine_full_highcloud.tif"
     100
     0.1
     0
@@ -141,16 +141,16 @@ add_test(NAME histo_utils_snowline_full_test
 
 add_test(NAME histo_utils_snow_fraction_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snow_fraction_test
-    "${BASELINE}/pass1.tif"
-    127784
+    "${BASELINE}/pass1_highcloud.tif"
+    126903
     )
 
 add_test(NAME compute_snow_mask_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/compute_snow_mask
-    "${BASELINE}/pass1.tif"
-    "${BASELINE}/pass2.tif"
-    "${BASELINE}/cloud_pass1.tif"
-    "${BASELINE}/cloud_refine.tif"
+    "${BASELINE}/pass1_highcloud.tif"
+    "${BASELINE}/pass2_highcloud.tif"
+    "${BASELINE}/cloud_pass1_highcloud.tif"
+    "${BASELINE}/cloud_refine_highcloud.tif"
     "${OUTPUT_TEST}/snow_all_test.tif"
      )
 
