@@ -72,7 +72,7 @@ Code to generate CES Neige products on Theia platforms
 
 lis dependencies: 
 
-GDAL >=1.9
+GDAL >=1.9 (compatible with GDAL 2.X)
 OTB >= 5.0 
 Boost-Python
 Python interpreter >= 2.7
