@@ -107,8 +107,8 @@ def burn_polygons_edges(input_img,input_vec):
 	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","'DN=\"1\"'","-l",str(unique_filename),tmp_line+".shp",input_img])
                 
         # 4) remove tmp_line files
-	#for shp in glob.glob(tmp_line+"*"):
-	#	os.remove(shp)
+	for shp in glob.glob(tmp_line+"*"):
+		os.remove(shp)
 
 class snow_detector :
 	def __init__(self, data):
