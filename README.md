@@ -36,10 +36,10 @@ runLis.sh param.json
 
 * COMPO: RGB composition with snow mask 
 * SNOW_ALL: Binary mask of snow and clouds.
-  * 1st bit: Snow detected from pass1
-  * 2nd bit: Snow detected from pass2
-  * 3rd bit: Clouds detected from pass1 
-  * 4th bit: Clouds refined  from pass2
+  * 1st bit: Snow mask after pass1
+  * 2nd bit: Snow mask after pass2
+  * 3rd bit: Clouds detected at pass0 
+  * 4th bit: Clouds refined  at pass0
 
 For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do: 
 ````
@@ -72,11 +72,15 @@ Code to generate CES Neige products on Theia platforms
 
 lis dependencies: 
 
-GDAL >=1.9
+GDAL >=2.0
 OTB >= 5.0 
 Boost-Python
 Python interpreter >= 2.7
 Python libs >= 2.7
+Python packages:
+numpy
+lxml
+matplotlib
 
 GDAL itself depends on a number of other libraries provided by most major operating systems and also depends on the non standard GEOS and PROJ4 libraries. GDAl- Python bindings are also required
 

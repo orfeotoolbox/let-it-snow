@@ -201,7 +201,7 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<itk::VectorI
          << " Total frequency = " << histogram.GetTotalFrequency()
          << " Dimension sizes = " << histogram.GetSize() << std::endl;
 
-  myfile << "z_center, Nz, fcloud_z, fsnow_z, fnosnow_z" << std::endl;
+  myfile << "z_center, tot_z, fcloud_z, fsnow_z, fnosnow_z" << std::endl;
 
   for (unsigned int i=0;i<histogram.GetSize()[0]; ++i)
     {

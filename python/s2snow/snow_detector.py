@@ -27,6 +27,7 @@ from gdalconst import *
 import multiprocessing
 import numpy as np
 import uuid
+from shutil import copyfile
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
@@ -58,15 +59,16 @@ def polygonize(input_img,input_mask,output_vec):
 	"""Helper function to polygonize raster mask using gdal polygonize"""
 	call_subprocess(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
-def composition_RGB(input_img,output_img, nRed, nGreen, nSWIR):
+def composition_RGB(input_img,output_img):
 	"""Make a RGB composition to highlight the snow cover
 	 
-	input_img: multispectral Level 2 SPOT-4 (GTiff), output_img: false color
+	input_img: multispectral tiff, output_img: false color
 	composite RGB image (GTiff).nRed,nGreen,nSWIR are index of red, green and
 	SWIR in in put images.
 
 	"""
-	call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
+	#call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
+	call_subprocess(["otbcli_Convert", "-in", input_img, "-out", output_img, "uint8", "-type", "linear"])
 
 def burn_polygons_edges(input_img,input_vec):
 	"""Burn polygon borders onto an image with the following symbology:
@@ -77,44 +79,43 @@ def burn_polygons_edges(input_img,input_vec):
 	
 	"""
         
-        #Save temporary file in working directory
+	#Save temporary file in working directory
         
-        #Retrieve directory from input vector file
-        input_dir=os.path.dirname(input_vec)
-        #TODO move to snowdetector class?
-        #Get unique identifier for the temporary file
-        unique_filename=uuid.uuid4()
+	#Retrieve directory from input vector file
+	input_dir=os.path.dirname(input_vec)
+	#TODO move to snowdetector class?
+	#Get unique identifier for the temporary file
+	unique_filename=uuid.uuid4()
 	tmp_line=op.join(input_dir,str(unique_filename))
+	print "tmpline: " + str(tmp_line)
 
+        #print "gdal version " + gdal.VersionInfo.str()
+        
 	call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
-	# 2) rasterize cloud and cloud shadows polygon borders in green
-	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","DN=\"2\"","-l","tmp_line",tmp_line+".shp",input_img])
-	# 3) rasterize snow polygon borders in magenta
-	call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","DN=\"1\"","-l","tmp_line",tmp_line+".shp",input_img])
-	# 4) remove tmp_line files
-	call_subprocess(["rm"]+glob.glob(tmp_line+"*"))
 
-def get_total_pixels(imgpath):
-	dataset = gdal.Open(imgpath, GA_ReadOnly)
-	#assume that snow and cloud images are of the same size
-	total_pixels=dataset.RasterXSize*dataset.RasterYSize
-	return total_pixels
-
-def get_total_pixels_without_nodata(nodata_mask):
-	dataset = gdal.Open(nodata_mask, GA_ReadOnly)
-	#assume that snow and cloud images are of the same size
-	wide = dataset.RasterXSize
-	high = dataset.RasterYSize
-	band = dataset.GetRasterBand(1)
-	array = band.ReadAsArray(0, 0, wide, high)
-	l = list(array.flatten())
-	return l.count(0)
+        if gdal.VersionInfo() >= 2000000:
+                print "GDAL version >= 2.0 detected. Where statement syntax have changed in gdal."
+                # 2) rasterize cloud and cloud shadows polygon borders in green
+	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where",'DN=2',"-l",str(unique_filename),tmp_line+".shp",input_img])
+	        # 3) rasterize snow polygon borders in magenta
+	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where",'DN=1',"-l",str(unique_filename),tmp_line+".shp",input_img])
+        else:
+                print "GDAL version <2."
+                # 2) rasterize cloud and cloud shadows polygon borders in green
+	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","'DN=\"2\"'","-l",str(unique_filename),tmp_line+".shp",input_img])
+	        # 3) rasterize snow polygon borders in magenta
+	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","'DN=\"1\"'","-l",str(unique_filename),tmp_line+".shp",input_img])
+                
+        # 4) remove tmp_line files
+	for shp in glob.glob(tmp_line+"*"):
+		os.remove(shp)
 
 class snow_detector :
 	def __init__(self, data):
 
 		self.version = VERSION
 		#Parse general parameters
+
 		general=data["general"]
 		self.path_tmp=str(general.get("pout"))
 		self.ram=general.get("ram", 512)
@@ -128,26 +129,106 @@ class snow_detector :
 		self.generate_vector=general.get("generate_vector", False)
 		self.do_preprocessing=general.get("preprocessing", False)
 		self.do_postprocessing=True
-		self.shadow_value=general.get("shadow_value")
+		self.nodata=-10000 #TODO parse json if needed
 		#Parse cloud data
-		cloud_mask=data["cloud_mask"]
-		self.rf=cloud_mask.get("rf")
-		self.rRed_darkcloud=cloud_mask.get("rRed_darkcloud")
-		self.rRed_backtocloud=cloud_mask.get("rRed_backtocloud")
+		cloud=data["cloud"]
+		self.rf=cloud.get("rf")
+		self.rRed_darkcloud=cloud.get("red_darkcloud")
+		self.rRed_backtocloud=cloud.get("red_backtocloud")
+		self.shadow_mask=cloud.get("shadow_mask")
+		self.all_cloud_mask=cloud.get("all_cloud_mask")
+		self.high_cloud_mask=cloud.get("high_cloud_mask")
 		#Parse input parameters
 		inputs=data["inputs"]
 		if(self.do_preprocessing):
 			self.vrt=str(inputs.get("vrt")) 
-		self.img=str(inputs.get("image"))
+		#self.img=str(inputs.get("image"))
 		self.dem=str(inputs.get("dem"))
 		self.cloud_init=str(inputs.get("cloud_mask"))
+		
+		#bands paths
+		green_band=inputs["green_band"]
+		gb_path=green_band["path"]
+		gb_no=green_band["noBand"]
+
+		gb_dataset = gdal.Open(gb_path, GA_ReadOnly)
+		gb_path_extracted=op.join(self.path_tmp, "green_band_extracted.tif")
+		if gb_dataset.RasterCount > 1:
+			print "extracting green band"
+			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(gb_no),gb_path,gb_path_extracted])
+		else:
+			copyfile(gb_path, gb_path_extracted)
+
+		red_band=inputs["red_band"]
+		rb_path=red_band["path"]
+		rb_no=red_band["noBand"]
+
+		rb_dataset = gdal.Open(rb_path, GA_ReadOnly)
+		rb_path_extracted=op.join(self.path_tmp, "red_band_extracted.tif")
+		if rb_dataset.RasterCount > 1:
+			print "extracting red band"
+			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(rb_no),rb_path,rb_path_extracted])
+		else:
+			copyfile(rb_path, rb_path_extracted)
+
+		swir_band=inputs["swir_band"]
+		sb_path=swir_band["path"]
+		sb_no=swir_band["noBand"]
+		
+		sb_dataset = gdal.Open(sb_path, GA_ReadOnly)
+		sb_path_extracted=op.join(self.path_tmp, "swir_band_extracted.tif")
+		if sb_dataset.RasterCount > 1:
+			print "extracting swir band"
+			call_subprocess(["gdal_translate", "-of","GTiff","-ot","Int16","-a_nodata", str(self.nodata),"-b",str(sb_no),sb_path,sb_path_extracted])
+
+		else:
+			copyfile(sb_path, sb_path_extracted)
+
+		#check for same res
+		gb_dataset = gdal.Open(gb_path_extracted, GA_ReadOnly)
+		rb_dataset = gdal.Open(rb_path_extracted, GA_ReadOnly)
+		sb_dataset = gdal.Open(sb_path_extracted, GA_ReadOnly)
+		
+		gb_resolution = gb_dataset.GetGeoTransform()[1]
+		rb_resolution = rb_dataset.GetGeoTransform()[1]
+		sb_resolution = sb_dataset.GetGeoTransform()[1]
+		print "green band resolution : " + str(gb_resolution)
+		print "red band resolution : " + str(rb_resolution)
+		print "swir band resolution : " + str(sb_resolution)
+		#test if different reso
+		gb_path_resampled=op.join(self.path_tmp, "green_band_resampled.tif")
+		rb_path_resampled=op.join(self.path_tmp, "red_band_resampled.tif")
+		sb_path_resampled=op.join(self.path_tmp, "swir_band_resampled.tif")
+		if not gb_resolution == rb_resolution == sb_resolution:
+			print "resolution is different among band files"
+			#gdalwarp to max reso
+			max_res = max(gb_resolution, rb_resolution, sb_resolution)
+			print "cubic resampling to " + str(max_res) + "of resolution" 
+			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),gb_path_extracted,gb_path_resampled])
+			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),rb_path_extracted,rb_path_resampled])
+			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),sb_path_extracted,sb_path_resampled])
+		else:
+			gb_path_resampled=gb_path_extracted
+			rb_path_resampled=rb_path_extracted
+			sb_path_resampled=sb_path_extracted
+			
+		#build vrt
+		print "building bands vrt"
+		self.img=op.join(self.path_tmp, "lis.vrt")
+		call_subprocess(["gdalbuildvrt","-separate", self.img, sb_path_resampled, rb_path_resampled, gb_path_resampled])
+		
+		#Set bands parameters
+		self.nGreen=3
+		self.nRed=2
+		self.nSWIR=1
+		
 		#Parse snow parameters
 		snow=data["snow"]
 		self.dz=snow.get("dz")
 		self.ndsi_pass1=snow.get("ndsi_pass1")
-		self.rRed_pass1=snow.get("rRed_pass1")
+		self.rRed_pass1=snow.get("red_pass1")
 		self.ndsi_pass2=snow.get("ndsi_pass2")
-		self.rRed_pass2=snow.get("rRed_pass2")
+		self.rRed_pass2=snow.get("red_pass2")
 		self.fsnow_lim=snow.get("fsnow_lim")
 		self.fsnow_total_lim=snow.get("fsnow_total_lim")
 		#Build useful paths
@@ -155,30 +236,25 @@ class snow_detector :
 		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
 		self.cloud_refine=op.join(self.path_tmp,"cloud_refine.tif")
 		self.nodata_path=op.join(self.path_tmp, "nodata_mask.tif")
-		#Set bands parameters
-		self.nGreen=0
-		self.nSWIR=0
-		self.nRed=0 
-		self.nodata=0
-
-		if self.mode == "spot":
-			self.nGreen=1 # Index of green band
-			self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
-			self.nRed=2 # Index of red band
-			self.nodata=-10000 # no-data value
-		elif self.mode == "landsat":
-			self.nGreen=3
-			self.nSWIR=6
-			self.nRed=4 
-			self.nodata=-10000
-		elif self.mode == "s2":
-			sentinel_2_preprocessing()
-			#Set generic band index for Sentinel-2
-			self.nGreen=1
-			self.nRed=2
-			self.nSWIR=3
-		else:
-			sys.exit("Supported modes are spot4,landsat and s2.")
+		
+		# if self.mode == "spot":
+		# 	self.nGreen=1 # Index of green band
+		# 	self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
+		# 	self.nRed=2 # Index of red band
+		# 	self.nodata=-10000 # no-data value
+		# elif self.mode == "landsat":
+		# 	self.nGreen=3
+		# 	self.nSWIR=6
+		# 	self.nRed=4 
+		# 	self.nodata=-10000
+		# elif self.mode == "s2":
+		# 	sentinel_2_preprocessing()
+		# 	#Set generic band index for Sentinel-2
+		# 	self.nGreen=1
+		# 	self.nRed=2
+		# 	self.nSWIR=3
+		# else:
+		# 	sys.exit("Supported modes are spot4,landsat and s2.")
 
 	def detect_snow(self, nbPass):
 		#Set maximum ITK threads
@@ -202,7 +278,7 @@ class snow_detector :
 		polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
 
 		#RGB composition
-		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"),self.nRed,self.nGreen,self.nSWIR)
+		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"))
 
 		#Burn polygons edges on the composition
 		#TODO add pass1 snow polygon in yellow
@@ -236,8 +312,13 @@ class snow_detector :
 		call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#Extract shadow mask
-		condition_shadow= "(im1b1>0 and im2b1>" + str(self.rRed_darkcloud) + ") or (im1b1 >= " + str(self.shadow_value) + ")"
-		call_subprocess(["otbcli_BandMath","-il",self.cloud_init,op.join(self.path_tmp,"red_nn.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow + "?1:0"])
+		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.all_cloud_mask), op.join(self.path_tmp,"all_cloud_mask.tif")]) 
+		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.shadow_mask), op.join(self.path_tmp,"shadow_mask.tif")])
+		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.high_cloud_mask), op.join(self.path_tmp,"high_cloud_mask.tif")])
+		cond_cloud2="im3b1>" + str(self.rRed_darkcloud)
+		condition_shadow= "((im1b1==1 and " + cond_cloud2 + ") or im2b1==1 or im4b1==1)"
+		print condition_shadow
+		call_subprocess(["otbcli_BandMath","-il",op.join(self.path_tmp,"all_cloud_mask.tif"), op.join(self.path_tmp,"shadow_mask.tif"),op.join(self.path_tmp,"red_nn.tif"), op.join(self.path_tmp,"high_cloud_mask.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow])
 
 	def pass1(self):
 		#Pass1 : NDSI threshold
@@ -305,12 +386,6 @@ class snow_detector :
 						
 		call_subprocess(["otbcli_BandMath","-il",self.cloud_refine,generic_snow_path,self.cloud_init,self.redBand_path,"-out",op.join(self.path_tmp,"final_mask.tif")+GDAL_OPT_2B,"uint8","-ram",str(self.ram),"-exp",condition_final])
 		call_subprocess(["compute_snow_mask", op.join(self.path_tmp,"pass1.tif"), op.join(self.path_tmp,"pass2.tif"), op.join(self.path_tmp,"cloud_pass1.tif"), op.join(self.path_tmp,"cloud_refine.tif"), op.join(self.path_tmp, "snow_all.tif")])
-		
-		self.snow_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(generic_snow_path, 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
-		print self.snow_percent
-		
-		self.cloud_percent = float(histo_utils_ext.compute_nb_pixels_between_bounds(op.join(self.path_tmp,"cloud_refine.tif"), 0, 255) * 100)/get_total_pixels_without_nodata(self.nodata_path)
-		print self.cloud_percent
 
 	def pass3(self):
 		#Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
@@ -357,12 +432,12 @@ class snow_detector :
 		#Extract green bands and resample to 20 meters
 		#FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
 		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
-		call_subprocess(["gdalwarp","-r","cubicspline","-tr","20","-20",greenBand_path,greenBand_resample_path])
+		call_subprocess(["gdalwarp","-r","cubic","-tr","20","-20",greenBand_path,greenBand_resample_path])
 
 		#Extract red bands and sample to 20 meters
 		#FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
 		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
-		call_subprocess(["gdalwarp","-r","cubicspline","-tr","20","-20",redBand_path,redBand_resample_path])
+		call_subprocess(["gdalwarp","-r","cubic","-tr","20","-20",redBand_path,redBand_resample_path])
 
 		#Extract SWIR
 		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nSWIR),s2_r2_img_path[0],swirBand_path])
@@ -374,3 +449,6 @@ class snow_detector :
 		#img variable is used later to compute snow mask
 		self.img=concat_s2
 		self.redBand_path=op.join(path_tmp,"red.tif")
+
+
+

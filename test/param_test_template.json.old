@@ -1,16 +1,15 @@
-
 {
     "general":{
         "pout":"outputdir",
-        "shadow_value":32,
+        "shadow_value":64,
         "ram":1024,
 	"nbThreads":1,
-	"mode":"landsat",
+	"mode":"spot",
 	"generate_vector":false,
 	"preprocessing":false,
-	"postprocessing":false
-        },
-    "inputs":{ 
+	"log":true
+         },
+    "inputs":{
 	"vrt":"inputvrt",
         "image":"inputimage",
         "dem":"inputdem",
@@ -18,7 +17,7 @@
     },
     "cloud_mask":{
         "rf":8,
-        "rRed_darkcloud":500,
+        "rRed_darkcloud":650,
         "rRed_backtocloud":100
     },
     "snow":{

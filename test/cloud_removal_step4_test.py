@@ -4,21 +4,20 @@ import sys
 import numpy as np
 from s2snow import cloud_removal
 
-arr = np.array([255, 255, 255, 255, 255,
-				205, 100, 205, 100, 255,
-				100, 205, 100, 100, 205,
-				255, 100, 100, 205, 100,
-				255, 255, 255, 255, 100]).reshape(5,5)
+arr = np.array([205, 100, 205, 205,
+				205, 205, 100, 100,
+				100, 205, 205, 255,
+				205, 205, 205, 100]).reshape(4,4)
 
-cloud_removal.step4_internal(arr)
+arrdem = np.array([1, 0, 0, 0,
+				   0, 0, 1, 0,
+				   0, 0, 0, 1,
+				   0, 0, 1, 0]).reshape(4,4)
 
-expected = np.array([255, 255, 255, 255, 255,
-					 205, 100, 205, 100, 255,
-					 100, 100, 100, 100, 205,
-					 255, 100, 100, 205, 100,
-					 255, 255, 255, 255, 100]).reshape(5,5)
 
-if((arr==expected).all()):
-	sys.exit(0)
-else:
-	sys.exit(1)
+cloud_removal.step4_internal(arr, arrdem)
+
+expected = np.array([100, 100, 205, 205,
+					 205, 205, 100, 100,
+					 100, 205, 205, 255,
+					 205, 205, 100, 100]).reshape(4,4)

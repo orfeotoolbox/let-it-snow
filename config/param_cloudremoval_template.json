@@ -18,12 +18,6 @@
 	"s1":true,
 	"s2":true,
 	"s3":true,
-	"s4":true,
-	"s5":true
-    },
-    "parameters":{
-	"hsMin":0,
-	"hsMax":0,
-	"windowSize":0
+	"s4":true
     }
 }
