@@ -130,11 +130,14 @@ class snow_detector :
 		self.do_preprocessing=general.get("preprocessing", False)
 		self.do_postprocessing=True
 		self.nodata=-10000 #TODO parse json if needed
+		self.multi=general.get("multi", 1) # Multiplier to handle S2 scaling
 		#Parse cloud data
 		cloud=data["cloud"]
 		self.rf=cloud.get("rf")
 		self.rRed_darkcloud=cloud.get("red_darkcloud")
+		self.rRed_darkcloud *= self.multi
 		self.rRed_backtocloud=cloud.get("red_backtocloud")
+		self.rRed_backtocloud *= self.multi
 		self.shadow_mask=cloud.get("shadow_mask")
 		self.all_cloud_mask=cloud.get("all_cloud_mask")
 		self.high_cloud_mask=cloud.get("high_cloud_mask")
@@ -227,8 +230,10 @@ class snow_detector :
 		self.dz=snow.get("dz")
 		self.ndsi_pass1=snow.get("ndsi_pass1")
 		self.rRed_pass1=snow.get("red_pass1")
+		self.rRed_pass1*=self.multi
 		self.ndsi_pass2=snow.get("ndsi_pass2")
 		self.rRed_pass2=snow.get("red_pass2")
+		self.rRed_pass2*=self.multi
 		self.fsnow_lim=snow.get("fsnow_lim")
 		self.fsnow_total_lim=snow.get("fsnow_total_lim")
 		#Build useful paths
