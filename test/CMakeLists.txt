@@ -141,8 +141,8 @@ add_test(NAME histo_utils_snowline_full_test
 
 add_test(NAME histo_utils_snow_fraction_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snow_fraction_test
-    "${BASELINE}/pass1_highcloud.tif"
-    126903
+    "${OUTPUT_TEST}/histo_utils_snow_fraction_test.tif"
+    11
     )
 
 add_test(NAME compute_snow_mask_test
