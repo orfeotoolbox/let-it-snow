@@ -27,9 +27,9 @@
     },
     "cloud":
     {
-        "shadow_mask":64,
+        "shadow_mask":32,
         "all_cloud_mask":1,
-        "high_cloud_mask":256,
+        "high_cloud_mask":128,
         "rf":8,
         "red_darkcloud":500,
         "red_backtocloud":100
