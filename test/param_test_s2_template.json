@@ -1,0 +1,47 @@
+{
+    "general":{
+        "pout":"/home/klempkat/let-it-snow/muscate/output",
+        "nodata":-10000,
+        "ram":1024,
+	"nb_threads":1,
+	"generate_vector":false,
+	"preprocessing":false,
+	"log":true,
+	"multi":10
+    },
+    "inputs":{
+	"green_band": {
+	    "path": "/home/grizonnetm/Data-Neige/MUSCATE/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_FRE_B3.tif",
+	    "noBand": 1
+	},
+	"red_band": {
+	    "path": "/home/grizonnetm/Data-Neige/MUSCATE/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_FRE_B4.tif",
+	    "noBand": 1
+	},
+	"swir_band": {
+	    "path": "/home/grizonnetm/Data-Neige/MUSCATE/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_FRE_B11.tif",
+	    "noBand": 1
+	},
+        "dem":"/home/grizonnetm/Data-Neige/MUSCATE/MNT_S2_N2/S2__TEST_AUX_REFDE2_T29RNQ_0001_1.0/S2__TEST_AUX_REFDE2_T29RNQ_0001/S2__TEST_AUX_REFDE2_T29RNQ_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF",
+        "cloud_mask":"/home/grizonnetm/Data-Neige/MUSCATE/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R2.tif"
+    },
+    "cloud":
+    {
+        "shadow_mask":32,
+        "all_cloud_mask":1,
+        "high_cloud_mask":128,
+        "rf":8,
+        "red_darkcloud":500,
+        "red_backtocloud":100
+    },
+    "snow":{
+        "dz":100,
+        "ndsi_pass1":0.4,
+        "red_pass1":200,
+        "ndsi_pass2":0.15,
+        "red_pass2":120,
+        "fsnow_lim":0.1,
+        "fsnow_total_lim":0.001
+    }
+}
+
