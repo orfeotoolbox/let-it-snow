@@ -1,19 +1,23 @@
-# CES NeigeOA
+# Let-it-snow operational snow cover product from Sentinel-2 and Landsat-8 data
 ## Synopsis
 
-This code is a Python/OTB version of the demonstrator of the snow detection algorithm for Sentinel-2 images. 
+This code is a Python/OTB version of the demonstrator of the snow detection algorithm for Sentinel-2 and Landsat-8 images. 
 
-To read more about this product (in French):
+The algorithm documentation with examples is available here:
+
+* [Algorithm theoritical basis documentation](https://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
+
+To read more about this project (in French):
 
 * [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3_light.pdf#page=10)
 
 * [Slides Séminaire GEOSUD](http://www.equipex-geosud.fr/documents/10180/233868/7_GascoinHagolle2015-THEIA+CES+surface+enneigee_S%C3%A9minaire+Theia+Geosud+2015.pdf)
 
-The input files are SPOT  or Landsat-8 Level-2A images from Theia Land and the SRTM digital elevation model.
+The input files are SPOT-4/5, Sentinel-2 or Landsat-8 Level-2A images from Theia Land data center and the SRTM digital elevation model.
 
 ## Code Example
 
-To build DEM data. Download VRT files corresponding to the data and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set vrt path. It will project and resample the SRTM DEM over the Landsat/SPOT area (30m:Landsat8 or 20m:Take5). It uses gdalwarp with the cubicspline option.
+To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set vrt path. It will project and resample the SRTM DEM over the Landsat/SPOT area (30m:Landsat8 or 20m:Take5). 
 
 The snow detection is performed in the Python script app/run_snow_detector.py. 
 
@@ -64,7 +68,7 @@ pixel_value & 00000101
 
 ## Motivation
 
-Code to generate CES Neige products on Theia platforms
+Code to generate the snow cover extent product on Theia platform.
 
 ## Installation
 
@@ -170,7 +174,7 @@ Do not modify these folders.
 
 ## Contributors
 
-Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (Stagiaire CNES)
+Manuel Grizonnet (engineer at CNES), Simon Gascoin (researcher at CNRS/CESBIO), Tristan Klempka (intern at CNES)
 
 ## License
 
