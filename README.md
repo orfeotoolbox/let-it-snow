@@ -5,7 +5,7 @@ This code is a Python/OTB version of the snow cover extent detection algorithm f
 
 The algorithm documentation with examples is available here:
 
-* [Algorithm theoritical basis documentation](http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
+* [Algorithm theoretical basis documentation](http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
 
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
@@ -20,18 +20,18 @@ To build DEM data download the SRTM files corresponding to the study area and bu
 The snow detection is performed in the Python script app/run_snow_detector.py. 
 
 Configure PYTHONPATH environment
-```sh
+```bash
 export PYTHONPATH=${lis-build-dir}/app/:$PYTHONPATH
 ```
 Run the main python script:
 
-```sh
+```bash
 python run_snow_detector param.json
 ```
 
 There is a Bash script in app directory which allows to set the env variable and run the script:
 
-```sh
+```bash
 runLis.sh param.json
 ```
 ## Products format
@@ -93,36 +93,36 @@ Python package dependencies: sys, subprocess, glob, os, json, gdal
 #### General
 
 In your build directory, use cmake to configure your build.
-```sh
+```bash
 cmake -C config.cmake source/lis/
 ```
 In your config.cmake you need to set :
-```sh
+```bash
 LIS_DATA_ROOT
 ```
 For OTB superbuild users these cmake variables need to be set:
-```sh
+```bash
 OTB_DIR
 ITK_DIR
 GDAL_INCLUDE_DIR
 GDAL_LIBRARY
 ```
 Run make in your build folder.
-```sh
+```bash
 make
 ```
 To install s2snow python module. 
 In your build folder:
-```sh
+```bash
 cd python
 python setup.py install
 ```
 or
-```sh
+```bash
 python setup.py install --user
 ```
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
-```sh
+```bash
 export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
 export PATH=/your/build/directory/bin:$PATH
 ```
@@ -133,28 +133,28 @@ let-it-snow is now installed.
 To configure OTB 5.2.1:
 
 Create a bash file which contains:
-```sh
+```bash
 source /mnt/data/home/otbtest/config_otb_5.2.1.sh
 ```
 
 Then build the lis project using cmake
-```sh
+```bash
 cd $build_dir
 cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
 make
 ```
 To install s2snow python module. 
 In your build folder:
-```sh
+```bash
 cd python
 python setup.py install
 ```
 or
-```sh
+```bash
 python setup.py install --user
 ```
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
-```sh
+```bash
 export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
 export PATH=/your/build/directory/bin:$PATH
 ```
