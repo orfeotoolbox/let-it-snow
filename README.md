@@ -5,7 +5,7 @@ This code is a Python/OTB version of the snow cover extent detection algorithm f
 
 The algorithm documentation with examples is available here:
 
-* [Algorithm theoritical basis documentation](https://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
+* [Algorithm theoritical basis documentation](http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
 
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
