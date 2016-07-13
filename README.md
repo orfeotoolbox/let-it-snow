@@ -15,11 +15,11 @@ The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theai La
 
 ## Code Example
 
-To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set vrt path. 
+To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path. 
 
 The snow detection is performed in the Python script app/run_snow_detector.py. 
 
-Configure PYTHONPATH environnement
+Configure PYTHONPATH environment
 ```sh
 export PYTHONPATH=${lis-build-dir}/app/:$PYTHONPATH
 ```

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.1.12)  13 JUL 2016 12:22
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.1.12)  13 JUL 2016 15:43
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1555,11 +1555,11 @@ t in the input directory')[]
  []
 
 Package epstopdf Info: Source file: <include/castest_CESneige_01.eps>
-(epstopdf)                    date: 2016-06-16 11:07:03
+(epstopdf)                    date: 2016-07-13 14:40:24
 (epstopdf)                    size: 22893 bytes
 (epstopdf)             Output file: <include/castest_CESneige_01-eps-converted-
 to.pdf>
-(epstopdf)                    date: 2016-06-16 11:57:05
+(epstopdf)                    date: 2016-07-13 14:40:24
 (epstopdf)                    size: 9092 bytes
 (epstopdf)             Command: <repstopdf --outfile=include/castest_CESneige_0
 1-eps-converted-to.pdf include/castest_CESneige_01.eps>
@@ -1575,11 +1575,11 @@ on input line 321.
 (pdftex.def)             Requested size: 289.07999pt x 230.19649pt.
  [17]
 Package epstopdf Info: Source file: <include/castest_CESneige_02.eps>
-(epstopdf)                    date: 2016-06-16 11:07:08
+(epstopdf)                    date: 2016-07-13 14:40:24
 (epstopdf)                    size: 98488 bytes
 (epstopdf)             Output file: <include/castest_CESneige_02-eps-converted-
 to.pdf>
-(epstopdf)                    date: 2016-06-16 11:57:06
+(epstopdf)                    date: 2016-07-13 14:40:24
 (epstopdf)                    size: 11233 bytes
 (epstopdf)             Command: <repstopdf --outfile=include/castest_CESneige_0
 2-eps-converted-to.pdf include/castest_CESneige_02.eps>
@@ -1596,11 +1596,11 @@ on input line 342.
  [18 <./include/castest_CESneige_01-eps-converted-to.pdf> <./include/castest_CE
 Sneige_02-eps-converted-to.pdf>]
 Package epstopdf Info: Source file: <include/castest_CESneige_03.eps>
-(epstopdf)                    date: 2016-06-16 11:07:30
+(epstopdf)                    date: 2016-07-13 14:40:24
 (epstopdf)                    size: 5474506 bytes
 (epstopdf)             Output file: <include/castest_CESneige_03-eps-converted-
 to.pdf>
-(epstopdf)                    date: 2016-06-16 11:57:07
+(epstopdf)                    date: 2016-07-13 14:40:24
 (epstopdf)                    size: 1009357 bytes
 (epstopdf)             Command: <repstopdf --outfile=include/castest_CESneige_0
 3-eps-converted-to.pdf include/castest_CESneige_03.eps>
@@ -1656,7 +1656,7 @@ nts/type1/public/lm/lmr7.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb><
 ublic/lm/lmri10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb></usr/sh
 are/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public
 /lm/lmtt8.pfb>
-Output written on ATBD_CES-Neige.pdf (25 pages, 15170637 bytes).
+Output written on ATBD_CES-Neige.pdf (25 pages, 15170397 bytes).
 PDF statistics:
  421 PDF objects out of 1000 (max. 8388607)
  353 compressed objects within 4 object streams
