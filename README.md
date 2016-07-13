@@ -19,19 +19,19 @@ To build DEM data download the SRTM files corresponding to the study area and bu
 
 The snow detection is performed in the Python script app/run_snow_detector.py. 
 
-```
 Configure PYTHONPATH environnement
+```sh
 export PYTHONPATH=${lis-build-dir}/app/:$PYTHONPATH
 ```
 Run the main python script:
 
-```
+```sh
 python run_snow_detector param.json
 ```
 
 There is a Bash script in app directory which allows to set the env variable and run the script:
 
-```
+```sh
 runLis.sh param.json
 ```
 ## Products format
@@ -44,9 +44,9 @@ runLis.sh param.json
   * 4th bit: Clouds refined  at pass0
 
 For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do: 
-````
+```python
 pixel_value & 00000101  
-````
+```
 * SEB: Raster image of the snow mask and cloud mask. 
   * 0: No-snow
   * 100: Snow
@@ -93,71 +93,71 @@ Python package dependencies: sys, subprocess, glob, os, json, gdal
 #### General
 
 In your build directory, use cmake to configure your build.
-```` 
+```sh
 cmake -C config.cmake source/lis/
-````
+```
 In your config.cmake you need to set :
-````
+```sh
 LIS_DATA_ROOT
-````
+```
 For OTB superbuild users these cmake variables need to be set:
-````
+```sh
 OTB_DIR
 ITK_DIR
 GDAL_INCLUDE_DIR
 GDAL_LIBRARY
-````
+```
 Run make in your build folder.
-````
+```sh
 make
-````
+```
 To install s2snow python module. 
 In your build folder:
-````
+```sh
 cd python
 python setup.py install
-```` 
+```
 or
-````
+```sh
 python setup.py install --user
-````
+```
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
-````
+```sh
 export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
 export PATH=/your/build/directory/bin:$PATH
-````
+```
 let-it-snow is now installed.
 
 #### On venuscalc
 
-To configure OTB 5.2.1 :
+To configure OTB 5.2.1:
 
 Create a bash file which contains:
-````
+```sh
 source /mnt/data/home/otbtest/config_otb_5.2.1.sh
-````
+```
 
 Then build the lis project using cmake
-````
+```sh
 cd $build_dir
 cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
 make
-````
+```
 To install s2snow python module. 
 In your build folder:
-````
+```sh
 cd python
 python setup.py install
-```` 
+```
 or
-````
+```sh
 python setup.py install --user
-````
+```
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
-````
+```sh
 export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
 export PATH=/your/build/directory/bin:$PATH
-````
+```
 let-it-snow is now installed.
 
 ## Tests
@@ -172,7 +172,7 @@ Do not modify these folders.
 
 ## Contributors
 
-Manuel Grizonnet (engineer at CNES), Simon Gascoin (researcher at CNRS/CESBIO), Tristan Klempka (intern at CNES)
+Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES)
 
 ## License
 
