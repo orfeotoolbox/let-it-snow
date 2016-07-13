@@ -1,0 +1,418 @@
+% Created 2016-05-31 mar. 12:08
+\documentclass[a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+ \usepackage{lmodern}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\hypersetup{
+colorlinks=true,
+linkcolor=blue,
+pdfauthor=Simon Gascoin,
+pdftitle=Algorithm theoritical basis documentation for an operational snow cover product from Sentinel-2 and Landsat-8 data (Let-it-snow)}
+\tolerance=1000
+\usepackage{amsfonts,bm}
+\usepackage{color}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[margin=2.5cm,a4paper]{geometry}
+\usepackage{enumitem}
+\usepackage[]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+% \usepackage{listings}
+% \lstset{language=Matlab}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,decorations.markings,shapes,fit}
+
+
+\renewcommand{\maketitle}{}
+\date{\today}
+% \title{ATBD CES surface enneigée}
+% \hypersetup{
+%   pdfkeywords={},
+%   pdfsubject={},
+%   pdfcreator={Emacs 24.3.1 (Org mode 8.2.4)}}
+\begin{document}
+
+\maketitle
+\pagestyle{fancy}
+% \providecommand{\alert}[1]{\textbf{#1}}
+% \setlist[itemize,1]{label=$\diamond$}
+% \setlist[itemize,2]{label=$\ast$}
+% \setlist[itemize,3]{label=$\star$}
+% \setlist[itemize,4]{label=$\bullet$}
+% \setlist[itemize,5]{label=$\circ$}
+% \setlist[itemize,6]{label=$-$}
+% \setlist[itemize,7]{label=$\cdot$}
+% \setlist[itemize,8]{label=$\cdot$}
+% \setlist[itemize,9]{label=$\cdot$}
+% \renewlist{itemize}{itemize}{9}
+\lhead[]{\includegraphics[width=0.1\textwidth]{./images/logo_cesbio.png}}
+\rhead[]{\thepage}
+% \cfoot{\textcolor{PineGreen}{copyright?}}
+
+\input{./page_titre.tex}
+
+\begin{abstract}
+ 
+This document describes the algorithm of the Let-it-snow (LIS) processing chain to generate the snow cover extent product for the Theia land data center. The algorithm takes as input a Sentinel-2 or Landsat-8 image of surface reflectance corrected from atmospheric and slope effects, the associated cloud mask (level 2A product provided by Theia) and a digital elevation model. The output is a single band raster at the same resolution of the input image giving the snow presence or absence and a cloud mask. The output cloud mask is different from the input cloud mask because some pixels can be reclassified as snow or no-snow by the algorithm.
+
+The snow detection algorithm works in two passes: first the most evident snow cover is detected using a set of conservative thresholds, then these snow pixels are used to determine the lowest elevation of the snow cover. A second pass is performed for the pixels above this elevation with a new set of less conservative thresholds.
+
+The processing chain also generates a vectorized version of the snow mask after pass 1 and 2 and a color composite that is overlaid by these polygons. These secondary products are intended for expert validation purpose.
+
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+% 
+\section{Introduction}\label{par:intro}
+
+\subsection{Motivation}
+
+The snow cover is a key factor of many ecological, climatological and hydrological processes in cold regions. The monitoring of the snow cover is of particular societal relevance in mountain regions since the seasonal snow melt modifies the soil moisture, groundwater recharge and river flow, often providing critical water resources to downstream areas\footnote{Barnett T. P., Adam J. C. and Lettenmaier D. P., Potential impacts of a warming climate on water availability in snow-dominated regions, Nature 438 (7066), 2005.}. 
+
+The snow cover is one of the 50 Essential Climate Variables (ECVs) that were defined by the Global Observing System for Climate (GCOS)\footnote{GCOS Essential Climate Variables  \url{http://www.wmo.int/pages/prog/gcos/index.php?name=EssentialClimateVariables}} in accordance with the Committee on Earth Observation Satellites (CEOS) agencies\footnote{Global Climate Observing System (GCOS) Implementation Plan \url{http://remotesensing.usgs.gov/ecv/document/gcos-138.pdf}} to support the work of the UNFCCC and the IPCC. 
+
+The \textit{snow cover extent} or \textit{snow cover area} is the extent of the snow cover on the land surface. A snow cover extent product is typically formatted as a georeferenced raster image whose pixel value indicate if snow is present or absent in the pixel.
+
+Other major satellite snow products include: (i) the snow cover fraction (ii) snow albedo (iii) the snow water equivalent. The snow cover fraction and albedo are generated from optical observations, while the snow water equivalent is retrieved using passive or active microwave. The snow water equivalent is potentially the most useful product since it gives directly the amount of accumulated water (snow mass), however current products are unsuitable to address user needs for many applications and places because they are available at coarse scale (25~km) with some limitations in the retrievals. This is due to the lack of observations in the wavelengths that are adapted to snow water equivalent sensing. As of today the snow cover extent product is still the most widely used for hydrological and climatological applications. This will certainly remain true for the next decade since there is no planned mission to retrieve the snow water equivalent or the snow depth at global scale\footnote{This was the objective of the CoreH2O mission but the project was not selected by the ESA for the Earth Explorer-7 program in 2015.}. 
+
+Current snow cover area products are derived from low to mid-resolution optical observations (e.g. AVHRR, VEGETATION, MODIS) but their spatial resolution (1~km to 250~m) is too coarse for various applications, in particular in mountain regions where the topography causes large spatial variability of the snow cover at decametric scales. High resolution snow cover maps can be generated from Landsat images but the temporal revisit of 16~days is not sufficient for snow cover monitoring during the melt season. The ESA Sentinel-2 mission offers the unique opportunity to study the snow cover extent dynamics at 20 m resolution with a 5 day revisit time. If combined with Landsat the temporal resolution can be further increased. Both Sentinel-2 and Landsat missions are global missions that are expected to run over long periods, allowing the development of operational products and services\footnote{Drusch M., Del Bello U., Carlier S. et al., Sentinel-2: ESA's Optical High-Resolution Mission for GMES Operational Services, Remote Sensing of Environment 120, 2012.}.
+
+\subsection{Objective}
+
+The objective of this algorithm is to generate a snow cover extent product from Landsat-8 and Sentinel-2 images at high resolution (30~m for Landsat-8, 20~m for Sentinel-2). The main requirements are:
+\begin{itemize}
+ \item The algorithm should be efficient to allow the processing of large areas (10$^4$ km$^2$) with a reasonable computation cost. 
+ \item It should be robust to seasonal and spatial variability of the snow cover and land surface properties. 
+ \item It should maximize the number of pixels that are classified as snow or no-snow.
+ \item It is always preferable to falsely classify a pixel as cloud than falsely classify a pixel as snow or no-snow. 
+%  \item It should not depend on uncertain external data (like meteorological data) to limit the risk of a product discontinuation.
+\end{itemize}
+
+\subsection{Development}
+
+The algorithm prototype was developed by Simon Gascoin with insights from Olivier Hagolle in June 2015.  The snow detection function and a script to run this function with an example are given in appendices \ref{par:castest} and \ref{par:s2snow} as formatted documents that includes the original Matlab code, comments, and output. The LIS chain was designed to work on any high resolution multi-spectral images from satellite sensors that include at least a channel in the visible spectrum and a channel near 1.5 µm (typically referred to as mid-infrared or ``MIR''). This initial code was ported to Python 2.7 and C++ by Manuel Grizonnet in order to make it scalable to large images using Orfeo Toolbox and GDAL. The LIS code was enhanced by Tristan Klempka during his internship at CNES. LIS currently supports SPOT-4, SPOT-5, Landsat-8 and Sentinel-2 level 2A products. The LIS code, installation documentation and configuration file examples are available in the Cesbio's gitlab: \url{http://tully.ups-tlse.fr/grizonnet/let-it-snow}. 
+
+\subsection{Limitations}
+
+The product is based on optical observations therefore it is not adapted to the detection of the snow cover:
+
+\begin{itemize}
+ \item in polar regions when illumination is insufficient ;
+  \item in dense forest areas where the ground is obstructed by the canopy, like in evergreen conifer forests.
+ \end{itemize}
+ 
+The algorithm may also fail to detect the snow cover in steep shaded slopes if the solar elevation is very low (typically below 20°). This can occur in mid-latitude areas in winter. In this case the slope correction in the L2A product is generally not applied as indicated in the L2A mask.
+
+The algorithm can only reduce the number of cloud pixels from the original L2A cloud mask. If a cloud was not detected by the previous cloud mask algorithm (MACCS) then it can only be classified as snow or no-snow. 
+
+The algorithm output depends on the scale of the input because the snowline elevation is computed at the scale of the image. In the case of the level 2A products this is 110~km by 110~km. The underlying assumption is that a large altitudinal variation of the snowline elevation is not likely at such a scale. Our impression is that this assumption is supported by regional analyses of the snowline in many mountain ranges, but this could be further assessed using mid-resolution snow products\footnote{Gascoin, S., Hagolle, O., Huc, M., Jarlan, L., Dejoux, J.-F., Szczypta, C., Marti, R., and Sánchez, R.: A snow cover climatology for the Pyrenees from MODIS snow products, Hydrol. Earth Syst. Sci., 19, 2337-2351}\footnote{Krajčí P., Holko L. and Parajka J., Variability of snow line elevation, snow cover area and depletion in the main Slovak basins in winters 2001–2014, Journal of Hydrology and Hydromechanics 64(1), 2016}.
+
+\section{Algorithm}\label{par:algo}
+
+\subsection{Inputs}\label{par:inputs}
+\begin{itemize}
+ \item From a level 2A product:
+ \begin{itemize}
+  \item the cloud and cloud shadow mask (referred to as ``L2A cloud mask'' in the following),
+  \item the green, red and MIR bands from the flat surface reflectance product (Tab.~\ref{tab:bands}). These images are corrected for atmospheric and terrain slope effects. The slope correction is important in mountain regions since it enables to use the same detection thresholds whatever the sun-slope geometry. 
+  \end{itemize}
+  \item A digital elevation model (DEM). The DEM is resampled from the SRTM seamless DEM\footnote{Jarvis A., H.I. Reuter, A.  Nelson, E. Guevara, 2008, Hole-filled  seamless SRTM data V4, International  Centre for Tropical  Agriculture (CIAT), available  from \url{http://srtm.csi.cgiar.org}.}. 
+  \item The parameters of the algorithm: \textcolor{red}{$r_f$, $d_z$, $r_B$, $r_D$, ,$n_1$, $n_2$, $r_1$, $r_2$, $f_s$, $f_t$} (written \textcolor{red}{in red} throughout the document).
+  
+\end{itemize}
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|l|lll|}
+\hline
+  & \multicolumn{3}{|c|}{Band}\\
+\hline
+Sensor & Green & Red & MIR\\
+\hline
+SPOT-4 HRV & 1 (20 m, 0.55 µm) & 2 (20 m, 0.65 µm) & 4 (20~m, 1.6 µm)\\
+SPOT-5 HRG & 1 (10 m, 0.55 µm) & 2 (10 m, 0.65 µm) & 4 (10~m, 1.6 µm)\\
+Sentinel-2 MSI & 2 (10 m, 0.56 µm) & 3 (10 m, 0.66 µm) & 5 (20 m, 1.6 µm)\\
+Landsat-8 OLI & 3 (30 m, 0.56 µm) & 4 (30 m, 0.65 µm) & 6 (30 m, 1.6 µm)\\
+\hline
+\end{tabular}
+\end{center}
+\caption{Index of the spectral band in the L2A flat surface reflectance products used by LIS. In parentheses is also indicated the spatial resolution and the wavelength of the band center.}
+\end{table}\label{tab:bands}
+
+\subsection{Outputs}\label{par:outputs}
+
+The main output is a raster image (*SEB.TIF) of the snow and cloud mask. It has the same projection and extent of the initial L2A product and the same resolution as the MIR band, i.e. 20~m for Sentinel-2 and SPOT-4, 30~m for Landsat-8 (Tab.~\ref{tab:bands}). It coded as follows:
+\begin{itemize}
+ \item 0: no-snow
+ \item 100: snow
+ \item 205: cloud including cloud shadow
+ \item 254: no data
+\end{itemize}
+
+The same data are made available as a polygon shapefile of the cloud and snow cover extent (*SEB\_VEC*). Two fields of information are embedded in this file:
+\begin{itemize}
+  \item DN:
+  \begin{itemize}
+    \item 0: no-snow
+    \item 100: snow
+    \item 205: cloud including cloud shadow
+    \item 254: no data
+  \end{itemize}
+  \item field:
+  \begin{itemize}
+    \item no-snow
+    \item snow
+    \item cloud
+    \item no-data
+  \end{itemize}
+\end{itemize}
+
+The other output files are rather useful for the expert evaluation and troubleshooting:
+\begin{itemize}
+ \item an RGB color composite image of bands MIR/red/green also showing the snow and cloud mask boundaries (*COMPO.TIF);
+ \item a binary mask of snow and clouds (*SEB\_ALL.TIF):
+ \begin{itemize}
+ \item bit 1: snow (pass 1)
+ \item bit 2: snow (pass 2)
+ \item bit 3: clouds (pass 1)
+ \item bit 4: clouds (pass 2)
+ \end{itemize}
+ \item a metadata file (*METADATA.XML)
+ 
+\end{itemize}
+
+\subsection{Pre-processing}
+
+In the case of Sentinel-2 the red and green bands are first resampled with the cubic method to a pixel size of 20~m by 20~m to match the resolution of the MIR band.
+
+The DEM is also resampled to the resolution of the target product (30~m or 20~m, see Sect.~\ref{par:outputs}) using the cubic spline method that is implemented in the gdal library.
+
+\subsection{Snow detection}\label{par:snowdetec}
+
+The snow detection is based on the Normalized Difference Snow Index (NDSI) and the reflectance in the red band. The NDSI is defined as\footnote{Dozier, J.: Spectral signature of alpine snow cover from the Landsat Thematic Mapper, Remote sensing of Environment 28, 9–22, 1989}:
+
+\begin{equation}
+\mathrm{NDSI} = \frac{\rho_\mathrm{green}-\rho_\mathrm{MIR}}{\rho_\mathrm{green}+\rho_\mathrm{MIR}}
+\end{equation}
+where $\rho_\mathrm{green}$ (resp. $\rho_\mathrm{MIR}$) is the slope-corrected surface reflectance in the green band (resp. MIR at 1.6~$\mu$m). The NDSI is based on the fact that only snow surfaces are very bright in the visible but dark in the shortwave infrared. Some lake pixels may also have a high NDSI value so we add a criterion on the red reflectance to remove these. A pixel is classified as snow if the two following conditions are fulfilled:
+\begin{itemize}
+ \item $\mathrm{NDSI} > n_i$,
+ \item $\rho_\mathrm{red} > r_i$
+\end{itemize}
+where $n_i$ and $r_i$ are two parameters with $i=\{1,2\}$. Otherwise the pixel is marked as no-snow. 
+
+
+\subsection{Snowline elevation}
+
+The snow detection (Sect.~\ref{par:snowdetec}) is performed a first time using thresholds \textcolor{red}{$n_1$} and \textcolor{red}{$r_1$}. The parameters are set to low values to minimize the false snow detections. As a consequence, many snow covered areas are not detected. However, this pass 1 enables to estimate a minimum snow cover elevation $z_s$. For that purpose the DEM is used to segment the image in elevation band of height \textcolor{red}{$d_z$}. The fraction of the cloud-free area of each band that is covered by snow is computed. We find the lowest elevation band $b$ at which the the snow cover fraction is greater than \textcolor{red}{$f_s$}. Then, $z_s$ is defined as the lower edge of the elevation band that is two elevation bands below band $b$. The snow cover fraction in each elevation band is determined using the pixels that are not marked as cloud in the pass 1 cloud mask (Sect.~\ref{par:cloud}). To ensure that $z_s$ is computed with a statistically significant sample of pixels, the snowline calculation is not activated if the total fraction of snow pixels in the image is lower than $f_t$. A detailed example of the determination of $z_s$ is given in appendix~\ref{par:castest}.
+
+\subsection{Cloud mask processing}\label{par:cloud}
+
+The L2A cloud mask is conservative because it is computed at a coarser resolution and also because it is developed for a large range of applications. However, the detection of the snow cover is robust to a thin, transparent, cloud cover. More importantly, the L2A cloud mask tends to falsely classify the edges of the snow cover as cloud. Hence, it is possible to recover many pixels from the L2A cloud mask and reclassify them as snow or no-snow. This step is important because it substantially increases the number of observations. A pixel from the L2A cloud mask cannot be reclassified as snow or no-snow if:
+
+\begin{itemize}
+ \item it is coded as ``cloud shadow'' in L2A cloud mask;
+ \item or: it is coded as ``high altitude cloud'' (or ``cirrus'') in the L2A cloud mask;
+ \item or: it is not a ``dark'' cloud (see below).
+\end{itemize}
+
+The cloud shadows are excluded because the signal-to-noise ratio is too low in these areas. 
+
+The ``high clouds'' are excluded because they can have a similar spectral signature as the snow cover (high reflectance in the visible and low reflectance in the MIR). This type of cloud is only detected in Landsat-8 and Sentinel-2 images because it is based on the spectral band centered on the 1.38 µm wavelength\footnote{Hagolle, O., High cloud detection using the cirrus band of LANDSAT 8 or Sentinel-2, \url{http://www.cesbio.ups-tlse.fr/multitemp/?p=4109}}, therefore the test is not activated for SPOT images.
+
+We select only the ``dark clouds'' because the snow test is robust to the snow/cloud confusion in this case. The ``dark'' clouds are defined using a threshold in the red band after down-sampling the red band by a factor \textcolor{red}{$r_f$} using the bilinear method. This resampling is applied to smooth locally anomalous pixels\footnote{It was also inspired by the MACCS algorithm, which performs the cloud detection at 240~m for Landsat-8 L2A products.}. Therefore, if a (non-shadow, non-high-cloud) cloud pixel has a red reflectance at this coarser resolution that is lower than $r_D$ then it is temporarily removed from the cloud mask and proceeds to the snow test. The new cloud mask at this stage is the pass 1 cloud mask (Fig.~\ref{fig:flowchart}). 
+
+After passing the pass 1 and 2 snow tests, some pixels that were originally marked as cloud will not be reclassified as snow. These pixels are marked as cloud if they have a reflectance in the red that is greater than $r_B$. Otherwise they are classified as no-snow. Here the full resolution red band is used. The resulting cloud mask is the pass 2 cloud mask. 
+
+\pagestyle{empty}
+
+% Define block styles
+\tikzstyle{decision} = [diamond, draw, fill=gray!20, 
+    text width=4.5em, text centered, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=gray!20, 
+    text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{blockfinal} = [rectangle, draw, fill=green!20, 
+    text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{blockinput} = [rectangle, draw, fill=blue!20, 
+    text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse, fill=red!20, node distance=3cm,
+    minimum height=2em]
+\tikzstyle{bigbox}=[inner sep=20pt]
+
+\begin{figure}
+ 
+\begin{tikzpicture}[node distance = 3.5cm, auto]
+    % Place nodes
+    \node [blockinput, text width=13em] (Level 2A product) {Level 2A product \begin{itemize}
+\item cloud mask 
+\item flat surface reflectances (red, MIR)
+\end{itemize} };
+    \node [cloud, left of=Level 2A product, node distance = 6cm] (MUSCATE) {MUSCATE};
+%     \node [rectangle, draw, text at top, right of=Level 2A product, node distance = 6cm, minimum height=5em, text width=18em] (leg) {Legend};
+    \node [blockfinal, right of=Level 2A product, node distance = 6cm, minimum height=2em, text width=3em] (blockfinalleg) {Output};
+    \node [blockinput, left of=blockfinalleg, node distance = 1.5cm, minimum height=2em, text width=3em] (blockinputleg) {Input};
+    \node [block, right of=blockfinalleg, node distance = 1.9cm, minimum height=2em] (blockleg) {\textcolor{red}{Parameter}};
+    \node[bigbox, fit=(blockinputleg)(blockfinalleg)(blockleg)] (leg) {};
+    \node[below right] at (leg.north west) {Legend};
+    \node [blockinput, below of=MUSCATE] (DEM) {DEM};
+    \node [decision, below of=Level 2A product] (is cloud or shadow?) {Is cloud or shadow?};
+    \node [decision, right of=is cloud or shadow?] (darkcloud) {Is shadow or high or bright cloud? \textcolor{red}{$r_D$}};
+    \node [blockfinal, right of=darkcloud] (cloudfinal1) {Cloud (pass 1)};
+    \node [decision, below of=is cloud or shadow?] (snowtest1) {Is snow? \textcolor{red}{$n_1$}, \textcolor{red}{$r_1$}};
+    \node [blockfinal, left of=snowtest1] (pass1) {Snow\\(pass 1)};
+    \node [decision, below of=snowtest1] (snowlim) {Enough snow?\\ \textcolor{red}{$f_t$}};
+    \node [decision, below of=snowlim] (abovezs) {Is above snowline?};
+    \node [block, left of=abovezs] (zs) {Snowline elevation \textcolor{red}{$d_z$}, \textcolor{red}{$f_s$}};       
+    \node [decision, right of=abovezs] (snowtest2) {Is snow? \textcolor{red}{$n_2$}, \textcolor{red}{$r_2$}};
+    \node [blockfinal, right of=snowtest2] (pass2) {Snow\\(pass 2)};
+    \node [decision, below of=snowtest2] (wascloud) {Was cloud?};
+	\node [blockfinal, right of=wascloud] (nosnow) {No snow};
+    \node [decision, below of=wascloud] (backtocloud) {Is dark? \textcolor{red}{$r_B$}};
+    \node [blockfinal, left of=backtocloud] (cloudfinal) {Cloud (pass 2)};
+
+    % Draw edges
+    \path [line] (Level 2A product) -- (is cloud or shadow?);
+    \path [line,dashed] (MUSCATE) -- (Level 2A product);
+    \path [line] (is cloud or shadow?) -- node[near start]{yes} (darkcloud);
+    \path [line] (is cloud or shadow?) -- node[near start]{no} (snowtest1);
+    \path [line] (darkcloud) -- node[near start]{yes}(cloudfinal1);
+    \path [line] (darkcloud) |- node[near start]{no}(snowtest1);
+    \path [line] (snowtest1) -- node[near start]{yes} (pass1);
+    \path [line] (snowtest1) -- node[near start]{yes} (snowlim);
+    \path [line] (snowlim) -- node[near start]{yes} (abovezs);
+    \path [line] (abovezs) -- node[near start]{yes} (snowtest2);
+    \path [line] (snowtest2) -- node[near start]{yes} (pass2);
+    \path [line] (snowtest2) -- node[near start]{no} (wascloud);
+    \path [line,dashed] (pass1) -- (zs);
+    \path [line,dashed] (zs) -- (abovezs);
+    \path [line] (abovezs) |- node[near start]{no} (wascloud);
+    \path [line,dashed] (MUSCATE) -- (DEM);
+    \path [line,dashed] (DEM) |- (zs);
+    \path [line] (wascloud) -- node[near start]{no} (nosnow);
+    \path [line] (wascloud) -- node[near start]{yes} (backtocloud);
+    \path [line] (backtocloud) -| node[near start]{yes} (nosnow);
+    \path [line] (backtocloud) -- node[near start]{no} (cloudfinal);
+    
+\end{tikzpicture}
+\caption{Flowchart of the snow detection algorithm}
+\end{figure}\label{fig:flowchart}
+
+\subsection{Parameter values}\label{par:param}
+
+\begin{table}
+\begin{center}
+\begin{tabularx}{\textwidth}{|l X l l|}
+\hline
+Parameter & Description & Name in the configuration file & Default value\\
+\hline
+\textcolor{red}{$r_f$} & Resize factor to produce the down-sampled red band & \texttt{rRed\_backtocloud} & 0.100 \\
+\textcolor{red}{$r_D$} & Maximum value of the down-sampled red band reflectance to define a dark cloud pixel & \texttt{rRed\_darkcloud} & 0.650 \\
+\textcolor{red}{$n_1$} & Minimum value of the NDSI for the pass 1 snow test & \texttt{ndsi\_pass1} & 0.400\\
+\textcolor{red}{$n_2$} & Minimum value of the NDSI for the pass 2 snow test & \texttt{ndsi\_pass2} & 0.150\\
+\textcolor{red}{$r_1$} & Minimum value of the red band reflectance the pass 1 snow test  & \texttt{rRed\_pass1} & 0.200 \\
+\textcolor{red}{$r_1$} & Minimum value of the red band reflectance the pass 2 snow test  & \texttt{rRed\_pass2} & 0.120 \\
+\textcolor{red}{$d_z$} & Minimum snow fraction in an elevation band to define $z_s$ & \texttt{fsnow\_lim} & 0.100 \\
+\textcolor{red}{$f_t$} & Minimum snow fraction in an elevation band to define $z_s$ & \texttt{fsnow\_lim} & 0.100 \\
+\textcolor{red}{$f_s$} & Minimum snow fraction in the image to activate the pass 2 snow test & \texttt{fsnow\_total\_lim} & 0.001 \\
+\textcolor{red}{$r_B$} & Minimum value of the red band reflectance to return a non-snow pixel to the cloud mask & \texttt{rRed\_backtocloud} & 0.100 \\
+\hline
+\end{tabularx}
+\end{center}
+\caption{LIS algorithm parameters description and default values.}
+\end{table}\label{tab:param}
+
+
+
+\section{Validation}\label{par:validation}
+
+The snow maps derived from Landsat data were generally considered as ``ground truth'' to validate and calibrate lower resolution snow cover products\footnote{Hall, D.K., Riggs, G.A.: Accuracy assessment of the MODIS snow products, Hydrological Processes 21(12), 1534–1547, 2007}. There is no space-borne sensor with a MIR channel that provides higher resolution imagery than Sentinel-2 or Landsat-8. As a consequence it is difficult to conduct a quantitative assessment. Hence the validation of the algorithm and the adjustment of the parameters was primarily done by visual inspection of the snow cover mask boundaries on the color composite images in Moroccan Atlas, Pyrenees, and the French Alps. First tests were done on subsets of SPOT-4 Take~5 images. The Python/C++ implementation of LIS allowed the processing and inspection of larger datasets such as a series of full 57 Landsat-8 scenes over the Pyrenees available from THEIA.
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\textwidth]{./images/montage_L8CESneige.png}
+ % montage_L8CESneige.png: 1152x882 pixel, 72dpi, 40.64x31.11 cm, bb=0 0 1152 882
+ \caption{Color composites of a Landsat-8 tile D0005H0001 time series over the Pyrenees processed by LIS. The snow mask is drawn in magenta and cloud mask in green. Each image is 110 km by 110 km.}
+ \label{fig:L8montage}
+\end{figure}
+
+The implementation of the Sentinel-2 configuration was tested on the Sentinel-2A image of 06-July-2015 tile 30TYN. The output snow mask was compared with an aerial photograph that was taken at a similar period of the year available from the Institut National Information Géographique Forestière. Both images were not acquired in the same year but the snow patterns at the end of the melt season tend to reproduce from one year to the other. The LIS snow mask matches very well the snow cover that is visible on the aerial photograph\footnote{Gascoin, S. First Sentinel-2 snow map \url{http://www.cesbio.ups-tlse.fr/multitemp/?p=7014}}
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\textwidth]{./images/S2snow.png}
+ % S2snow.png: 1071x1048 pixel, 150dpi, 18.13x17.74 cm, bb=0 0 514 503
+ \caption{The Sentinel-2A image of 06-July-2015 (level 2A, tile 30TYN) and the snow mask generated by LIS. The snow mask is in magenta and the background image is a color composite RGB NIR/Red/Green. The inset is a zoom in the Vignemale area (Fig.~\ref{fig:S2snowzoom}).}
+ \label{fig:S2snow}
+\end{figure}
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\textwidth]{./images/Sentinel2_testmontage.png}
+ % Sentinel2_testmontage.png: 2014x811 pixel, 72dpi, 71.05x28.61 cm, bb=0 0 2014 811
+ \caption{The LIS snow mask from the Sentinel-2A image of 06-July-2015 (Fig.~\ref{fig:S2snow}) is superposed to an aerial orthophoto taken in August 2013 and distributed by the Institut National Information Géographique Forestière.}
+ \label{fig:S2snowzoom}
+\end{figure}
+
+The output of LIS was also examined by comparing the output snow mask from two images acquired on the same day by two different sensors. The example shown in Fig.~\ref{fig:L8vS4} illustrates that both snow masks are consistent, although further inspection revealed that the SPOT-4 snow mask tends to underestimate the snow cover area in this case. This is probably due to the lower radiometric resolution of SPOT-4 sensor.
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\textwidth]{./images/L8vsS4-23042013_montage.png}
+ % L8vsS4-23042013_montage.png: 960x563 pixel, 96dpi, 25.40x14.89 cm, bb=0 0 720 422
+ \caption{Comparison of the output of LIS from two a Landsat-8 and SPOT-4 product acquired on the same day.}
+ \label{fig:L8vsS4-23042013}
+\end{figure}
+
+The output of LIS was also compared to the output of the fmask algorithm\footnote{Zhu, Z., Wang, S. and Woodcock, C.E., 2015. Improvement and expansion of the Fmask algorithm: cloud, cloud shadow, and snow detection for Landsats 4–7, 8, and Sentinel 2 images. Remote Sensing of Environment, 159, pp.269-277.} available in Google Earth Engine (Landsat TOA with Fmask collections). The snow mask are similar, because the method of detection is also based on the NDSI. We found that fmask falsely detects water area in snow-free shaded slopes (an example is given in Fig~\ref{fig:fmask}). The cloud mask is also more conservative than LIS, which is normal given that fmask is a general-purpose algorithm like MACCS. 
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\textwidth]{./images/fmask20140111.png}
+ % fmask20140111.png: 3507x2480 pixel, 300dpi, 29.69x21.00 cm, bb=0 0 842 595
+ \caption{Comparison of the output of the LIS and fmask algorithm on 2014-01-11 in the Pyrenees.}
+ \label{fig:fmask}
+\end{figure}
+
+
+\clearpage
+
+\section{Conclusion and perspectives}\label{par:conclu}
+
+The LIS processing chain is a robust and numerically efficient tool to generate a new, high-resolution snow cover product for Theia Land data center. The LIS snow mask is an improvement from the L2A snow mask (Fig.~\ref{fig:L2AvsLIS}), but its accuracy is largely due to the quality of the slope-corrected L2A product. After the launch of Sentinel-2B the frequency of observations will increase. This will improve the atmospheric corrections by the multi-temporal algorithm MACCS and all the products that are derived from the L2A product in general, including this snow cover extent product. 
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\textwidth]{./images/Maroc_20130327_S4T5.png}
+ % Maroc_20130327_S4T5.png: 1234x856 pixel, 85dpi, 36.88x25.58 cm, bb=0 0 1045 725
+ \caption{Snow and cloud mask after processing by S2snow (left) vs. L2A original cloud and snow mask (right). Clouds are marked in green, cloud shadows in black, snow in magenta. Revisiting the cloud mask enables to increase the area of snow/no snow detection.}
+ \label{fig:L2AvsLIS}
+\end{figure}
+
+
+In the meantime we would like to further validate LIS using terrestrial time lapse images in the next year. This could also allow a calibration of the parameters (e.g. $n_2$ ,$r_2$). 
+
+A cloud-free snow cover extent product would facilitate the exploitation of the data by end-users. We plan to work on the development of a cloud-free snow cover product (i.e. a level 3 product). The cloud removal or ``gap-filling'' algorithm will rely on a series a spatio-temporal filters to reclassify the cloud pixels that are output by LIS. This type of gap-filling algorithm was already developed for MODIS snow cover products\footnote{Gascoin, S., Hagolle, O., Huc, M., Jarlan, L., Dejoux, J.-F., Szczypta, C., Marti, R., and Sánchez, R.: A snow cover climatology for the Pyrenees from MODIS snow products, Hydrol. Earth Syst. Sci., 19, 2337-2351.} but must be further assessed on Sentinel-2 time series. We also plan to evaluate the combination of Sentinel-2 and Landsat-8 snow maps to increase the number of observations used by the gap-filling algorithm. 
+
+\clearpage
+
+\appendix
+\input{include/castest_CESneige.tex}
+\input{include/S2snow.tex}
+\end{document}

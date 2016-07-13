@@ -1,0 +1,17 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}
+\contentsline {subsection}{\numberline {1.1}Motivation}{3}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Objective}{3}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Development}{4}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}Limitations}{4}{subsection.1.4}
+\contentsline {section}{\numberline {2}Algorithm}{4}{section.2}
+\contentsline {subsection}{\numberline {2.1}Inputs}{4}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Outputs}{5}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Pre-processing}{5}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Snow detection}{6}{subsection.2.4}
+\contentsline {subsection}{\numberline {2.5}Snowline elevation}{6}{subsection.2.5}
+\contentsline {subsection}{\numberline {2.6}Cloud mask processing}{6}{subsection.2.6}
+\contentsline {subsection}{\numberline {2.7}Parameter values}{7}{subsection.2.7}
+\contentsline {section}{\numberline {3}Validation}{7}{section.3}
+\contentsline {section}{\numberline {4}Conclusion and perspectives}{13}{section.4}
+\contentsline {section}{\numberline {A}Test script (castest\_CESneige.m)}{14}{appendix.A}
+\contentsline {section}{\numberline {B}Snow detection function (S2snow.m)}{20}{appendix.B}
