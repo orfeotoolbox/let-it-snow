@@ -9,9 +9,7 @@ The algorithm documentation with examples is available here:
 
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
-* [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3_light.pdf#page=10)
-
-* [Slides Séminaire GEOSUD](http://www.equipex-geosud.fr/documents/10180/233868/7_GascoinHagolle2015-THEIA+CES+surface+enneigee_S%C3%A9minaire+Theia+Geosud+2015.pdf)
+* [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3.pdf#page=10)
 
 The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theai Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and the SRTM digital elevation model.
 
