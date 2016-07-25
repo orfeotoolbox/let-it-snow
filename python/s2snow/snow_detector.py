@@ -236,6 +236,7 @@ class snow_detector :
 		self.rRed_pass2*=self.multi
 		self.fsnow_lim=snow.get("fsnow_lim")
 		self.fsnow_total_lim=snow.get("fsnow_total_lim")
+		self.zs=-1 #default value when zs is not set
 		#Build useful paths
 		self.redBand_path=op.join(self.path_tmp,"red.tif")
 		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
