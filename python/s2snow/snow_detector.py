@@ -59,7 +59,7 @@ def polygonize(input_img,input_mask,output_vec):
 	"""Helper function to polygonize raster mask using gdal polygonize"""
 	call_subprocess(["gdal_polygonize.py",input_img,"-f","ESRI Shapefile","-mask",input_mask,output_vec])
 
-def composition_RGB(input_img,output_img):
+def composition_RGB(input_img,output_img, nSWIR, nRed, nGreen, multi):
 	"""Make a RGB composition to highlight the snow cover
 	 
 	input_img: multispectral tiff, output_img: false color
@@ -67,9 +67,22 @@ def composition_RGB(input_img,output_img):
 	SWIR in in put images.
 
 	"""
-	#call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0","300","-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
-	call_subprocess(["otbcli_Convert", "-in", input_img, "-out", output_img, "uint8", "-type", "linear"])
+        scale_factor=300*multi
+        
+	call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0",str(scale_factor),"-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
 
+        #Comment this part which use an alternative solution with OTB Convert application
+        # #create temporary file to add nodata value
+        # f = tempfile.NamedTemporaryFile(suffix='.tif')
+
+        # #Store nodata in a temporary file
+        # call_subprocess(["otbcli_ManageNoData", "-in", input_img, "-out", f.name, "int16", "-mode", "changevalue", "-mode.changevalue.newv", str(nodata)])
+
+        # #Convert image to RGB
+        # call_subprocess(["otbcli_Convert", "-in", f.name, "-out", output_img, "uint8", "-type", "linear"])
+
+        # f.close()
+        
 def burn_polygons_edges(input_img,input_vec):
 	"""Burn polygon borders onto an image with the following symbology:
 	 
@@ -236,6 +249,7 @@ class snow_detector :
 		self.rRed_pass2*=self.multi
 		self.fsnow_lim=snow.get("fsnow_lim")
 		self.fsnow_total_lim=snow.get("fsnow_total_lim")
+		self.zs=-1 #default value when zs is not set
 		#Build useful paths
 		self.redBand_path=op.join(self.path_tmp,"red.tif")
 		self.ndsi_pass1_path=op.join(self.path_tmp,"pass1.tif")
@@ -283,7 +297,7 @@ class snow_detector :
 		polygonize(op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask.tif"),op.join(self.path_tmp,"final_mask_vec.shp"))
 
 		#RGB composition
-		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"))
+		composition_RGB(self.img,op.join(self.path_tmp,"composition.tif"), self.nSWIR, self.nRed, self.nGreen, self.multi)
 
 		#Burn polygons edges on the composition
 		#TODO add pass1 snow polygon in yellow
@@ -306,11 +320,11 @@ class snow_detector :
 		geotransform = dataset.GetGeoTransform() 
 		
 		#resample red band using multiresolution pyramid
-		call_subprocess(["gdalwarp","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
+		call_subprocess(["gdalwarp","-overwrite","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
 		
 		#Resample red band nn
 		#FIXME: use MACCS resampling filter contribute by J. Michel here
-		call_subprocess(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
+		call_subprocess(["gdalwarp","-overwrite","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#edit result to set the resolution to the input image resolution
 		#TODO need to find a better solution and also guess the input spacing (using maccs resampling filter)
@@ -406,7 +420,7 @@ class snow_detector :
 		#Index of bands in R1 and R2 respectively
 		nGreen=2
 		nSWIR=5
-		nRed=3
+	        nRed=3
 		nodata=-10000
 		   
 		if not os.path.isdir(self.img):
