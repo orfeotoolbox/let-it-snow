@@ -320,11 +320,11 @@ class snow_detector :
 		geotransform = dataset.GetGeoTransform() 
 		
 		#resample red band using multiresolution pyramid
-		call_subprocess(["gdalwarp","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
+		call_subprocess(["gdalwarp","-overwrite","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
 		
 		#Resample red band nn
 		#FIXME: use MACCS resampling filter contribute by J. Michel here
-		call_subprocess(["gdalwarp","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
+		call_subprocess(["gdalwarp","-overwrite","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#edit result to set the resolution to the input image resolution
 		#TODO need to find a better solution and also guess the input spacing (using maccs resampling filter)
