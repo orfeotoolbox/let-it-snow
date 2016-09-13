@@ -14,6 +14,9 @@ outputPath=$3
 #exit 1 on error
 set -e 
 
+#create output directory
+mkdir -p $outputPath
+
 # move to config path to build the json file.
 
 cp ${configPath}/param_test_template.json ${outputPath}/param_test.json

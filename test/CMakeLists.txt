@@ -4,20 +4,19 @@ set(BASELINE ${LIS_DATA_ROOT}/Baseline)
 set(DATA_TEST ${LIS_DATA_ROOT}/Input-Data-Test)
 set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
-#TODO need to pass env variable propoerly using qgis code
-#SET(ENV{PYTHONPATH} \"${CMAKE_BINARY_DIR}/bin/:\$ENV{PYTHONPATH}\")
-#MESSAGE(\"PYTHONPATH:\$ENV{PYTHONPATH}\")
+set(OUTPUT_TEST_TAKE5 ${OUTPUT_TEST}/take5)
+set(OUTPUT_TEST_S2 ${OUTPUT_TEST}/s2)
 
 add_test(NAME test_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 	"${DATA_TEST}/Take5/AOI_test_CESNeige"
-	"${OUTPUT_TEST}"
+	"${OUTPUT_TEST_TAKE5}"
 	)
 
 add_test(NAME s2snow_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST}/param_test.json
+  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_TAKE5}/param_test.json
   )
 
 #Add dependence to s2 test to avoid conflic in Testing directory
@@ -27,12 +26,12 @@ add_test(NAME test_s2_json_builder_test
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_s2_json_builder.sh
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 	"${DATA_TEST}/S2"
-	"${OUTPUT_TEST}"
+	"${OUTPUT_TEST_S2}"
 	)
 
 add_test(NAME s2snow_s2_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST}/param_s2_test.json
+  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2}/param_s2_test.json
   )
 set_tests_properties(s2snow_s2_test PROPERTIES DEPENDS test_s2_json_builder_test)
 
@@ -40,21 +39,21 @@ set_tests_properties(s2snow_s2_test PROPERTIES DEPENDS test_s2_json_builder_test
 add_test(NAME compare_snow_output_pass1_test
   COMMAND gdalcompare.py
   "${BASELINE}/pass1_highcloud.tif"
-  "${OUTPUT_TEST}/pass1.tif" 
+  "${OUTPUT_TEST_TAKE5}/pass1.tif" 
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_output_pass2_test
   COMMAND gdalcompare.py
   "${BASELINE}/pass2_highcloud.tif"
-  "${OUTPUT_TEST}/pass2.tif" 
+  "${OUTPUT_TEST_TAKE5}/pass2.tif" 
   )
 set_tests_properties(compare_snow_output_pass2_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_output_pass3_test
   COMMAND gdalcompare.py
   "${BASELINE}/pass3_highcloud.tif"
-  "${OUTPUT_TEST}/pass3.tif" 
+  "${OUTPUT_TEST_TAKE5}/pass3.tif" 
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
@@ -75,7 +74,7 @@ add_test(NAME preprocessing_test
 add_test(NAME compare_final_mask_output_test
   COMMAND gdalcompare.py
   "${BASELINE}/final_mask_highcloud.tif"
-  "${OUTPUT_TEST}/final_mask.tif" 
+  "${OUTPUT_TEST_TAKE5}/final_mask.tif" 
   )
 set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_test)
 
@@ -83,14 +82,14 @@ set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_te
 add_test(NAME compare_final_mask_vec_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
   "${BASELINE}/final_mask_vec_highcloud.dbf"
-  "${OUTPUT_TEST}/final_mask_vec.dbf" 
+  "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf" 
   )
 set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_all_output_test
   COMMAND gdalcompare.py
   "${BASELINE}/snow_all_highcloud.tif"
-  "${OUTPUT_TEST}/snow_all.tif" 
+  "${OUTPUT_TEST_TAKE5}/snow_all.tif" 
   )
 set_tests_properties(compare_snow_all_output_test PROPERTIES DEPENDS s2snow_test)
 
