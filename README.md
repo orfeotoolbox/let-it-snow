@@ -64,6 +64,10 @@ pixel_value & 00000101
      * cloud
      * no-data
 
+## Data set example
+
+Sequence of snow maps produced from Sentinel-2 type of observations (SPOT-5 Take 5) over the Deux Alpes and Alpe d'Huez ski resorts are available on [Zenodo](http://doi.org/10.5281/zenodo.159563).
+
 ## Motivation
 
 Code to generate the snow cover extent product on Theia platform.
