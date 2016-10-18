@@ -221,10 +221,12 @@ class snow_detector :
 			max_res = max(gb_resolution, rb_resolution, sb_resolution)
 			print "cubic resampling to " + str(max_res) + " meters."
                         
-			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),gb_path_extracted,gb_path_resampled])
-			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),rb_path_extracted,rb_path_resampled])
-			call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),sb_path_extracted,sb_path_resampled])
-                        #gdal.Warp(gb_path_resampled,gb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
+			#call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),gb_path_extracted,gb_path_resampled])
+			#call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),rb_path_extracted,rb_path_resampled])
+			#call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),sb_path_extracted,sb_path_resampled])
+                        gdal.Warp(gb_path_resampled,gb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
+                        gdal.Warp(rb_path_resampled,rb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
+                        gdal.Warp(sb_path_resampled,sb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
 		else:
 			gb_path_resampled=gb_path_extracted
 			rb_path_resampled=rb_path_extracted
