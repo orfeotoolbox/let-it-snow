@@ -78,6 +78,13 @@ add_test(NAME compare_final_mask_output_test
   )
 set_tests_properties(compare_final_mask_output_test PROPERTIES DEPENDS s2snow_test)
 
+add_test(NAME compare_final_mask_output_s2_test
+  COMMAND gdalcompare.py
+  "${BASELINE}/final_mask_highcloud_s2.tif"
+  "${OUTPUT_TEST_S2}/final_mask.tif" 
+  )
+set_tests_properties(compare_final_mask_output_s2_test PROPERTIES DEPENDS s2snow_s2_test)
+
 #gdalcompare.py doesn't work on dbf files
 add_test(NAME compare_final_mask_vec_output_test
   COMMAND ${CMAKE_COMMAND} -E compare_files
