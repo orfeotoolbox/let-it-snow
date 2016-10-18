@@ -64,6 +64,10 @@ pixel_value & 00000101
      * cloud
      * no-data
 
+## Data set example
+
+Sequence of snow maps produced from Sentinel-2 type of observations (SPOT-5 Take 5) over the Deux Alpes and Alpe d'Huez ski resorts are available on [Zenodo](http://doi.org/10.5281/zenodo.159563).
+
 ## Motivation
 
 Code to generate the snow cover extent product on Theia platform.
@@ -134,13 +138,13 @@ To configure OTB 5.2.1:
 
 Create a bash file which contains:
 ```bash
-source /mnt/data/home/otbtest/config_otb_5.2.1.sh
+source /mnt/data/home/grizonnetm/config_otb_5.6.sh
 ```
 
 Then build the lis project using cmake
 ```bash
 cd $build_dir
-cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/otbtest/OTB/SuperBuild/include -DGDAL_LIBRARY=/mnt/data/home/otbtest/OTB/SuperBuild/lib/libgdal.so $source_dir
+cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/grizonnetm/build/OTB-install/include -DGDAL_LIBRARY=/mnt/data/home/grizonnetm/build/OTB-install/lib/libgdal.so $source_dir
 make
 ```
 To install s2snow python module. 
