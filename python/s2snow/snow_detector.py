@@ -235,8 +235,9 @@ class snow_detector :
 		#build vrt
 		print "building bands vrt"
 		self.img=op.join(self.path_tmp, "lis.vrt")
-		call_subprocess(["gdalbuildvrt","-separate", self.img, sb_path_resampled, rb_path_resampled, gb_path_resampled])
-		
+
+                gdal.BuildVRT(self.img,[sb_path_resampled, rb_path_resampled, gb_path_resampled], separate=True)
+                
 		#Set bands parameters
 		self.nGreen=3
 		self.nRed=2
