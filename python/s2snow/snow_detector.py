@@ -315,7 +315,7 @@ class snow_detector :
 	def pass0(self):
 		#Pass -1 : generate custom cloud mask
         #Extract red band
-		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(self.nRed),self.img,self.redBand_path])
+                gdal.Translate(self.redBand_path,self.img,format = 'GTiff', outputType = gdal.GDT_Int16, noData=self.nodata, bandList = [self.nRed])
 		dataset = gdal.Open( self.redBand_path, GA_ReadOnly )
 		
 		xSize=dataset.RasterXSize
@@ -328,7 +328,7 @@ class snow_detector :
 		call_subprocess(["gdalwarp","-overwrite","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
 		
 		#Resample red band nn
-		#FIXME: use MACCS resampling filter contribute by J. Michel here
+		#FIXME: use MACCS resampling filter contribute in OTB 5.6 here
 		call_subprocess(["gdalwarp","-overwrite","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
 		
 		#edit result to set the resolution to the input image resolution
