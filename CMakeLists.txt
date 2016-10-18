@@ -27,7 +27,7 @@ if (GDAL_CONFIG)
   
   # check for gdal version
   if (GDAL_VERSION_MAJOR LESS 2)
-    message (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.0 or higher.")
+    message (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.1 or higher.")
   endif ()
 endif()
 
