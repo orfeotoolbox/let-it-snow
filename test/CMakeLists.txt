@@ -6,6 +6,7 @@ set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
 set(OUTPUT_TEST_TAKE5 ${OUTPUT_TEST}/take5)
 set(OUTPUT_TEST_S2 ${OUTPUT_TEST}/s2)
+set(OUTPUT_TEST_S2_SMALL ${OUTPUT_TEST}/s2-small)
 
 add_test(NAME test_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
@@ -19,8 +20,8 @@ add_test(NAME s2snow_test
   ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_TAKE5}/param_test.json
   )
 
-#Add dependence to s2 test to avoid conflic in Testing directory
-set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test DEPENDS s2snow_s2_test)
+#Add dependence to s2 test to avoid conflict in Testing directory
+set_tests_properties(s2snow_test PROPERTIES DEPENDS test_json_builder_test)
 
 add_test(NAME test_s2_json_builder_test 
 	COMMAND ${CMAKE_SOURCE_DIR}/test/test_s2_json_builder.sh
@@ -35,6 +36,20 @@ add_test(NAME s2snow_s2_test
   )
 set_tests_properties(s2snow_s2_test PROPERTIES DEPENDS test_s2_json_builder_test)
 
+#Add Test with extract 1000*1000 of S2 (x=1400,y=2200 pixel coord at 20 meters)
+add_test(NAME test_s2_small_json_builder_test 
+	COMMAND ${CMAKE_SOURCE_DIR}/test/test_s2_json_builder.sh
+	"${CMAKE_CURRENT_SOURCE_DIR}"
+	"${DATA_TEST}/S2-SMALL"
+	"${OUTPUT_TEST_S2_SMALL}"
+	)
+
+add_test(NAME s2snow_s2_small_test
+  COMMAND ${PYTHON_EXECUTABLE}
+  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL}/param_s2_test.json
+  )
+
+set_tests_properties(s2snow_s2_small_test PROPERTIES DEPENDS test_s2_small_json_builder_test)
 	
 add_test(NAME compare_snow_output_pass1_test
   COMMAND gdalcompare.py
@@ -84,6 +99,13 @@ add_test(NAME compare_final_mask_output_s2_test
   "${OUTPUT_TEST_S2}/final_mask.tif" 
   )
 set_tests_properties(compare_final_mask_output_s2_test PROPERTIES DEPENDS s2snow_s2_test)
+
+add_test(NAME compare_final_mask_output_s2_small_test
+  COMMAND gdalcompare.py
+  "${BASELINE}/final_mask_highcloud_s2_small.tif"
+  "${OUTPUT_TEST_S2_SMALL}/final_mask.tif" 
+  )
+set_tests_properties(compare_final_mask_output_s2_small_test PROPERTIES DEPENDS s2snow_s2_small_test)
 
 #gdalcompare.py doesn't work on dbf files
 add_test(NAME compare_final_mask_vec_output_test
