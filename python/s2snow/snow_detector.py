@@ -69,19 +69,7 @@ def composition_RGB(input_img,output_img, nSWIR, nRed, nGreen, multi):
 	"""
         scale_factor=300*multi
         
-	call_subprocess(["gdal_translate","-co","PHOTOMETRIC=RGB","-scale","0",str(scale_factor),"-ot","Byte","-b",str(nSWIR),"-b",str(nRed),"-b",str(nGreen),input_img,output_img])
-
-        #Comment this part which use an alternative solution with OTB Convert application
-        # #create temporary file to add nodata value
-        # f = tempfile.NamedTemporaryFile(suffix='.tif')
-
-        # #Store nodata in a temporary file
-        # call_subprocess(["otbcli_ManageNoData", "-in", input_img, "-out", f.name, "int16", "-mode", "changevalue", "-mode.changevalue.newv", str(nodata)])
-
-        # #Convert image to RGB
-        # call_subprocess(["otbcli_Convert", "-in", f.name, "-out", output_img, "uint8", "-type", "linear"])
-
-        # f.close()
+        gdal.Translate(output_img,input_img,format = 'GTiff', creationOptions = ['PHOTOMETRIC=RGB'], outputType = gdal.GDT_Byte,scaleParams = [[0, scale_factor, 0, 255]] , bandList = [nSWIR,nRed,nGreen])
         
 def burn_polygons_edges(input_img,input_vec):
 	"""Burn polygon borders onto an image with the following symbology:
@@ -104,8 +92,8 @@ def burn_polygons_edges(input_img,input_vec):
 
         #print "gdal version " + gdal.VersionInfo.str()
         
-	call_subprocess(["ogr2ogr","-overwrite","-nlt","MULTILINESTRING",tmp_line+".shp",input_vec])
-
+        gdal.VectorTranslate(tmp_line+".shp", input_vec, accessMode='overwrite', geometryType='MULTILINESTRING')
+        
         if gdal.VersionInfo() >= 2000000:
                 print "GDAL version >= 2.0 detected. Where statement syntax have changed in gdal."
                 # 2) rasterize cloud and cloud shadows polygon borders in green
@@ -221,9 +209,6 @@ class snow_detector :
 			max_res = max(gb_resolution, rb_resolution, sb_resolution)
 			print "cubic resampling to " + str(max_res) + " meters."
                         
-			#call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),gb_path_extracted,gb_path_resampled])
-			#call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),rb_path_extracted,rb_path_resampled])
-			#call_subprocess(["gdalwarp", "-overwrite","-r","cubic","-tr", str(max_res),str(max_res),sb_path_extracted,sb_path_resampled])
                         gdal.Warp(gb_path_resampled,gb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
                         gdal.Warp(rb_path_resampled,rb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
                         gdal.Warp(sb_path_resampled,sb_path_extracted,resampleAlg = gdal.GRIORA_Cubic, xRes = max_res,yRes = max_res)
@@ -325,12 +310,12 @@ class snow_detector :
 		geotransform = dataset.GetGeoTransform() 
 		
 		#resample red band using multiresolution pyramid
-		call_subprocess(["gdalwarp","-overwrite","-r","bilinear","-ts",str(xSize/self.rf),str(ySize/self.rf),self.redBand_path,op.join(self.path_tmp,"red_coarse.tif")])
-		
+		gdal.Warp(op.join(self.path_tmp,"red_coarse.tif"),self.redBand_path,resampleAlg = gdal.GRIORA_Bilinear, width = xSize/self.rf,height = ySize/self.rf)
+                
 		#Resample red band nn
 		#FIXME: use MACCS resampling filter contribute in OTB 5.6 here
-		call_subprocess(["gdalwarp","-overwrite","-r","near","-ts",str(xSize),str(ySize),op.join(self.path_tmp,"red_coarse.tif"),op.join(self.path_tmp,"red_nn.tif")])
-		
+		gdal.Warp(op.join(self.path_tmp,"red_nn.tif"),op.join(self.path_tmp,"red_coarse.tif"),resampleAlg = gdal.GRIORA_NearestNeighbour, width = xSize,height = ySize)
+                          
 		#edit result to set the resolution to the input image resolution
 		#TODO need to find a better solution and also guess the input spacing (using maccs resampling filter)
 		call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
@@ -455,17 +440,17 @@ class snow_detector :
 						
 		#Extract green bands and resample to 20 meters
 		#FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
-		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nGreen),s2_r1_img_path[0],greenBand_path])
-		call_subprocess(["gdalwarp","-r","cubic","-tr","20","-20",greenBand_path,greenBand_resample_path])
-
+                gdal.Translate(greenBand_path,s2_r1_img_path[0],format = 'GTiff', outputType = gdal.GDT_Int16, noData=self.nodata, bandList = [nGreen])
+                gdal.Warp(greenBand_resample_path,greenBand_path,resampleAlg = gdal.GRIORA_Cubic, xRes =20,yRes = 20)
+                
 		#Extract red bands and sample to 20 meters
 		#FIXME Use multi resolution pyramid application or new resampling filter fontribute by J. Michel hear
-		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nRed),s2_r1_img_path[0],redBand_path])
-		call_subprocess(["gdalwarp","-r","cubic","-tr","20","-20",redBand_path,redBand_resample_path])
+                gdal.Translate(redBand_path,s2_r1_img_path[0],format = 'GTiff', outputType = gdal.GDT_Int16, noData=self.nodata, bandList = [nRed])
+                gdal.Warp(redBand_resample_path,redBand_path,resampleAlg = gdal.GRIORA_Cubic, xRes = 20,yRes = 20)
 
 		#Extract SWIR
-		call_subprocess(["gdal_translate", "-a_nodata", str(self.nodata),"-ot","Int16","-b",str(nSWIR),s2_r2_img_path[0],swirBand_path])
-						
+		gdal.Translate(swirBand_path,s2_r2_img_path[0],format = 'GTiff', outputType = gdal.GDT_Int16, noData=self.nodata, bandList = [nSWIR])
+		
 		#Concatenate all bands in a single image
 		concat_s2=op.join(path_tmp,"concat_s2.tif")
 		call_subprocess(["otbcli_ConcatenateImages","-il",greenBand_resample_path,redBand_resample_path,swirBand_path,"-out",concat_s2,"int16","-ram",str(ram)])
