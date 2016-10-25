@@ -7,7 +7,7 @@ module purge
 module load cmake/3.0.2
 module load gcc
 module load boost
-module load otb/5.2.1
+module load otb/5.6
 module load python/2.7.5
 
 pkg="lis"
