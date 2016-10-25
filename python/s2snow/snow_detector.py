@@ -90,22 +90,16 @@ def burn_polygons_edges(input_img,input_vec):
 	tmp_line=op.join(input_dir,str(unique_filename))
 	print "tmpline: " + str(tmp_line)
 
-        #print "gdal version " + gdal.VersionInfo.str()
-        
         gdal.VectorTranslate(tmp_line+".shp", input_vec, accessMode='overwrite', geometryType='MULTILINESTRING')
         
-        if gdal.VersionInfo() >= 2000000:
-                print "GDAL version >= 2.0 detected. Where statement syntax have changed in gdal."
-                # 2) rasterize cloud and cloud shadows polygon borders in green
-	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where",'DN=2',"-l",str(unique_filename),tmp_line+".shp",input_img])
-	        # 3) rasterize snow polygon borders in magenta
-	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where",'DN=1',"-l",str(unique_filename),tmp_line+".shp",input_img])
-        else:
-                print "GDAL version <2."
-                # 2) rasterize cloud and cloud shadows polygon borders in green
-	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where","'DN=\"2\"'","-l",str(unique_filename),tmp_line+".shp",input_img])
-	        # 3) rasterize snow polygon borders in magenta
-	        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where","'DN=\"1\"'","-l",str(unique_filename),tmp_line+".shp",input_img])
+        # 2) rasterize cloud and cloud shadows polygon borders in green
+        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","0","-burn","255","-burn","0","-where",'DN=2',"-l",str(unique_filename),tmp_line+".shp",input_img])
+        #FIXME can't find the right syntax here to use gdal lib
+        #gdal.Rasterize(input_img , tmp_line+".shp" , bands = [1,2,3] , burnValues = [0,255,0] , where='DN=2', layers = str(unique_filename) )
+	# 3) rasterize snow polygon borders in magenta
+        call_subprocess(["gdal_rasterize","-b","1","-b","2","-b","3","-burn","255","-burn","0","-burn","255","-where",'DN=1',"-l",str(unique_filename),tmp_line+".shp",input_img])
+        #FIXME can't find the right syntax here to use gdal lib
+        #gdal.Rasterize(input_img , tmp_line+".shp" , bands = [1,2,3] , burnValues = [255,0,255] , where='DN=1' , layers = str(unique_filename) )
                 
         # 4) remove tmp_line files
 	for shp in glob.glob(tmp_line+"*"):
