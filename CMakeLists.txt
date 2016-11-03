@@ -42,11 +42,11 @@ include_directories( ${PYTHON_INCLUDE_DIRS} )
 find_package( Boost COMPONENTS python REQUIRED )
 
 #On cnes cluster there is an issue loading boost required library
-#Boost_LIBRARIES should contain here libboost_python.so, on cluster it is optimizedboost_python-mt-shareddebugboost_python-mt-shared-debug
+#Boost_LIBRARIES should contain here libboost_python*.so, on cluster it is optimizedboost_python-mt-shareddebugboost_python-mt-shared-debug
 #As it is a silent bug on cmake level we need to check the configuration by hand
 #So check the content of boost library
 message(STATUS "boost lib " ${Boost_LIBRARIES})
-string(REGEX MATCH ".*libboost_python\\..*"  BOOSTPYTHONLIB ${Boost_LIBRARIES})
+string(REGEX MATCH ".*libboost_python.*"  BOOSTPYTHONLIB ${Boost_LIBRARIES})
 message(STATUS "boost lib match " ${BOOSTPYTHONLIB})
 if("${BOOSTPYTHONLIB}" STREQUAL "" )
 		message(WARNING "Unable to find boost python component. Need to override boost python libs with custom path (Boost_Python_Lib cmake variable). Related to buggy FindBoost.cmake on the cluster.")
