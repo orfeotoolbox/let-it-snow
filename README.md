@@ -180,5 +180,5 @@ Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES)
 
 ## License
 
-This is free software under the GPL v3 licence. See
-http://www.gnu.org/licenses/gpl-3.0.html for details.
+This is free software under the GNU Affero General Public License v3.0. See
+http://www.gnu.org/licenses/agpl.html for details.
