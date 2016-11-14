@@ -168,7 +168,9 @@ let-it-snow is now installed.
 
 Enable tests with BUILD_TESTING cmake option. Use ctest to run tests. Do not forget to clean your output test directory when you run a new set of tests.
 
-Download LIS-Data folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files. 
+Data (input and baseline) to run validation tests are available on [Zenodo](http://doi.org/10.5281/zenodo.166511).
+
+Download LIS-Data and extract the folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files. 
 Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated. 
 Data-Test : Test data folder needed to run tests. It contains Landsat, Take5 and SRTM data.
 Output-Test : Temporary output tests folder.
