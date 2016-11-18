@@ -39,7 +39,7 @@ import histo_utils_ext
 import dem_builder
 import format_output
 
-VERSION="0.1"
+VERSION="1.1.0"
 
 #Build gdal option to generate maks of 1 byte using otb extended filename
 #syntaxx
