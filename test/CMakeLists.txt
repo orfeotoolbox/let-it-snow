@@ -108,12 +108,14 @@ add_test(NAME compare_final_mask_output_s2_small_test
 set_tests_properties(compare_final_mask_output_s2_small_test PROPERTIES DEPENDS s2snow_s2_small_test)
 
 #gdalcompare.py doesn't work on dbf files
-add_test(NAME compare_final_mask_vec_output_test
-  COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BASELINE}/final_mask_vec_highcloud.dbf"
-  "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf" 
-  )
-set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
+#COMMENT this test for now
+#TODO find an other way to compare vector files to validate this part 
+# add_test(NAME compare_final_mask_vec_output_test
+#   COMMAND ${CMAKE_COMMAND} -E compare_files
+#   "${BASELINE}/final_mask_vec_highcloud.dbf"
+#   "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf" 
+#   )
+# set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 add_test(NAME compare_snow_all_output_test
   COMMAND gdalcompare.py
