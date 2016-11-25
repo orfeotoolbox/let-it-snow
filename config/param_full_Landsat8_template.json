@@ -1,34 +1,45 @@
-
 {
     "general":{
         "pout":"outputdir",
-        "shadow_value":32,
+        "nodata":-10000,
         "ram":1024,
-	"nbThreads":1,
-	"mode":"landsat",
+	"nb_threads":1,
 	"generate_vector":false,
 	"preprocessing":false,
-	"postprocessing":false
-        },
-    "inputs":{ 
-	"vrt":"inputvrt",
-        "image":"inputimage",
+	"log":true
+    },
+    "inputs":{
+	"green_band": {
+	    "path": "inputimage",
+	    "noBand": 3
+	},
+	"red_band": {
+	    "path": "inputimage",
+	    "noBand": 4
+	},
+	"swir_band": {
+	    "path": "inputimage",
+	    "noBand": 6
+	},
         "dem":"inputdem",
         "cloud_mask":"inputcloud"
     },
-    "cloud_mask":{
+    "cloud":
+    {
+        "shadow_mask":64,
+        "all_cloud_mask":0,
+        "high_cloud_mask":64,
         "rf":8,
-        "rRed_darkcloud":500,
-        "rRed_backtocloud":100
+        "red_darkcloud":650,
+        "red_backtocloud":100
     },
     "snow":{
         "dz":100,
         "ndsi_pass1":0.4,
-        "rRed_pass1":200,
+        "red_pass1":200,
         "ndsi_pass2":0.15,
-        "rRed_pass2":120,
+        "red_pass2":120,
         "fsnow_lim":0.1,
         "fsnow_total_lim":0.001
     }
 }
-
