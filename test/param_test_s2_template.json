@@ -30,7 +30,7 @@
         "shadow_mask":32,
         "all_cloud_mask":1,
         "high_cloud_mask":128,
-        "rf":8,
+        "rf":12,
         "red_darkcloud":500,
         "red_backtocloud":100
     },

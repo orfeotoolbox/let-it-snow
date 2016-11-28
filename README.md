@@ -26,7 +26,7 @@ export PYTHONPATH=${lis-build-dir}/app/:$PYTHONPATH
 Run the main python script:
 
 ```bash
-python run_snow_detector param.json
+run_snow_detector.py param.json
 ```
 
 There is a Bash script in app directory which allows to set the env variable and run the script:
