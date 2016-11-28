@@ -322,7 +322,7 @@ After passing the pass 1 and 2 snow tests, some pixels that were originally mark
 \hline
 Parameter & Description & Name in the configuration file & Default value\\
 \hline
-\textcolor{red}{$r_f$} & Resize factor to produce the down-sampled red band & \texttt{rRed\_backtocloud} & 0.100 \\
+\textcolor{red}{$r_f$} & Resize factor to produce the down-sampled red band & \texttt{rf} & 8 for L8 (12 for S2) \\
 \textcolor{red}{$r_D$} & Maximum value of the down-sampled red band reflectance to define a dark cloud pixel & \texttt{rRed\_darkcloud} & 0.650 \\
 \textcolor{red}{$n_1$} & Minimum value of the NDSI for the pass 1 snow test & \texttt{ndsi\_pass1} & 0.400\\
 \textcolor{red}{$n_2$} & Minimum value of the NDSI for the pass 2 snow test & \texttt{ndsi\_pass2} & 0.150\\
@@ -370,7 +370,7 @@ The implementation of the Sentinel-2 configuration was tested on the Sentinel-2A
  \label{fig:S2snowzoom}
 \end{figure}
 
-The output of LIS was also examined by comparing the output snow mask from two images acquired on the same day by two different sensors. The example shown in Fig.~\ref{fig:L8vS4} illustrates that both snow masks are consistent, although further inspection revealed that the SPOT-4 snow mask tends to underestimate the snow cover area in this case. This is probably due to the lower radiometric resolution of SPOT-4 sensor.
+The output of LIS was also examined by comparing the output snow mask from two images acquired on the same day by two different sensors. The example shown in Fig.~\ref{fig:L8vsS4-23042013} illustrates that both snow masks are consistent, although further inspection revealed that the SPOT-4 snow mask tends to underestimate the snow cover area in this case. This is probably due to the lower radiometric resolution of SPOT-4 sensor.
 
 \begin{figure}[h]
  \centering
