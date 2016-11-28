@@ -39,8 +39,6 @@ import histo_utils_ext
 import dem_builder
 import format_output
 
-VERSION="1.1.0"
-
 #Build gdal option to generate maks of 1 byte using otb extended filename
 #syntaxx
 GDAL_OPT="?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
@@ -108,7 +106,6 @@ def burn_polygons_edges(input_img,input_vec):
 class snow_detector :
 	def __init__(self, data):
 
-		self.version = VERSION
 		#Parse general parameters
 
 		general=data["general"]
