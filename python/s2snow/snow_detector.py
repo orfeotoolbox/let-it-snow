@@ -130,7 +130,8 @@ class snow_detector :
 		self.rRed_darkcloud *= self.multi
 		self.rRed_backtocloud=cloud.get("red_backtocloud")
 		self.rRed_backtocloud *= self.multi
-		self.shadow_mask=cloud.get("shadow_mask")
+		self.shadow_in_mask=cloud.get("shadow_in_mask")
+                self.shadow_out_mask=cloud.get("shadow_out_mask")
 		self.all_cloud_mask=cloud.get("all_cloud_mask")
 		self.high_cloud_mask=cloud.get("high_cloud_mask")
 		#Parse input parameters
@@ -311,11 +312,22 @@ class snow_detector :
 		#TODO need to find a better solution and also guess the input spacing (using maccs resampling filter)
 		call_subprocess(["gdal_edit.py","-tr",str(geotransform[1]),str(geotransform[5]),op.join(self.path_tmp,"red_nn.tif")])
 		
-		#Extract shadow mask
+		#Extract all masks
 		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.all_cloud_mask), op.join(self.path_tmp,"all_cloud_mask.tif")]) 
-		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.shadow_mask), op.join(self.path_tmp,"shadow_mask.tif")])
-		call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.high_cloud_mask), op.join(self.path_tmp,"high_cloud_mask.tif")])
-		cond_cloud2="im3b1>" + str(self.rRed_darkcloud)
+
+                #Extract shadow masks
+                #First extract shadow wich corresponds to shadow of clouds inside the image
+                call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.shadow_in_mask), op.join(self.path_tmp,"shadow_in_mask.tif")])
+                #Then extract shadow mask of shadows from clouds outside the image
+                call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.shadow_out_mask), op.join(self.path_tmp,"shadow_out_mask.tif")])
+
+                #The output shadow mask corresponds to a OR logic between the 2 shadow masks
+                call_subprocess(["otbcli_BandMath", "-il",op.join(self.path_tmp,"shadow_in_mask.tif"),op.join(self.path_tmp,"shadow_out_mask.tif"),"-out", op.join(self.path_tmp,"shadow_mask.tif"), "uint8", "-ram",str(self.ram),"-exp","(im1b1 == 1) || (im2b1 == 1)"])
+
+                #Extract high clouds
+                call_subprocess(["compute_cloud_mask", self.cloud_init, str(self.high_cloud_mask), op.join(self.path_tmp,"high_cloud_mask.tif")])
+
+                cond_cloud2="im3b1>" + str(self.rRed_darkcloud)
 		condition_shadow= "((im1b1==1 and " + cond_cloud2 + ") or im2b1==1 or im4b1==1)"
 		print condition_shadow
 		call_subprocess(["otbcli_BandMath","-il",op.join(self.path_tmp,"all_cloud_mask.tif"), op.join(self.path_tmp,"shadow_mask.tif"),op.join(self.path_tmp,"red_nn.tif"), op.join(self.path_tmp,"high_cloud_mask.tif"),"-out",self.cloud_refine+GDAL_OPT,"uint8","-ram",str(self.ram),"-exp",condition_shadow])

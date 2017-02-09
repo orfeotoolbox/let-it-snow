@@ -227,7 +227,8 @@ The snow detection (Sect.~\ref{par:snowdetec}) is performed a first time using t
 The L2A cloud mask is conservative because it is computed at a coarser resolution and also because it is developed for a large range of applications. However, the detection of the snow cover is robust to a thin, transparent, cloud cover. More importantly, the L2A cloud mask tends to falsely classify the edges of the snow cover as cloud. Hence, it is possible to recover many pixels from the L2A cloud mask and reclassify them as snow or no-snow. This step is important because it substantially increases the number of observations. A pixel from the L2A cloud mask cannot be reclassified as snow or no-snow if:
 
 \begin{itemize}
- \item it is coded as ``cloud shadow'' in L2A cloud mask;
+ \item it is coded as ``cloud shadow''  in L2A cloud mask. Note that it can be
+   cloud shadows matched with a cloud or cloud shadows in the zone where clouds could be outside the image ;
  \item or: it is coded as ``high altitude cloud'' (or ``cirrus'') in the L2A cloud mask;
  \item or: it is not a ``dark'' cloud (see below).
 \end{itemize}
