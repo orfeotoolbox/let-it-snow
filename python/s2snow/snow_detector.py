@@ -353,16 +353,17 @@ class snow_detector :
 		#Pass 2: compute snow fraction (c++)
 		nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(self.ndsi_pass1_path, 0 , 255)
 		print "Number of snow pixels ", nb_snow_pixels
-		
+
+                #Compute Zs elevation fraction and histogram values
+                #We compute it in all case as we need to check histogram values to detect cold clouds in optionnal pass4
+
+                histo_log=op.join(self.path_tmp,"histogram.txt")
+		#c++ function
+		self.zs=histo_utils_ext.compute_snowline(self.dem,self.ndsi_pass1_path,op.join(self.path_tmp,"cloud_pass1.tif"), self.dz, self.fsnow_lim, False, -2, -self.dz/2, histo_log) 
+			
+		print "computed ZS:", self.zs
+                
 		if (nb_snow_pixels > self.fsnow_total_lim):
-			#Pass 2: determine the Zs elevation fraction (c++)
-			#Save histogram values for logging
-			histo_log=op.join(self.path_tmp,"histogram.txt")
-			#c++ function
-			self.zs=histo_utils_ext.compute_snowline(self.dem,self.ndsi_pass1_path,op.join(self.path_tmp,"cloud_pass1.tif"), self.dz, self.fsnow_lim, False, -2, -self.dz/2, histo_log) 
-			
-			print "computed ZS:", self.zs
-			
 			#Test zs value (-1 means that no zs elevation was found)
 			if (self.zs !=-1):
 				#NDSI threshold again
