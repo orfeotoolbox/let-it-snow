@@ -20,6 +20,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from optparse import OptionParser
 
+
 def load_histo(histo_path):
         with open(histo_path) as f:
   		v = np.loadtxt(f, delimiter=",", dtype='float', comments="#", skiprows=3, usecols=(0,3,4))
@@ -69,7 +70,6 @@ def main():
                           version="%prog")
 
     parser.add_option("-f","--file", help="absolute path to histogram file", dest="histo_path", type="string")
-    #parser.add_option("-f","--file", help="absolute path to histogram file", dest="histo_path", type="string")
 
     (opts, args) = parser.parse_args()
 
@@ -78,9 +78,8 @@ def main():
         parser.print_help()
         exit(-1)
     else:
-        #print opts.path
-        #print_histo(opts.histo_path)
-        load_histo(opts.histo_path)   
+        load_histo(opts.histo_path)
+
 if __name__ == '__main__':
     main()
    
