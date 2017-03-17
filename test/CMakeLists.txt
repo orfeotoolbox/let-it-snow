@@ -17,7 +17,7 @@ add_test(NAME test_json_builder_test
 
 add_test(NAME s2snow_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_TAKE5}/param_test.json
+  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_TAKE5}/param_test.json
   )
 
 #Add dependence to s2 test to avoid conflict in Testing directory
@@ -32,7 +32,7 @@ add_test(NAME test_s2_json_builder_test
 
 add_test(NAME s2snow_s2_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2}/param_s2_test.json
+  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2}/param_s2_test.json
   )
 set_tests_properties(s2snow_s2_test PROPERTIES DEPENDS test_s2_json_builder_test)
 
@@ -46,7 +46,7 @@ add_test(NAME test_s2_small_json_builder_test
 
 add_test(NAME s2snow_s2_small_test
   COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_SOURCE_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL}/param_s2_test.json
+  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL}/param_s2_test.json
   )
 
 set_tests_properties(s2snow_s2_small_test PROPERTIES DEPENDS test_s2_small_json_builder_test)

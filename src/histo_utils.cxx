@@ -226,11 +226,12 @@ void print_histogram (const itk::Statistics::ImageToHistogramFilter<itk::VectorI
     idx4[2] = 1;
 
     const HistogramType::AbsoluteFrequencyType z_center = histogram.GetMeasurementVector(idx1)[0];
-    const int Nz = histogram.GetFrequency(idx1) + histogram.GetFrequency(idx2);
+    const int Nz = histogram.GetFrequency(idx1) + histogram.GetFrequency(idx2) + histogram.GetFrequency(idx3) + histogram.GetFrequency(idx4);
     const int fcloud_z = histogram.GetFrequency(idx3) + histogram.GetFrequency(idx4);
     const int fsnow_z = histogram.GetFrequency(idx2) + histogram.GetFrequency(idx4);
-    const int fnosnow_z = Nz - (fcloud_z + fsnow_z);
-     
+    const int fnosnow_z = histogram.GetFrequency(idx1);
+
+    //myfile << histogram.GetFrequency(idx1) << ", " << histogram.GetFrequency(idx2) << ", "<< histogram.GetFrequency(idx3) << ", "<< histogram.GetFrequency(idx4) << std::endl;
     myfile << z_center << ", " << Nz << ", "<< fcloud_z << ", "<< fsnow_z << ", "<< fnosnow_z << std::endl;
     }
 

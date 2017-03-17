@@ -52,18 +52,26 @@ def compute_cloud(image):
 	return np.sum(msk_cloud)
 
 def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
+
+        #Cloud conditions (include pixel flagged as cloud and also as no data
+        cloud_nodata_condition = "(im2b1 == 205 || im2b1 == 254)"
+        
 	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1) 
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, t0_path, p1_path, "-out", output_path, "-exp", cloud_nodata_condition + "?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
 	#S(y,x,t) = 1 if (S(y,x,t-2) = 1 and S(y,x,t+1) = 1)
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m2_path, output_path, p1_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m2_path, output_path, p1_path, "-out", output_path, "-exp", cloud_nodata_condition + "?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
 	#S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+2) = 1)
-	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", "im2b1==205?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
+	call(["otbcli_BandMath","-ram", str(ram), "-il", m1_path, output_path, p2_path, "-out", output_path, "-exp", cloud_nodata_condition + "?((im1b1==100&&im3b1==100)?100:(im1b1==0&&im3b1==0?0:im2b1)):im2b1"])
 
 def step2(t0_path, dem_path, output_path, ram):
 	
 	percentage_cloud = compute_cloudpercent(t0_path)
 	print "cloud percent : " + str(percentage_cloud)
-	if percentage_cloud < 30:
+
+        #Perform step 2 only if cloud coverage is less than a threshold value (hard coded for now to 30%) 
+        cloudpercent_condition = percentage_cloud < 30
+        
+	if cloudpercent_condition:
 		#S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
 		hs_min=compute_HSmin(t0_path, dem_path)
 		print "hs_min: " + str(hs_min)
@@ -72,7 +80,9 @@ def step2(t0_path, dem_path, output_path, ram):
 		print "hs_max: " + str(hs_max)
 		#S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
 		call(["otbcli_BandMath","-ram", str(ram), "-il", output_path, dem_path, "-out", output_path, "-exp", "im1b1==205?(im2b1>"+str(hs_max)+"?100:im1b1):im1b1"])
-	
+
+        return cloudpercent_condition
+
 def step3(t0_path, output_path):
     
 	# four-pixels neighboring    
@@ -249,10 +259,14 @@ def run(data):
 		latest_file_path=temp_output_path
 	if s2:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step2.tif")
-		step2(latest_file_path, dem_path, temp_output_path, ram)
-		if stats:
-			statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
-		latest_file_path=temp_output_path
+		cloudpercent = step2(latest_file_path, dem_path, temp_output_path, ram)
+
+                #Step 2 is only perform if cloud percent is lower than a threshold (conditional step)
+                if cloudpercent:
+                        latest_file_path=temp_output_path
+                        if stats:
+			        statsarr.append(compute_stats(temp_output_path, latest_file_path, ref_path))
+                        
 	if s3:
 		temp_output_path=op.join(output_path, "cloud_removal_output_step3.tif")
 		step3(latest_file_path, temp_output_path)
