@@ -36,7 +36,7 @@ runLis.sh param.json
 ```
 ## Products format
 
-* COMPO: RGB composition with snow mask 
+* COMPO: Raster image showing the outlines of the cloud (including cloud shadow) and snow masks drawn on the RGB composition of the L2A image (bands SWIR/Red/Green).
 * SNOW_ALL: Binary mask of snow and clouds.
   * 1st bit: Snow mask after pass1
   * 2nd bit: Snow mask after pass2
