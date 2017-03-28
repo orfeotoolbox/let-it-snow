@@ -1,8 +1,16 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
+## [Unreleased]
+- add json schema to ATBD to document all parameters
+- Add version of lis in atbd
+- Document how to build the documentation in doc/tex directory
+- Compact histogram files and copy it in LIS_PRODUCTS
+- Apply autopep8 to all Python scripts to imprve code quality
+- Add a changelog
 ## [1.1.1] - 2015-11-28
-- update version number to 1.1.1
+- minor update in build scripts
+- change ctest launcher location
 ## [1.1.0] - 2015-11-28
 - Change license from GPL to A-GPL
 - Improvments in cmake configuration
