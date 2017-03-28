@@ -11,29 +11,24 @@ To read more about the "Centre d'Expertise Scientifique surface enneigée" (in F
 
 * [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3.pdf#page=10)
 
-The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theai Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and the SRTM digital elevation model.
+The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theai Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and the SRTM digital elevation model reprojected at the same resolution as the input image.
 
-## Code Example
+##Usage
 
-To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path. 
-
-The snow detection is performed in the Python script app/run_snow_detector.py. 
-
-Configure PYTHONPATH environment
-```bash
-export PYTHONPATH=${lis-build-dir}/app/:$PYTHONPATH
-```
-Run the main python script:
+Run the python script run_snow_detector.py with a json configuration file as unique argument:
 
 ```bash
-run_snow_detector.py param.json
+python run_snow_detector.py param.json
 ```
+The snow detection is performed in the Python script [run_snow_detector.py](app/run_snow_detector.py).
 
-There is a Bash script in app directory which allows to set the env variable and run the script:
+All the parameters of the algorithm, paths to input and output data are stored in the json file. See the provided example [param_test_s2_template.json](tes/param_test_s2_template.json) file for an example.
 
-```bash
-runLis.sh param.json
-```
+Moreover The JSON schema is available in the [Algorithm theoritical basis documentation](doc/tex/ATBD_CES-Neige.tex) and gives more information about the roles of these parameters.
+
+NB: To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path. 
+
+
 ## Products format
 
 * COMPO: Raster image showing the outlines of the cloud (including cloud shadow) and snow masks drawn on the RGB composition of the L2A image (bands SWIR/Red/Green).

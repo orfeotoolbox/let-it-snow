@@ -11,4 +11,5 @@ doc/tex/*aux
 doc/tex/*log
 doc/tex/*out
 doc/tex/*toc
+doc/tex/_minted*
 

@@ -7,7 +7,7 @@
             "properties": {
                 "all_cloud_mask": {
                     "default": 1,
-                    "description": "Threshold (greater than) apply to Theia cloud mask to retrieve a strict cloud mask.",
+                    "description": "Threshold apply to Theia cloud mask to retrieve a strict cloud mask (greater than all_cloud_mask).",
                     "id": "all_cloud_mask",
                     "title": "The All_cloud_mask schema.",
                     "type": "integer"
@@ -42,14 +42,14 @@
                 },
                 "shadow_in_mask": {
                     "default": 32,
-                    "description": "bitmask apply to retrieve cloud shadow (cloud inside the image).",
+                    "description": "bitmask apply to retrieve cloud shadows (for cloud inside the image).",
                     "id": "shadow_in_mask",
                     "title": "The Shadow_in_mask schema.",
                     "type": "integer"
                 },
                 "shadow_out_mask": {
                     "default": 64,
-                    "description": "bitmask apply to retrieve cloud shadow (cloud outside the image).",
+                    "description": "bitmask apply to retrieve cloud shadows (for cloud outside the image).",
                     "id": "shadow_out_mask",
                     "title": "The Shadow_out_mask schema.",
                     "type": "integer"
