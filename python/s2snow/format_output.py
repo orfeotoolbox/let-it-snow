@@ -78,6 +78,13 @@ def format_LIS(snow_detector):
 	str_compo = str_compo.upper()
 	copyfile(op.join(pout, "composition.tif"), op.join(path_products, str_compo))
 
+        #Copy histogram to LIS_PRODUCTS directory
+        ext = "TXT"
+	code_histo = "_HISTO"
+	str_histo = product_id+code_histo+"."+ext 
+	str_histo = str_histo.upper()
+        copyfile(op.join(pout, "histogram.txt"), op.join(path_products, str_histo))
+        
 	snow_percent = compute_snowpercent(op.join(pout, "final_mask.tif"))
 	cloud_percent = compute_cloudpercent(op.join(pout, "final_mask.tif"))
 	
