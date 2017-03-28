@@ -1,0 +1,253 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/test/param_test_s2_template.json",
+    "properties": {
+        "cloud": {
+            "id": "cloud",
+            "properties": {
+                "all_cloud_mask": {
+                    "default": 1,
+                    "description": "Threshold (greater than) apply to Theia cloud mask to retrieve a strict cloud mask.",
+                    "id": "all_cloud_mask",
+                    "title": "The All_cloud_mask schema.",
+                    "type": "integer"
+                },
+                "high_cloud_mask": {
+                    "default": 128,
+                    "description": "bitmask apply to retrieve high clouds for input mask",
+                    "id": "high_cloud_mask",
+                    "title": "The High_cloud_mask schema.",
+                    "type": "integer"
+                },
+                "red_backtocloud": {
+                    "default": 100,
+                    "description": "Minimum value of the red band reflectance to return a non-snow pixel to the cloud mask.",
+                    "id": "red_backtocloud",
+                    "title": "The Red_backtocloud schema.",
+                    "type": "integer"
+                },
+                "red_darkcloud": {
+                    "default": 500,
+                    "description": "Maximum value of the down-sampled red band reflectance to define a dark cloud pixel.",
+                    "id": "red_darkcloud",
+                    "title": "The Red_darkcloud schema.",
+                    "type": "integer"
+                },
+                "rf": {
+                    "default": 12,
+                    "description": "Resize factor to produce the down-sampled red band (use for cloud refinement).",
+                    "id": "rf",
+                    "title": "The Rf schema.",
+                    "type": "integer"
+                },
+                "shadow_in_mask": {
+                    "default": 32,
+                    "description": "bitmask apply to retrieve cloud shadow (cloud inside the image).",
+                    "id": "shadow_in_mask",
+                    "title": "The Shadow_in_mask schema.",
+                    "type": "integer"
+                },
+                "shadow_out_mask": {
+                    "default": 64,
+                    "description": "bitmask apply to retrieve cloud shadow (cloud outside the image).",
+                    "id": "shadow_out_mask",
+                    "title": "The Shadow_out_mask schema.",
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "general": {
+            "id": "general",
+            "properties": {
+                "generate_vector": {
+                    "default": false,
+                    "description": "Generate vector masks of the detection (pass 1 and 2 and final result).",
+                    "id": "generate_vector",
+                    "title": "The Generate_vector schema.",
+                    "type": "boolean"
+                },
+                "log": {
+                    "default": true,
+                    "description": "Log output and error to files (std***.log).",
+                    "id": "log",
+                    "title": "The Log schema.",
+                    "type": "boolean"
+                },
+                "multi": {
+                    "default": 10,
+                    "description": "Scale input paramters to map reflectance interval (parameters are provided in milli-reflectance but L2A S2 Theia product are between 0 and 10000).",
+                    "id": "multi",
+                    "title": "The Multi schema.",
+                    "type": "integer"
+                },
+                "nb_threads": {
+                    "default": 1,
+                    "description": "Maximum number of threads use by the program.",
+                    "id": "nb_threads",
+                    "title": "The Nb_threads schema.",
+                    "type": "integer"
+                },
+                "nodata": {
+                    "default": -10000,
+                    "description": "No-data value in the input L2A product.",
+                    "id": "nodata",
+                    "title": "The Nodata schema.",
+                    "type": "integer"
+                },
+                "pout": {
+                    "description": "Path to output directory.",
+                    "id": "pout",
+                    "title": "The Pout schema.",
+                    "type": "string"
+                },
+                "preprocessing": {
+                    "default": false,
+                    "description": "Activate the extraction and resampling of the DEM.",
+                    "id": "preprocessing",
+                    "title": "The Preprocessing schema.",
+                    "type": "boolean"
+                },
+                "ram": {
+                    "default": 1024,
+                    "description": "Maximum number of RAM memory used by the program.",
+                    "id": "ram",
+                    "title": "The Ram schema.",
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "inputs": {
+            "id": "inputs",
+            "properties": {
+                "cloud_mask": {
+                    "description": "Input mask image (in MASK directory for Theia product).",
+                    "id": "cloud_mask",
+                    "title": "The Cloud_mask schema.",
+                    "type": "string"
+                },
+                "dem": {
+                    "description": "Input DEM with the same resolution and extent as the input image if preprocessing is deactivated.",
+                    "id": "dem",
+                    "title": "The Dem schema.",
+                    "type": "string"
+                },
+                "green_band": {
+                    "id": "green_band",
+                    "properties": {
+                        "noBand": {
+                            "default": 1,
+                            "description": "Green band number.",
+                            "id": "noBand",
+                            "title": "The Noband schema.",
+                            "type": "integer"
+                        },
+                        "path": {
+                            "description": "Path to input L2A image or L2A green band.",
+                            "id": "path",
+                            "title": "The Path schema.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "red_band": {
+                    "id": "red_band",
+                    "properties": {
+                        "noBand": {
+                            "default": 1,
+                            "description": "Red band number.",
+                            "id": "noBand",
+                            "title": "The Noband schema.",
+                            "type": "integer"
+                        },
+                        "path": {
+                            "description": "Path to input L2A image or L2A red band.",
+                            "id": "path",
+                            "title": "The Path schema.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "swir_band": {
+                    "id": "swir_band",
+                    "properties": {
+                        "noBand": {
+                            "default": 1,
+                            "description": "SWIR band number.",
+                            "id": "noBand",
+                            "title": "The Noband schema.",
+                            "type": "integer"
+                        },
+                        "path": {
+                            "description": "Path to input L2A image or L2A swir band.",
+                            "id": "path",
+                            "title": "The Path schema.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "snow": {
+            "id": "snow",
+            "properties": {
+                "dz": {
+                    "default": 100,
+                    "description": "Minimum snow fraction in an elevation band to define zs.",
+                    "id": "dz",
+                    "title": "The Dz schema.",
+                    "type": "integer"
+                },
+                "fsnow_lim": {
+                    "default": 0.1,
+                    "description": "Minimum snow fraction in an elevation band to define zs.",
+                    "id": "fsnow_lim",
+                    "title": "The Fsnow_lim schema.",
+                    "type": "number"
+                },
+                "fsnow_total_lim": {
+                    "default": 0.001,
+                    "description": "Minimum snow fraction in the image to activate the pass 2 snow test.",
+                    "id": "fsnow_total_lim",
+                    "title": "The Fsnow_total_lim schema.",
+                    "type": "number"
+                },
+                "ndsi_pass1": {
+                    "default": 0.4,
+                    "description": "Minimum value of the NDSI for the pass 1 snow test.",
+                    "id": "ndsi_pass1",
+                    "title": "The Ndsi_pass1 schema.",
+                    "type": "number"
+                },
+                "ndsi_pass2": {
+                    "default": 0.15,
+                    "description": "Minimum value of the NDSI for the pass 2 snow test.",
+                    "id": "ndsi_pass2",
+                    "title": "The Ndsi_pass2 schema.",
+                    "type": "number"
+                },
+                "red_pass1": {
+                    "default": 200,
+                    "description": "Minimum value of the red band reflectance the pass 1 snow test.",
+                    "id": "red_pass1",
+                    "title": "The Red_pass1 schema.",
+                    "type": "integer"
+                },
+                "red_pass2": {
+                    "default": 120,
+                    "description": "Minimum value of the red band reflectance the pass 2 snow test.",
+                    "id": "red_pass2",
+                    "title": "The Red_pass2 schema.",
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "type": "object"
+}
