@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
-## [1.2.0] - 2017-06-04
+## [1.2] - 2017-06-04
 - add json schema to ATBD to document all parameters
 - Add version of lis in atbd
 - Document how to build the documentation in doc/tex directory
