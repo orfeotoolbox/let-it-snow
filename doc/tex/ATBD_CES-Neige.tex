@@ -30,7 +30,8 @@ pdftitle=Algorithm theoretical basis documentation for an operational snow cover
 \usepackage[]{algorithm2e}
 \usepackage{fancyhdr}
 \usepackage{tabularx}
-% \usepackage{listings}
+%\usepackage{listings}
+\usepackage{minted}
 % \lstset{language=Matlab}
 
 \usepackage{tikz}
@@ -227,7 +228,8 @@ The snow detection (Sect.~\ref{par:snowdetec}) is performed a first time using t
 The L2A cloud mask is conservative because it is computed at a coarser resolution and also because it is developed for a large range of applications. However, the detection of the snow cover is robust to a thin, transparent, cloud cover. More importantly, the L2A cloud mask tends to falsely classify the edges of the snow cover as cloud. Hence, it is possible to recover many pixels from the L2A cloud mask and reclassify them as snow or no-snow. This step is important because it substantially increases the number of observations. A pixel from the L2A cloud mask cannot be reclassified as snow or no-snow if:
 
 \begin{itemize}
- \item it is coded as ``cloud shadow'' in L2A cloud mask;
+ \item it is coded as ``cloud shadow''  in L2A cloud mask. Note that it can be
+   cloud shadows matched with a cloud or cloud shadows in the zone where clouds could be outside the image ;
  \item or: it is coded as ``high altitude cloud'' (or ``cirrus'') in the L2A cloud mask;
  \item or: it is not a ``dark'' cloud (see below).
 \end{itemize}
@@ -256,7 +258,7 @@ After passing the pass 1 and 2 snow tests, some pixels that were originally mark
     minimum height=2em]
 \tikzstyle{bigbox}=[inner sep=20pt]
 
-\begin{figure}
+\begin{figure}[H]
  
 \begin{tikzpicture}[node distance = 3.5cm, auto]
     % Place nodes
@@ -314,9 +316,13 @@ After passing the pass 1 and 2 snow tests, some pixels that were originally mark
 \caption{Flowchart of the snow detection algorithm}
 \end{figure}\label{fig:flowchart}
 
-\subsection{Parameter values}\label{par:param}
+\subsection{Parameters description}\label{par:param}
 
-\begin{table}
+\subsubsection{Main algorithm parameters}\label{par:sciparam}
+
+The table below gives the description of the main parameters of the algorithm:
+
+\begin{table}[!htbp]
 \begin{center}
 \begin{tabularx}{\textwidth}{|l X l l|}
 \hline
@@ -338,7 +344,23 @@ Parameter & Description & Name in the configuration file & Default value\\
 \caption{LIS algorithm parameters description and default values.}
 \end{table}\label{tab:param}
 
+Above default values related to reflectance are given as float values between 0
+and 1. Threshold related to reflectance values follow the convention of
+considering milli-reflectance as input (values between 0 and 1000) in the json
+file. Some products can encode reflectance with other convention (floating
+values between 0 and 1 or reflectance between 0 and 10000), to handle those
+cases, there is a parameter 'multi' in the json configuration file which allows
+to scale reflectance parameters. For instance, for products with reflectance
+between 0 and 10000 you can use
 
+\subsubsection{JSON schema of configuration file}\label{par:jsonparam}
+
+The JSON Schema here describes the parameter file format and provide a clear, human-
+and machine-readable documentation of all the algorithm parameters. JSON schema
+was generated on \href{https://jsonschema.net} with the following options (with
+metada and relative id).
+
+\inputminted[tabsize=2, fontsize=\tiny]{js}{schema.json}
 
 \section{Validation}\label{par:validation}
 

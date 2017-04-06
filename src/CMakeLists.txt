@@ -17,3 +17,7 @@ target_link_libraries(compute_snow_mask ${OTB_LIBRARIES})
 #Build cloud mask exe
 add_executable(compute_cloud_mask compute_cloud_mask.cxx)
 target_link_libraries(compute_cloud_mask ${OTB_LIBRARIES})
+
+#Build snow line exe
+add_executable(compute_snowline compute_snowline.cxx)
+target_link_libraries(compute_snowline histo_utils)
