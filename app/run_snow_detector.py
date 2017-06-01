@@ -5,7 +5,7 @@ import os.path as op
 import json
 from s2snow import snow_detector
 
-VERSION = "1.2"
+VERSION = "1.3"
 
 
 def show_help():
