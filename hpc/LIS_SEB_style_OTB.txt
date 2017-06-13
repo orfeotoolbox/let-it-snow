@@ -1,0 +1,10 @@
+##Color table use to produce LIS SEB using OTB Color Mapping application
+
+# cyan: snow
+100 0 255 255
+# grey: no snow
+0 119 119 119
+# white: cloud
+205 255 255 255
+#black: no data
+254 0 0 0
