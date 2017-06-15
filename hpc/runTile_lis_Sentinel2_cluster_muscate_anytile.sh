@@ -8,7 +8,13 @@
 # run LIS for one Sentinel-2 Level-2A tile (all available dates in the tile folder)
 # specify the path to the tile folder, the path the DEM and the template configuration file (.json)
 # First argument is the tile name (nnccc): qsub -v tile="31TGK" runTile_lis_Sentinel2_cluster_muscate_anytile.sh
-TMPDIR="/tmp/"
+
+# FIXME: conflict on hal between environnement variable TMPDIR used also internally by openmpi 
+# Store the directory in  PBS_TMP_DIR
+PBS_TMPDIR=$TMPDIR
+# Unset TMPDIR env variable which conflict with openmpi   
+unset TMPDIR
+
 # Tile to process
 # tile="T"$1
 if [ -z $tile ]; then
@@ -18,8 +24,8 @@ fi
 echo $tile
 
 # working directory
-tmp_output_dir=$TMPDIR/TheiaNeige_Muscate_T${tile}_out/
-tmp_input_dir=$TMPDIR/TheiaNeige_Muscate_T${tile}_in/
+tmp_output_dir=$PBS_TMPDIR/TheiaNeige_Muscate_T${tile}_out/
+tmp_input_dir=$PBS_TMPDIR/TheiaNeige_Muscate_T${tile}_in/
 
 # storage directory
 storage_output_dir=/work/OT/siaa/Theia/Neige/output_muscate_v2/
