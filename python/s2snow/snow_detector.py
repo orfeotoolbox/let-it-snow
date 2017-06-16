@@ -29,7 +29,6 @@ import numpy as np
 import uuid
 from shutil import copyfile
 from distutils import spawn
-
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
@@ -41,17 +40,20 @@ import histo_utils_ext
 import dem_builder
 import format_output
 
+# OTB Applications
+import otbApplication as otb
+
 # Build gdal option to generate maks of 1 byte using otb extended filename
 # syntaxx
 GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
+
 # Build gdal option to generate maks of 2 bytes using otb extended filename
 # syntax
 GDAL_OPT_2B = "?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
-# run subprocess and write to stdout and stderr
-
-
 def call_subprocess(process_list):
+    """ Run subprocess and write to stdout and stderr
+    """
     process = subprocess.Popen(
         process_list,
         stdout=subprocess.PIPE,
@@ -412,18 +414,15 @@ class snow_detector:
         if self.do_preprocessing:
             dem_builder.build_dem(self.vrt, self.img, self.dem)
 
-        # Compute NoData mask
-        call_subprocess(["otbcli_BandMath",
-                         "-il",
-                         self.img,
-                         "-out",
-                         self.nodata_path,
-                         "uint8",
-                         "-ram",
-                         str(self.ram),
-                         "-exp",
-                         "im1b1==" + str(self.nodata) + "?1:0"])
+        bandMath = otb.Registry.CreateApplication("BandMath")
 
+        noDataMaskExpr = "im1b1==" + str(self.nodata) + "?1:0"
+        bandMath.SetParameterString("exp",noDataMaskExpr)
+	bandMath.SetParameterStringList("il",[self.img])
+	bandMath.SetParameterString("ram",str(self.ram))
+        bandMath.SetParameterString("out",self.nodata_path)
+        bandMath.ExecuteAndWriteOutput()
+        
         if nbPass >= 0:
             self.pass0()
         if nbPass >= 1:
@@ -528,46 +527,47 @@ class snow_detector:
 
         # The output shadow mask corresponds to a OR logic between the 2 shadow
         # masks
-        call_subprocess(["otbcli_BandMath",
-                         "-il",
-                         op.join(self.path_tmp,
-                                 "shadow_in_mask.tif"),
-                         op.join(self.path_tmp,
-                                 "shadow_out_mask.tif"),
-                         "-out",
-                         op.join(self.path_tmp,
-                                 "shadow_mask.tif"),
-                         "uint8",
-                         "-ram",
-                         str(self.ram),
-                         "-exp",
-                         "(im1b1 == 1) || (im2b1 == 1)"])
+
+        bandMathShadow = otb.Registry.CreateApplication("BandMath")
+
+        shadowExpr = "(im1b1 == 1) || (im2b1 == 1)"
+        
+        bandMathShadow.SetParameterString("exp",shadowExpr)
+        bandMathShadow.SetParameterStringList("il",[op.join(self.path_tmp,"shadow_in_mask.tif"),op.join(self.path_tmp,"shadow_out_mask.tif")])
+        bandMathShadow.SetParameterString("ram",str(self.ram))
+        bandMathShadow.SetParameterString("out",op.join(self.path_tmp,"shadow_mask.tif"))
+        bandMathShadow.SetParameterOutputImagePixelType("out",otb.ImagePixelType_uint8)
+
+        bandMathShadow.ExecuteAndWriteOutput()
 
         # Extract high clouds
+        # FIXME Replace with an OTB Application and then call with Python API
         call_subprocess(["compute_cloud_mask", self.cloud_init, str(
             self.high_cloud_mask), op.join(self.path_tmp, "high_cloud_mask.tif")])
 
         cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
         condition_shadow = "((im1b1==1 and " + cond_cloud2 + \
             ") or im2b1==1 or im4b1==1)"
+
         print condition_shadow
-        call_subprocess(["otbcli_BandMath",
-                         "-il",
-                         op.join(self.path_tmp,
+
+        bandMathFinalShadow = otb.Registry.CreateApplication("BandMath")
+
+        bandMathFinalShadow.SetParameterString("exp",condition_shadow)
+        bandMathFinalShadow.SetParameterStringList("il",[op.join(self.path_tmp,
                                  "all_cloud_mask.tif"),
                          op.join(self.path_tmp,
                                  "shadow_mask.tif"),
                          op.join(self.path_tmp,
                                  "red_nn.tif"),
                          op.join(self.path_tmp,
-                                 "high_cloud_mask.tif"),
-                         "-out",
-                         self.cloud_refine + GDAL_OPT,
-                         "uint8",
-                         "-ram",
-                         str(self.ram),
-                         "-exp",
-                         condition_shadow])
+                                 "high_cloud_mask.tif")])
+        bandMathFinalShadow.SetParameterString("ram",str(self.ram))
+        bandMathFinalShadow.SetParameterString("out",self.cloud_refine + GDAL_OPT)
+        bandMathFinalShadow.SetParameterOutputImagePixelType("out",otb.ImagePixelType_uint8)
+
+        bandMathFinalShadow.ExecuteAndWriteOutput()
+        
 
     def pass1(self):
         # Pass1 : NDSI threshold
@@ -577,6 +577,8 @@ class snow_detector:
 
         condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + \
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
+
+        # FIXME Replace with call to the OTB Application Python API
         call_subprocess(["otbcli_BandMath",
                          "-il",
                          self.img,
@@ -592,6 +594,8 @@ class snow_detector:
         # Update the cloud mask (again)
         condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + \
             str(self.rRed_backtocloud) + "))"
+
+        # FIXME Replace with call to the OTB Application Python API
         call_subprocess(["otbcli_BandMath",
                          "-il",
                          self.cloud_refine,
@@ -633,6 +637,7 @@ class snow_detector:
                 condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ") and (" + ndsi_formula + "> " + str(
                     self.ndsi_pass2) + ") and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
 
+                # FIXME Replace with call to the OTB Application Python API
                 call_subprocess(["otbcli_BandMath",
                                  "-il",
                                  self.img,
@@ -662,6 +667,8 @@ class snow_detector:
                 print "did not find zs, keep pass 1 result."
                 generic_snow_path = self.ndsi_pass1_path
                 # empty image pass2 is needed for computing snow_all
+
+                # FIXME Replace with call to the OTB Application Python API
                 call_subprocess(["otbcli_BandMath",
                                  "-il",
                                  op.join(self.path_tmp,
@@ -678,6 +685,8 @@ class snow_detector:
         else:
             generic_snow_path = self.ndsi_pass1_path
             # empty image pass2 is needed for computing snow_all
+
+            # FIXME Replace with call to the OTB Application Python API
             call_subprocess(["otbcli_BandMath",
                              "-il",
                              op.join(self.path_tmp,
@@ -704,6 +713,7 @@ class snow_detector:
         condition_final = "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + \
             str(self.rRed_backtocloud) + ")))?2:0"
 
+        # FIXME Replace with call to the OTB Application Python API
         call_subprocess(["otbcli_BandMath",
                          "-il",
                          self.cloud_refine,
@@ -718,6 +728,8 @@ class snow_detector:
                          str(self.ram),
                          "-exp",
                          condition_final])
+
+        # FIXME Replace with an OTB Application and call to the OTB Application Python API
         call_subprocess(
             [
                 "compute_snow_mask", op.join(
@@ -730,6 +742,8 @@ class snow_detector:
     def pass3(self):
         # Fuse pass1 and pass2
         condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
+
+        # FIXME Replace with call to the OTB Application Python API
         call_subprocess(["otbcli_BandMath",
                          "-il",
                          self.ndsi_pass1_path,
@@ -826,6 +840,8 @@ class snow_detector:
 
         # Concatenate all bands in a single image
         concat_s2 = op.join(path_tmp, "concat_s2.tif")
+
+        # FIXME Replace with call to the OTB Application Python API
         call_subprocess(["otbcli_ConcatenateImages",
                          "-il",
                          greenBand_resample_path,
