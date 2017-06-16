@@ -3,7 +3,6 @@
 #PBS -j oe
 #PBS -l select=1:ncpus=1:mem=4000mb
 #PBS -l walltime=00:55:00
-#PBS -J 1-2
 # run LIS for one Sentinel-2 Level-2A tile and one date (walltime is higher)
 # specify the path to the tile folder, the path the DEM and the template configuration file (.json)
 # First argument is the tile name (nnccc): qsub -v tile="31TCH",date="20170416" runTile_lis_Sentinel2_cluster_muscate_anytile_anydate
