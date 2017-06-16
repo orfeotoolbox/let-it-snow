@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
+## [Unreleased]
+###Changed
+- Move OTB minimum 6.0.0 which include a fix to handle properly 1 byte TIFF image 	
 ## [1.2] - 2017-06-04
 - add json schema to ATBD to document all parameters
 - Add version of lis in atbd

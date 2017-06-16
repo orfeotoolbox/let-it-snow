@@ -527,9 +527,7 @@ class snow_detector:
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
         print "ndsi formula: ", ndsi_formula
 
-        # Use 255 not 1 here because of bad handling of 1 byte tiff by otb)
-        # FIXME
-        condition_pass1 = "(im2b1!=255 and (" + ndsi_formula + ")>" + str(
+        condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(
             self.ndsi_pass1) + " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
         call_subprocess(["otbcli_BandMath",
                          "-il",
@@ -544,9 +542,7 @@ class snow_detector:
                          condition_pass1 + "?1:0"])
 
         # Update the cloud mask (again)
-        # Use 255 not 1 here because of bad handling of 1 byte tiff by otb)
-        # FIXME
-        condition_cloud_pass1 = "(im1b1==255 or (im2b1!=255 and im3b1==1 and im4b1> " + \
+        condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + \
             str(self.rRed_backtocloud) + "))"
         call_subprocess(["otbcli_BandMath",
                          "-il",
@@ -568,7 +564,7 @@ class snow_detector:
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
         # Pass 2: compute snow fraction (c++)
         nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(
-            self.ndsi_pass1_path, 0, 255)
+            self.ndsi_pass1_path, 0, 1)
         print "Number of snow pixels ", nb_snow_pixels
 
         # Compute Zs elevation fraction and histogram values
@@ -586,9 +582,7 @@ class snow_detector:
             # Test zs value (-1 means that no zs elevation was found)
             if (self.zs != -1):
                 # NDSI threshold again
-                # Use 255 not 1 here because of bad handling of 1 byte tiff by otb)
-                # FIXME
-                condition_pass2 = "(im3b1 != 255) and (im2b1>" + str(self.zs) + ") and (" + ndsi_formula + "> " + str(
+                condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ") and (" + ndsi_formula + "> " + str(
                     self.ndsi_pass2) + ") and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
 
                 call_subprocess(["otbcli_BandMath",
@@ -658,9 +652,8 @@ class snow_detector:
                     self.path_tmp,
                     "pass3_vec.shp"))
 
-        # Final update of the cloud mask (use 255 not 1 here because of bad
-        # handling of 1 byte tiff by otb)
-        condition_final = "(im2b1==255)?1:((im1b1==255) or ((im3b1>0) and (im4b1> " + \
+        # Final update of the cloud mask
+        condition_final = "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + \
             str(self.rRed_backtocloud) + ")))?2:0"
 
         call_subprocess(["otbcli_BandMath",
@@ -687,9 +680,8 @@ class snow_detector:
                             self.path_tmp, "snow_all.tif")])
 
     def pass3(self):
-        # Fuse pass1 and pass2 (use 255 not 1 here because of bad handling of 1 byte tiff by otb)
-        # FIXME
-        condition_pass3 = "(im1b1 == 255 or im2b1 == 255)"
+        # Fuse pass1 and pass2
+        condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
         call_subprocess(["otbcli_BandMath",
                          "-il",
                          self.ndsi_pass1_path,

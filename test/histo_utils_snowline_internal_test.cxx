@@ -74,8 +74,8 @@ void CreateImage(ImageType::Pointer image)
   pixel.SetSize(MeasurementVectorSize);
   //pixel.Fill(110);
   pixel[0]=70;
-  pixel[1]=255;
-  pixel[2]=255;  
+  pixel[1]=1;
+  pixel[2]=1;  
 
   itk::ImageRandomNonRepeatingIteratorWithIndex<ImageType> imageIterator(image, image->GetLargestPossibleRegion());
   imageIterator.ReinitializeSeed(0);  	
@@ -89,7 +89,7 @@ void CreateImage(ImageType::Pointer image)
       {
       //Change the pixel value at half of the iterations
       pixel[0]=81;
-      pixel[1]=255;
+      pixel[1]=1;
       pixel[2]=0;
       }
     std::cout << "Setting pixel " << imageIterator.GetIndex() << " to " << pixel << std::endl;

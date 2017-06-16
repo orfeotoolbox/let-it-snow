@@ -161,8 +161,6 @@ int compute_nb_pixels_between_bounds(const std::string & infname, const int lowe
   HistogramFilterType::HistogramMeasurementVectorType upperBound(1);
 
   lowerBound.Fill(lowerbound);
-  //Bound set to 255 because of bad handling of tif 1 bits in OTB!
-  //FIXME Change 255 to 0 when bug Mantis 1079 will be fixed
   upperBound.Fill(upperbound);
   
   histogramFilter->SetHistogramBinMinimum( lowerBound );
@@ -297,11 +295,10 @@ short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compos
   lowerBound[0] = min;
   lowerBound[1] = 0;
   lowerBound[2] = 0;
+
   upperBound[0] = max;
-  //Bound set to 255 because of bad handling of tif 1 bits in OTB!
-  //FIXME Change 255 to 0 when bug Mantis 1079 will be fixed
-  upperBound[1] = 255;
-  upperBound[2] = 255;
+  upperBound[1] = 1;
+  upperBound[2] = 1;
 
   histogramFilter->SetHistogramBinMinimum( lowerBound );
   histogramFilter->SetHistogramBinMaximum( upperBound );
