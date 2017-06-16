@@ -28,6 +28,7 @@ import multiprocessing
 import numpy as np
 import uuid
 from shutil import copyfile
+from distutils import spawn
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
@@ -61,10 +62,42 @@ def call_subprocess(process_list):
 
 
 def polygonize(input_img, input_mask, output_vec):
-    """Helper function to polygonize raster mask using gdal polygonize"""
-    call_subprocess(["gdal_polygonize.py", input_img, "-f",
-                     "ESRI Shapefile", "-mask", input_mask, output_vec])
+    """Helper function to polygonize raster mask using gdal polygonize
 
+    if gina-tools is available it use gdal_trace_outline instead of
+    gdal_polygonize (faster)
+    """
+    # Test if gdal_trace_outline is available
+    gdal_trace_outline_path = spawn.find_executable("gdal_trace_outline")
+    gdal_trace_outline_path = None
+    if gdal_trace_outline_path is None:
+        # Use gdal_polygonize
+        call_subprocess(["gdal_polygonize.py", input_img, "-f",
+                     "ESRI Shapefile", "-mask", input_mask, output_vec])
+    else:
+        print "Use gdal_trace_outline to polygonize raster mask..."
+        
+        #Temporary file to store result of outline tool
+        # Get unique identifier for the temporary file
+        # Retrieve directory from input vector file
+        input_dir = os.path.dirname(output_vec)
+        unique_filename = uuid.uuid4()
+        tmp_poly = op.join(input_dir, str(unique_filename))
+
+        tmp_poly_shp = tmp_poly + ".shp"
+        # We can use here gina-tools gdal_trace_outline which is faster
+        call_subprocess(["gdal_trace_outline", input_img, "-classify", "-out-cs", "en", "-ogr-out", tmp_poly_shp, "-dp-toler", "0","-split-polys"])
+
+        # Then remove polygons with 0 as field value and rename field from "value" to "DN" to follow same convention as gdal_polygonize
+        call_subprocess(["ogr2ogr",
+                         "-sql",
+                         'SELECT value AS DN from \"' + str(unique_filename) + '\" where value != 0',
+                         output_vec,
+                         tmp_poly_shp])
+
+        # Remove temporary vectors
+        for shp in glob.glob(tmp_poly + "*"):
+            os.remove(shp)
 
 def composition_RGB(input_img, output_img, nSWIR, nRed, nGreen, multi):
     """Make a RGB composition to highlight the snow cover
