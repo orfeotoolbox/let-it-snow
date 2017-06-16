@@ -73,11 +73,11 @@ def polygonize(input_img, input_mask, output_vec):
     if gdal_trace_outline_path is None:
         # Use gdal_polygonize
         call_subprocess(["gdal_polygonize.py", input_img, "-f",
-                     "ESRI Shapefile", "-mask", input_mask, output_vec])
+                         "ESRI Shapefile", "-mask", input_mask, output_vec])
     else:
         print "Use gdal_trace_outline to polygonize raster mask..."
-        
-        #Temporary file to store result of outline tool
+
+        # Temporary file to store result of outline tool
         # Get unique identifier for the temporary file
         # Retrieve directory from input vector file
         input_dir = os.path.dirname(output_vec)
@@ -86,18 +86,33 @@ def polygonize(input_img, input_mask, output_vec):
 
         tmp_poly_shp = tmp_poly + ".shp"
         # We can use here gina-tools gdal_trace_outline which is faster
-        call_subprocess(["gdal_trace_outline", input_img, "-classify", "-out-cs", "en", "-ogr-out", tmp_poly_shp, "-dp-toler", "0","-split-polys"])
+        call_subprocess(["gdal_trace_outline",
+                         input_img,
+                         "-classify",
+                         "-out-cs",
+                         "en",
+                         "-ogr-out",
+                         tmp_poly_shp,
+                         "-dp-toler",
+                         "0",
+                         "-split-polys"])
 
-        # Then remove polygons with 0 as field value and rename field from "value" to "DN" to follow same convention as gdal_polygonize
-        call_subprocess(["ogr2ogr",
-                         "-sql",
-                         'SELECT value AS DN from \"' + str(unique_filename) + '\" where value != 0',
-                         output_vec,
-                         tmp_poly_shp])
+        # Then remove polygons with 0 as field value and rename field from
+        # "value" to "DN" to follow same convention as gdal_polygonize
+        call_subprocess(
+            [
+                "ogr2ogr",
+                "-sql",
+                'SELECT value AS DN from \"' +
+                str(unique_filename) +
+                '\" where value != 0',
+                output_vec,
+                tmp_poly_shp])
 
         # Remove temporary vectors
         for shp in glob.glob(tmp_poly + "*"):
             os.remove(shp)
+
 
 def composition_RGB(input_img, output_img, nSWIR, nRed, nGreen, multi):
     """Make a RGB composition to highlight the snow cover
@@ -560,8 +575,8 @@ class snow_detector:
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
         print "ndsi formula: ", ndsi_formula
 
-        condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(
-            self.ndsi_pass1) + " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
+        condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + \
+            " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
         call_subprocess(["otbcli_BandMath",
                          "-il",
                          self.img,
