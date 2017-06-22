@@ -12,7 +12,7 @@
 # FIXME: conflict on hal between environnement variable TMPDIR used also internally by openmpi 
 # Store the directory in  PBS_TMP_DIR
 PBS_TMPDIR=$TMPDIR
-# Unset TMPDIR env variable which conflict with openmpi   
+# Unset TMPDIR env variable which conflicts with openmpi   
 unset TMPDIR
 
 # Tile to process
@@ -59,13 +59,12 @@ fzip=$(basename $i)
 f=$(basename $i .zip)
 
 echo "fzip" $fzip
-echo "f" $f
 
 #create working input directory
 pinw=$tmp_input_dir
 mkdir -p $pinw
 
-echo "pin" $pinw
+echo "pinw" $pinw
 
 #copy and extract input data
 
@@ -99,10 +98,6 @@ sed -i -e "s|inputB3|$inputB3|g" $config
 sed -i -e "s|inputcloud|$inputcloud|g" $config
 sed -i -e "s|inputdem|$inputdem|g" $config
 sed -i -e "s|outputdir|$pout|g" $config
-
-# escape [ and ] coming from job arrays (quick fix does not work..)
-#sed -i -e 's|\]|\\]|g' $config
-#sed -i -e 's|\[|\\[|g' $config
 
 #Load LIS modules
 module load lis/develop

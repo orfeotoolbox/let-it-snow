@@ -8,9 +8,6 @@
 # First argument is the tile name (nnccc): qsub -v tile="31TCH",date="20170416" runTile_lis_Sentinel2_cluster_muscate_anytile_anydate
 # Second argument is the date (YYYMMDD)
 
-# fix the bug with [] in file name
-TMPDIR="/tmp/"
-
 # Tile to process
 # tile="T"$1
 if [ -z $tile ]; then
@@ -62,7 +59,6 @@ fzip=$(basename $i)
 f=$(basename $i .zip)
 
 echo "fzip" $fzip
-echo "f" $f
 
 #create working input directory
 pinw=$tmp_input_dir
@@ -104,7 +100,6 @@ sed -i -e "s|inputdem|$inputdem|g" $config
 sed -i -e "s|outputdir|$pout|g" $config
 
 #Load LIS modules
-#export MODULEPATH=$MODULEPATH:/work/logiciels/modulefiles_linux3-ci
 module load lis/develop
 
 #configure gdal_cachemax to speedup gdal polygonize and gdal rasterize (half of requested RAM)
