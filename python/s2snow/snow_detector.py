@@ -732,21 +732,19 @@ class snow_detector:
         # Fuse pass1 and pass2
         condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
 
-        # FIXME Replace with call to the OTB Application Python API
-        call_subprocess(["otbcli_BandMath",
-                         "-il",
-                         self.ndsi_pass1_path,
-                         op.join(self.path_tmp,
-                                 "pass2.tif"),
-                         "-out",
-                         op.join(self.path_tmp,
-                                 "pass3.tif") + GDAL_OPT,
-                         "uint8",
-                         "-ram",
-                         str(self.ram),
-                         "-exp",
-                         condition_pass3 + "?1:0"])
+        bandMathPass3 = otb.Registry.CreateApplication("BandMath")
 
+        bandMathPass3.SetParameterString("exp",condition_pass3 + "?1:0")
+        bandMathPass3.SetParameterStringList("il",[self.ndsi_pass1_path,
+                         op.join(self.path_tmp,
+                                 "pass2.tif")])
+        bandMathPass3.SetParameterString("ram",str(self.ram))
+        bandMathPass3.SetParameterString("out",op.join(self.path_tmp,
+                                 "pass3.tif") + GDAL_OPT)
+        bandMathPass3.SetParameterOutputImagePixelType("out",otb.ImagePixelType_uint8)
+
+        bandMathPass3.ExecuteAndWriteOutput()
+        
     def sentinel_2_preprocessing(self):
         # Handle Sentinel-2 case here. Sentinel-2 images are in 2 separates tif. R1
         #(green/red) at 10 meters and R2 (swir) at 20 meters. Need to extract each
@@ -830,17 +828,16 @@ class snow_detector:
         # Concatenate all bands in a single image
         concat_s2 = op.join(path_tmp, "concat_s2.tif")
 
-        # FIXME Replace with call to the OTB Application Python API
-        call_subprocess(["otbcli_ConcatenateImages",
-                         "-il",
-                         greenBand_resample_path,
+        Concatenate = otb.Registry.CreateApplication("ConcatenateImages")
+
+        Concatenate.SetParameterStringList("il",[greenBand_resample_path,
                          redBand_resample_path,
-                         swirBand_path,
-                         "-out",
-                         concat_s2,
-                         "int16",
-                         "-ram",
-                         str(ram)])
+                         swirBand_path])
+        Concatenate.SetParameterString("ram",str(ram))
+        Concatenate.SetParameterString("out",concat_s2)
+        Concatenate.SetParameterOutputImagePixelType("out",otb.ImagePixelType_int16)
+
+        Concatenate.ExecuteAndWriteOutput()
 
         # img variable is used later to compute snow mask
         self.img = concat_s2
