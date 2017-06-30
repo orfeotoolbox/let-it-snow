@@ -127,6 +127,9 @@ def format_LIS(snow_detector):
 
 
 def format_SEB_values(path, nodata_path, ram):
+
+    # FIXME: why there are 2 calls to BandMath application 
+    # FIXME: use otb app python API
     call_subprocess(["otbcli_BandMath",
                      "-il",
                      path,
@@ -137,6 +140,8 @@ def format_SEB_values(path, nodata_path, ram):
                      str(ram),
                      "-exp",
                      "(im1b1==1)?100:(im1b1==2)?205:0"])
+
+    # FIXME : use otb app python API
     call_subprocess(["otbcli_BandMath",
                      "-il",
                      path,
