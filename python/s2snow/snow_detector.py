@@ -622,6 +622,7 @@ class snow_detector:
         ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
         # Pass 2: compute snow fraction (c++)
+        # FIXME: use np.count here ?
         nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(
             self.ndsi_pass1_path, 0, 1)
         print "Number of snow pixels ", nb_snow_pixels
