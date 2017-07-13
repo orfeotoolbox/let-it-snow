@@ -127,38 +127,6 @@ export PATH=/your/build/directory/bin:$PATH
 ```
 let-it-snow is now installed.
 
-#### On venuscalc
-
-To configure OTB 5.2.1:
-
-Create a bash file which contains:
-```bash
-source /mnt/data/home/grizonnetm/config_otb_5.6.sh
-```
-
-Then build the lis project using cmake
-```bash
-cd $build_dir
-cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/grizonnetm/build/OTB-install/include -DGDAL_LIBRARY=/mnt/data/home/grizonnetm/build/OTB-install/lib/libgdal.so $source_dir
-make
-```
-To install s2snow python module. 
-In your build folder:
-```bash
-cd python
-python setup.py install
-```
-or
-```bash
-python setup.py install --user
-```
-Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
-```bash
-export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
-export PATH=/your/build/directory/bin:$PATH
-```
-let-it-snow is now installed.
-
 ## Tests
 
 Enable tests with BUILD_TESTING cmake option. Use ctest to run tests. Do not forget to clean your output test directory when you run a new set of tests.
