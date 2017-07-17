@@ -506,12 +506,9 @@ class snow_detector:
         # edit result to set the resolution to the input image resolution
         # TODO need to find a better solution and also guess the input spacing
         # (using maccs resampling filter)
-        call_subprocess(["gdal_edit.py",
-                         "-tr",
-                         str(geotransform[1]),
-                         str(geotransform[5]),
-                         op.join(self.path_tmp,
-                                 "red_nn.tif")])
+        dataset=gdal.Open(op.join(self.path_tmp,"red_nn.tif"),gdal.GA_Update)
+        dataset.SetGeoTransform(geotransform)
+        dataset=None
 
         # Extract all masks
         call_subprocess(["compute_cloud_mask", self.cloud_init, str(
