@@ -1,4 +1,8 @@
+set(LIS_DATA_ROOT CACHE PATH "The test data directory which contains 2 sub-folders ( Baseline/Input-Data-Test)" )
 mark_as_advanced(LIS_DATA_ROOT)
+if(NOT LIS_DATA_ROOT)
+	message(FATAL_ERROR "Please set LIS_DATA_ROOT")
+endif()
 
 set(BASELINE ${LIS_DATA_ROOT}/Baseline)
 set(DATA_TEST ${LIS_DATA_ROOT}/Input-Data-Test)
