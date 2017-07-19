@@ -76,6 +76,13 @@ add_test(NAME compare_snow_output_pass3_test
   )
 set_tests_properties(compare_snow_output_pass1_test PROPERTIES DEPENDS s2snow_test)
 
+add_test(NAME compare_composition_test
+  COMMAND gdalcompare.py
+  "${BASELINE}/composition_highcloud.tif"
+  "${OUTPUT_TEST_TAKE5}/composition.tif" 
+  )
+set_tests_properties(compare_composition_test PROPERTIES DEPENDS s2snow_test)
+
 add_test(NAME preprocessing_test
   COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/s2snow/dem_builder.py 
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
