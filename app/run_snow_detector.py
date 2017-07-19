@@ -3,6 +3,7 @@
 import sys
 import os.path as op
 import json
+import logging
 from s2snow import snow_detector
 
 VERSION = "1.3"
@@ -39,6 +40,12 @@ def main(argv):
         sys.stdout = open(op.join(pout, "stdout.log"), 'w')
         sys.stderr = open(op.join(pout, "stderr.log"), 'w')
 
+    # Set logging level and format.
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+    logging.info("Start run_snow_detector.py")
+    logging.info("Input args = " + json_file)
+    
+    # Run the snow detector
     sd = snow_detector.snow_detector(data)
     sd.detect_snow(2)
 

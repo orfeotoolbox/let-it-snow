@@ -22,6 +22,7 @@ import glob
 import os
 import os.path as op
 import json
+import logging
 import gdal
 from gdalconst import *
 import multiprocessing
@@ -60,7 +61,7 @@ def call_subprocess(process_list):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = process.communicate()
-    print out
+    logging.info(out)
     sys.stderr.write(err)
 
 
@@ -78,7 +79,7 @@ def polygonize(input_img, input_mask, output_vec):
         call_subprocess(["gdal_polygonize.py", input_img, "-f",
                          "ESRI Shapefile", "-mask", input_mask, output_vec])
     else:
-        print "Use gdal_trace_outline to polygonize raster mask..."
+        loggging.info("Use gdal_trace_outline to polygonize raster mask...")
 
         # Temporary file to store result of outline tool
         # Get unique identifier for the temporary file
@@ -158,7 +159,7 @@ def burn_polygons_edges(input_img, input_vec):
     # Get unique identifier for the temporary file
     unique_filename = uuid.uuid4()
     tmp_line = op.join(input_dir, str(unique_filename))
-    print "tmpline: " + str(tmp_line)
+    logging.info("tmpline: " + str(tmp_line))
 
     gdal.VectorTranslate(
         tmp_line + ".shp",
@@ -227,7 +228,7 @@ class snow_detector:
         try:
             nbDefaultThreads = multiprocessing.cpu_count()
         except NotImplementedError:
-            print "Cannot get max number of CPU on the system. nbDefaultThreads set to 1."
+            logging.error("Cannot get max number of CPU on the system. nbDefaultThreads set to 1.")
             nbDefaultThreads = 1
         self.nbThreads = general.get("nbThreads", nbDefaultThreads)
         self.mode = general.get("mode")
@@ -263,7 +264,7 @@ class snow_detector:
         gb_dataset = gdal.Open(gb_path, GA_ReadOnly)
         gb_path_extracted = op.join(self.path_tmp, "green_band_extracted.tif")
         if gb_dataset.RasterCount > 1:
-            print "extracting green band"
+            logging.info("extracting green band")
             # Use gdal 2 python API
             gdal.Translate(
                 gb_path_extracted,
@@ -282,7 +283,7 @@ class snow_detector:
         rb_dataset = gdal.Open(rb_path, GA_ReadOnly)
         rb_path_extracted = op.join(self.path_tmp, "red_band_extracted.tif")
         if rb_dataset.RasterCount > 1:
-            print "extracting red band"
+            logging.info("extracting red band")
             gdal.Translate(
                 rb_path_extracted,
                 rb_path,
@@ -300,7 +301,7 @@ class snow_detector:
         sb_dataset = gdal.Open(sb_path, GA_ReadOnly)
         sb_path_extracted = op.join(self.path_tmp, "swir_band_extracted.tif")
         if sb_dataset.RasterCount > 1:
-            print "extracting swir band"
+            logging.info("extracting swir band")
             gdal.Translate(
                 sb_path_extracted,
                 sb_path,
@@ -319,18 +320,18 @@ class snow_detector:
         gb_resolution = gb_dataset.GetGeoTransform()[1]
         rb_resolution = rb_dataset.GetGeoTransform()[1]
         sb_resolution = sb_dataset.GetGeoTransform()[1]
-        print "green band resolution : " + str(gb_resolution)
-        print "red band resolution : " + str(rb_resolution)
-        print "swir band resolution : " + str(sb_resolution)
+        logging.info("green band resolution : " + str(gb_resolution))
+        logging.info("red band resolution : " + str(rb_resolution))
+        logging.info("swir band resolution : " + str(sb_resolution))
         # test if different reso
         gb_path_resampled = op.join(self.path_tmp, "green_band_resampled.tif")
         rb_path_resampled = op.join(self.path_tmp, "red_band_resampled.tif")
         sb_path_resampled = op.join(self.path_tmp, "swir_band_resampled.tif")
         if not gb_resolution == rb_resolution == sb_resolution:
-            print "resolution is different among band files"
+            logging.info("resolution is different among band files")
             # gdalwarp to max reso
             max_res = max(gb_resolution, rb_resolution, sb_resolution)
-            print "cubic resampling to " + str(max_res) + " meters."
+            logging.info("cubic resampling to " + str(max_res) + " meters.")
 
             gdal.Warp(
                 gb_path_resampled,
@@ -356,7 +357,7 @@ class snow_detector:
             sb_path_resampled = sb_path_extracted
 
         # build vrt
-        print "building bands vrt"
+        logging.info("building bands vrt")
         self.img = op.join(self.path_tmp, "lis.vrt")
 
         gdal.BuildVRT(self.img,
@@ -553,7 +554,7 @@ class snow_detector:
         condition_shadow = "((im1b1==1 and " + cond_cloud2 + \
             ") or im2b1==1 or im4b1==1)"
 
-        print condition_shadow
+        logging.info(condition_shadow)
 
         bandMathFinalShadow = otb.Registry.CreateApplication("BandMath")
 
@@ -577,7 +578,7 @@ class snow_detector:
         # Pass1 : NDSI threshold
         ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
-        print "ndsi formula: ", ndsi_formula
+        logging.info("ndsi formula: "+ ndsi_formula)
 
         condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + \
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
@@ -622,7 +623,7 @@ class snow_detector:
         # FIXME: use np.count here ?
         nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(
             self.ndsi_pass1_path, 0, 1)
-        print "Number of snow pixels ", nb_snow_pixels
+        logging.info("Number of snow pixels =" + str(nb_snow_pixels))
 
         # Compute Zs elevation fraction and histogram values
         # We compute it in all case as we need to check histogram values to
@@ -633,7 +634,7 @@ class snow_detector:
         self.zs = histo_utils_ext.compute_snowline(self.dem, self.ndsi_pass1_path, op.join(
             self.path_tmp, "cloud_pass1.tif"), self.dz, self.fsnow_lim, False, -2, -self.dz / 2, histo_log)
 
-        print "computed ZS:", self.zs
+        logging.info("computed ZS:" + str(self.zs))
 
         if (nb_snow_pixels > self.fsnow_total_lim):
             # Test zs value (-1 means that no zs elevation was found)
@@ -670,7 +671,7 @@ class snow_detector:
             else:
                 # No zs elevation found, take result of pass1 in the output
                 # product
-                print "did not find zs, keep pass 1 result."
+                logging.warning("did not find zs, keep pass 1 result.")
                 generic_snow_path = self.ndsi_pass1_path
                 # empty image pass2 is needed for computing snow_all
 

@@ -5,6 +5,7 @@ import os
 import os.path as op
 import glob
 import datetime
+import logging
 from lxml import etree
 from shutil import copyfile
 import gdal
@@ -20,7 +21,7 @@ def call_subprocess(process_list):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = process.communicate()
-    print out
+    logging.info(out)
     sys.stderr.write(err)
 
 
