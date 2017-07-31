@@ -19,7 +19,7 @@ mkdir -p $outputPath
 
 # move to config path to build the json file.
 
-cp ${configPath}/param_test_s2_template.json ${outputPath}/param_s2_test.json
+cp ${configPath}/param_test_s2_template.json ${outputPath}/param_test.json
 
 # modify only three parameters: image file, cloud file, dem file, output dir
 inputimage_green=$(find $dataPath -name *FRE_B3.tif)
@@ -34,7 +34,7 @@ cat > $temp_python_script <<SCRIPT
 #!/usr/bin/python
 import json
 
-jsonFile = open("${outputPath}/param_s2_test.json", "r")
+jsonFile = open("${outputPath}/param_test.json", "r")
 data = json.load(jsonFile)
 jsonFile.close()
 
@@ -58,7 +58,7 @@ input_swir=inputs["swir_band"]
 input_swir["path"]="$inputimage_swir"
 input_swir["noBand"]="1"
 
-jsonFile = open("${outputPath}/param_s2_test.json", "w+")
+jsonFile = open("${outputPath}/param_test.json", "w+")
 jsonFile.write(json.dumps(data, indent=4))
 jsonFile.close()
 

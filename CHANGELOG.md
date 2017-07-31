@@ -10,6 +10,7 @@ All notable changes to LIS will be documented in this file.
 - Move OTB minimum 6.0.0 which include a fix to handle properly 1 byte TIFF image
 - New QGIS style files for raster and vector LIS product
 - Use OTB Application Python API instead of call to subprocess
+- Use Python Logging module for python scripts instead of using print
 
 ## [1.2] - 2017-06-04
 - add json schema to ATBD to document all parameters
