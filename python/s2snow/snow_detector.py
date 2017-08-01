@@ -56,6 +56,7 @@ GDAL_OPT_2B = "?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 def call_subprocess(process_list):
     """ Run subprocess and write to stdout and stderr
     """
+    logging.info("Running: " + " ".join(process_list))
     process = subprocess.Popen(
         process_list,
         stdout=subprocess.PIPE,
@@ -169,54 +170,30 @@ def burn_polygons_edges(input_img, input_vec):
         accessMode='overwrite',
         geometryType='MULTILINESTRING')
 
-    # 2) rasterize cloud and cloud shadows polygon borders in green
-    call_subprocess(["gdal_rasterize",
-                     "-b",
-                     "1",
-                     "-b",
-                     "2",
-                     "-b",
-                     "3",
-                     "-burn",
-                     "0",
-                     "-burn",
-                     "255",
-                     "-burn",
-                     "0",
-                     "-where",
-                     'DN=2',
-                     "-l",
-                     str(unique_filename),
-                     tmp_line + ".shp",
-                     input_img])
-    # FIXME can't find the right syntax here to use gdal lib
-    logging.info("gdal.Rasterize : ")
+    logging.info("gdal.Rasterize inputs: ")
     logging.info("input = " + input_img)
     logging.info("shapefile = " + tmp_line+".shp")
     logging.info("layers = " + str(unique_filename))
-    # gdal.Rasterize(input_img , tmp_line+".shp" , bands = [1,2,3] , burnValues = [0,255,0] , where='DN=2', layers = str(unique_filename) )
+
+    # Warning: We have to open the input_img (filename) as img_ds (dataset)
+    # the gdal.Rasterize method return a segfault when using directly input_img
+    img_ds=gdal.Open(input_img, gdal.GA_Update)
+
+    # 2) rasterize cloud and cloud shadows polygon borders in green
+    gdal.Rasterize(img_ds, 
+                   tmp_line+".shp",
+                   bands=[1,2,3],
+                   burnValues=[0,255,0],
+                   where='DN=2',
+                   layers=str(unique_filename))
+
     # 3) rasterize snow polygon borders in magenta
-    call_subprocess(["gdal_rasterize",
-                     "-b",
-                     "1",
-                     "-b",
-                     "2",
-                     "-b",
-                     "3",
-                     "-burn",
-                     "255",
-                     "-burn",
-                     "0",
-                     "-burn",
-                     "255",
-                     "-where",
-                     'DN=1',
-                     "-l",
-                     str(unique_filename),
-                     tmp_line + ".shp",
-                     input_img])
-    # FIXME can't find the right syntax here to use gdal lib
-    #gdal.Rasterize(input_img , tmp_line+".shp" , bands = [1,2,3] , burnValues = [255,0,255] , where='DN=1' , layers = str(unique_filename) )
+    gdal.Rasterize(img_ds, 
+                   tmp_line+".shp",
+                   bands=[1,2,3],
+                   burnValues=[255,0,255],
+                   where='DN=1',
+                   layers=str(unique_filename))
 
     # 4) remove tmp_line files
     for shp in glob.glob(tmp_line + "*"):
@@ -547,8 +524,10 @@ class snow_detector:
 
         # Extract high clouds
         # FIXME Replace with an OTB Application and then call with Python API
-        call_subprocess(["compute_cloud_mask", self.cloud_init, str(
-            self.high_cloud_mask), op.join(self.path_tmp, "high_cloud_mask.tif")])
+        call_subprocess(["compute_cloud_mask",
+                         self.cloud_init,
+                         str(self.high_cloud_mask),
+                         op.join(self.path_tmp, "high_cloud_mask.tif")])
 
         cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
         condition_shadow = "((im1b1==1 and " + cond_cloud2 + \
@@ -636,11 +615,9 @@ class snow_detector:
                 if self.generate_vector:
                     # Generate polygons for pass2 (useful for quality check)
                     # TODO
-                    polygonize(
-                        op.join(
-                            self.path_tmp, "pass2.tif"), op.join(
-                            self.path_tmp, "pass2.tif"), op.join(
-                            self.path_tmp, "pass2_vec.shp"))
+                    polygonize(op.join(self.path_tmp, "pass2.tif"),
+                               op.join(self.path_tmp, "pass2.tif"),
+                               op.join(self.path_tmp, "pass2_vec.shp"))
                 self.pass3()
                 generic_snow_path = op.join(self.path_tmp, "pass3.tif")
             else:
@@ -671,12 +648,9 @@ class snow_detector:
 
         if self.generate_vector:
             # Generate polygons for pass3 (useful for quality check)
-            polygonize(
-                generic_snow_path,
-                generic_snow_path,
-                op.join(
-                    self.path_tmp,
-                    "pass3_vec.shp"))
+            polygonize(generic_snow_path,
+                       generic_snow_path,
+                       op.join(self.path_tmp,"pass3_vec.shp"))
 
         # Final update of the cloud mask
         condition_final = "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + \
@@ -694,24 +668,22 @@ class snow_detector:
 
         # FIXME Replace with an OTB Application and call to the OTB Application
         # Python API
-        call_subprocess(
-            [
-                "compute_snow_mask", op.join(
-                    self.path_tmp, "pass1.tif"), op.join(
-                    self.path_tmp, "pass2.tif"), op.join(
-                    self.path_tmp, "cloud_pass1.tif"), op.join(
-                        self.path_tmp, "cloud_refine.tif"), op.join(
-                            self.path_tmp, "snow_all.tif")])
+        call_subprocess(["compute_snow_mask",
+                         op.join(self.path_tmp, "pass1.tif"),
+                         op.join(self.path_tmp, "pass2.tif"),
+                         op.join(self.path_tmp, "cloud_pass1.tif"),
+                         op.join(self.path_tmp, "cloud_refine.tif"),
+                         op.join(self.path_tmp, "snow_all.tif")])
 
     def pass3(self):
         # Fuse pass1 and pass2
         condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
         bandMathPass3 = band_math([self.ndsi_pass1_path,
-                            op.join(self.path_tmp,"pass2.tif")],
-                            op.join(self.path_tmp, "pass3.tif") + GDAL_OPT,
-                            condition_pass3 + "?1:0",
-                            self.ram,
-                            otb.ImagePixelType_uint8)
+                                   op.join(self.path_tmp,"pass2.tif")],
+                                   op.join(self.path_tmp, "pass3.tif") + GDAL_OPT,
+                                   condition_pass3 + "?1:0",
+                                   self.ram,
+                                   otb.ImagePixelType_uint8)
         bandMathPass3.ExecuteAndWriteOutput()
 
     def sentinel_2_preprocessing(self):
