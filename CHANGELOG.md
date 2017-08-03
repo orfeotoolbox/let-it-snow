@@ -11,6 +11,7 @@ All notable changes to LIS will be documented in this file.
 - New QGIS style files for raster and vector LIS product
 - Use OTB Application Python API instead of call to subprocess
 - Use Python Logging module for python scripts instead of using print
+- Changed compute_cloud_mask and compute_snow_mask by OTB applications
 
 ## [1.2] - 2017-06-04
 - add json schema to ATBD to document all parameters

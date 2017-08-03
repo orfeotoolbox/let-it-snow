@@ -10,14 +10,16 @@ target_link_libraries( histo_utils_ext ${Boost_LIBRARIES} histo_utils )
 # don't prepend wrapper library name with lib
 set_target_properties( histo_utils_ext PROPERTIES PREFIX "" )
 
-#Build SEB snow all mask exe
-add_executable(compute_snow_mask compute_snow_mask.cxx)
-target_link_libraries(compute_snow_mask ${OTB_LIBRARIES})
-
-#Build cloud mask exe
-add_executable(compute_cloud_mask compute_cloud_mask.cxx)
-target_link_libraries(compute_cloud_mask ${OTB_LIBRARIES})
-
 #Build snow line exe
 add_executable(compute_snowline compute_snowline.cxx)
 target_link_libraries(compute_snowline histo_utils)
+
+# Create the ComputeCloudMask OTB application
+otb_create_application(NAME           ComputeCloudMask
+                       SOURCES        ComputeCloudMask.cxx
+                       LINK_LIBRARIES ${OTB_LIBRARIES})
+
+# Create the ComputeSnowMask OTB application
+otb_create_application(NAME           ComputeSnowMask
+                       SOURCES        ComputeSnowMask.cxx
+                       LINK_LIBRARIES ${OTB_LIBRARIES})

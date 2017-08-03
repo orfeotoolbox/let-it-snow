@@ -72,6 +72,7 @@ python $temp_python_script
 # sed -i -e "s|inputdem|$inputdem|g" ${outputPath}/param_test.json
 # sed -i -e "s|outputdir|$outputPath|g" ${outputPath}/param_test.json
 
+rm $temp_python_script
 
 exit 0
  

@@ -11,6 +11,10 @@ configPath=$1
 dataPath=$2
 outputPath=$3
 
+echo $1
+echo $2
+echo $3
+
 #exit 1 on error
 set -e 
 
@@ -25,6 +29,8 @@ cp ${configPath}/param_test_template.json ${outputPath}/param_test.json
 inputimage=$(find $dataPath -name *ORTHO_SURF_CORR_PENTE*.TIF)
 inputcloud=$(find $dataPath -name *NUA.TIF)
 inputdem=$(find $dataPath/SRTM/* -name *.tif)
+
+echo $inputdem
 
 temp_python_script=$(mktemp temp_python.XXXX.py)
 cat > $temp_python_script <<SCRIPT
@@ -69,6 +75,7 @@ python $temp_python_script
 # sed -i -e "s|inputdem|$inputdem|g" ${outputPath}/param_test.json
 # sed -i -e "s|outputdir|$outputPath|g" ${outputPath}/param_test.json
 
+rm $temp_python_script
 
 exit 0
  
