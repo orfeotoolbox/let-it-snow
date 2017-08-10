@@ -10,30 +10,34 @@ set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
 set(OUTPUT_TEST_TAKE5 ${OUTPUT_TEST}/take5)
 add_test(NAME take5_test_json_builder_test
-  COMMAND ${CMAKE_SOURCE_DIR}/test/test_json_builder.sh
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test_json_builder.py
   "${DATA_TEST}/Take5/AOI_test_CESNeige"
   "${OUTPUT_TEST_TAKE5}"
   )
 
+set(OUTPUT_TEST_L8 ${OUTPUT_TEST}/l8)
+add_test(NAME l8_test_json_builder_test
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test_json_builder.py
+  "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20170308_N2A_France-MetropoleD0004H0001"
+  "${OUTPUT_TEST_L8}"
+  )
+
 set(OUTPUT_TEST_S2 ${OUTPUT_TEST}/s2)
-add_test(NAME s2_test_json_builder_test 
-  COMMAND ${CMAKE_SOURCE_DIR}/test/test_s2_json_builder.sh
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+add_test(NAME s2_test_json_builder_test
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test_json_builder.py
   "${DATA_TEST}/S2"
   "${OUTPUT_TEST_S2}"
   )
 
 #Add Test with extract 1000*1000 of S2 (x=1400,y=2200 pixel coord at 20 meters)
 set(OUTPUT_TEST_S2_SMALL ${OUTPUT_TEST}/s2-small)
-add_test(NAME s2-small_test_json_builder_test 
-  COMMAND ${CMAKE_SOURCE_DIR}/test/test_s2_json_builder.sh
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+add_test(NAME s2-small_test_json_builder_test
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test_json_builder.py
   "${DATA_TEST}/S2-SMALL"
   "${OUTPUT_TEST_S2_SMALL}"
   )
 
-set( TEST_CASES_LIST ${TEST_CASES_LIST} s2-small s2 take5)
+set( TEST_CASES_LIST ${TEST_CASES_LIST} s2-small take5 l8 s2)
 foreach( test_name ${TEST_CASES_LIST})
   set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
   set(CURRENT_TEST_OUTPUT ${OUTPUT_TEST}/${test_name})

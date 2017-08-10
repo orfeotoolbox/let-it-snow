@@ -341,8 +341,8 @@ class snow_detector:
         self.mode = general.get("mode")
         self.generate_vector = general.get("generate_vector", False)
         self.do_preprocessing = general.get("preprocessing", False)
-        self.do_postprocessing = True
-        self.nodata = -10000  # TODO parse json if needed
+        self.do_postprocessing = general.get("postprocessing", True)
+        self.nodata = general.get("nodata", -10000)
         self.multi = general.get("multi", 1)  # Multiplier to handle S2 scaling
 
         # Parse cloud data
@@ -448,25 +448,6 @@ class snow_detector:
         self.cloud_refine = op.join(self.path_tmp, "cloud_refine.tif")
         self.nodata_path = op.join(self.path_tmp, "nodata_mask.tif")
 
-        # if self.mode == "spot":
-        # 	self.nGreen=1 # Index of green band
-        # 	self.nSWIR=4 # Index of SWIR band (1 to 3 µm) = band 11 (1.6 µm) in S2
-        # 	self.nRed=2 # Index of red band
-        # 	self.nodata=-10000 # no-data value
-        # elif self.mode == "landsat":
-        # 	self.nGreen=3
-        # 	self.nSWIR=6
-        # 	self.nRed=4
-        # 	self.nodata=-10000
-        # elif self.mode == "s2":
-        # 	sentinel_2_preprocessing()
-        # 	#Set generic band index for Sentinel-2
-        # 	self.nGreen=1
-        # 	self.nRed=2
-        # 	self.nSWIR=3
-        # else:
-        # 	sys.exit("Supported modes are spot4,landsat and s2.")
-
     def detect_snow(self, nbPass):
         # Set maximum ITK threads
         os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
@@ -491,13 +472,6 @@ class snow_detector:
         if nbPass == 2:
             self.pass2()
 
-        # Gdal polygonize (needed to produce composition)
-        # TODO: Study possible loss and issue with vectorization product
-        polygonize(
-            op.join(self.path_tmp, "final_mask.tif"),
-            op.join(self.path_tmp, "final_mask.tif"),
-            op.join(self.path_tmp, "final_mask_vec.shp"))
-
         # RGB composition
         composition_RGB(
             self.img,
@@ -506,6 +480,13 @@ class snow_detector:
             self.nRed,
             self.nGreen,
             self.multi)
+
+        # Gdal polygonize (needed to produce composition)
+        # TODO: Study possible loss and issue with vectorization product
+        polygonize(
+            op.join(self.path_tmp, "final_mask.tif"),
+            op.join(self.path_tmp, "final_mask.tif"),
+            op.join(self.path_tmp, "final_mask_vec.shp"))
 
         # Burn polygons edges on the composition
         # TODO add pass1 snow polygon in yellow
