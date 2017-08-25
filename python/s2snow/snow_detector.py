@@ -74,7 +74,6 @@ def polygonize(input_img, input_mask, output_vec):
     """
     # Test if gdal_trace_outline is available
     gdal_trace_outline_path = spawn.find_executable("gdal_trace_outline")
-    gdal_trace_outline_path = None
     if gdal_trace_outline_path is None:
         # Use gdal_polygonize
         call_subprocess([
@@ -82,7 +81,7 @@ def polygonize(input_img, input_mask, output_vec):
         "-f", "ESRI Shapefile",
         "-mask", input_mask, output_vec])
     else:
-        loggging.info("Use gdal_trace_outline to polygonize raster mask...")
+        logging.info("Use gdal_trace_outline to polygonize raster mask...")
 
         # Temporary file to store result of outline tool
         # Get unique identifier for the temporary file
