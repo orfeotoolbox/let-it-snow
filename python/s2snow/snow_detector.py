@@ -273,17 +273,17 @@ def compute_cloud_mask(img_in, img_out, cloudmaskvalue, ram=None, out_type=None)
         logging.info("out = " + img_out)
         logging.info("cloudmaskvalue = " + cloudmaskvalue)
 
-        bandMathApp = otb.Registry.CreateApplication("ComputeCloudMask")
-        bandMathApp.SetParameterString("cloudmaskvalue", cloudmaskvalue)
-        bandMathApp.SetParameterString("in", img_in)
-        bandMathApp.SetParameterString("out", img_out)
+        cloudMaskApp = otb.Registry.CreateApplication("ComputeCloudMask")
+        cloudMaskApp.SetParameterString("cloudmaskvalue", cloudmaskvalue)
+        cloudMaskApp.SetParameterString("in", img_in)
+        cloudMaskApp.SetParameterString("out", img_out)
         if ram is not None:
             logging.info("ram = " + str(ram))
-            bandMathApp.SetParameterString("ram", str(ram))
+            cloudMaskApp.SetParameterString("ram", str(ram))
         if out_type is not None:
             logging.info("out_type = " + str(out_type))
-            bandMathApp.SetParameterOutputImagePixelType("out", out_type)
-        return bandMathApp
+            cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
+        return cloudMaskApp
     else:
         logging.error("Parameters img_in, img_out and cloudmaskvalue are required")
 
@@ -308,19 +308,19 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, ram=None, ou
         logging.info("cloud_refine = " + cloud_refine)
         logging.info("out = " + out)
 
-        bandMathApp = otb.Registry.CreateApplication("ComputeSnowMask")
-        bandMathApp.SetParameterString("pass1", pass1)
-        bandMathApp.SetParameterString("pass2", pass2)
-        bandMathApp.SetParameterString("cloudpass1", cloud_pass1)
-        bandMathApp.SetParameterString("cloudrefine", cloud_refine)
-        bandMathApp.SetParameterString("out", out)
+        snowMaskApp = otb.Registry.CreateApplication("ComputeSnowMask")
+        snowMaskApp.SetParameterString("pass1", pass1)
+        snowMaskApp.SetParameterString("pass2", pass2)
+        snowMaskApp.SetParameterString("cloudpass1", cloud_pass1)
+        snowMaskApp.SetParameterString("cloudrefine", cloud_refine)
+        snowMaskApp.SetParameterString("out", out)
         if ram is not None:
             logging.info("ram = " + str(ram))
-            bandMathApp.SetParameterString("ram", str(ram))
+            snowMaskApp.SetParameterString("ram", str(ram))
         if out_type is not None:
             logging.info("out_type = " + str(out_type))
-            bandMathApp.SetParameterOutputImagePixelType("out", out_type)
-        return bandMathApp
+            snowMaskApp.SetParameterOutputImagePixelType("out", out_type)
+        return snowMaskApp
     else:
         logging.error("Parameters pass1, pass2, cloud_pass1, cloud_refine and out are required")
 
