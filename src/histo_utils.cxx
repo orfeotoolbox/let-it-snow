@@ -305,11 +305,38 @@ short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compos
 
   histogramFilter->SetHistogramBinMinimum( lowerBound );
   histogramFilter->SetHistogramBinMaximum( upperBound );
+
+  // Handle case where Dimension 1 of the histogram is zero
+  // (upperBound[0]-lowerBound[0]) / dz < 1).
+  // In this case, the histogram can't be computed by the ImageToHistogramFilter
+  // filter
+  // Write histogram.txt file and returm zs=-1
+
+  //FIXME Implicit cast from float to int here?
+  const unsigned int nbAltitudeBins = dz == 0? 0 : (upperBound[0]-lowerBound[0]) / dz;
+
+  if ( nbAltitudeBins < 1 )
+    {
+    // Empty histogram. Write histo file and return -1 (no zs)
+    std::ofstream myfile;
+  
+    #if CXX11_ENABLED
+    myfile.open(std::string(histo_file));
+    #else
+    myfile.open(histo_file);
+    #endif
+
+    myfile << "Number of bins=0" << std::endl;
+    myfile.close();
+    // Return -1 as no zs is found in this case
+    return -1;
+    }
+
   
   typedef HistogramFilterType::HistogramSizeType SizeType;
   SizeType size( 3 );
 
-  size[0] = (upperBound[0]-lowerBound[0]) / dz;        // number of bins for the altitude   channel
+  size[0] = nbAltitudeBins;        // number of bins for the altitude   channel
   size[1] =   2;        // number of bins for the snow channel
   size[2] =   2;        // number of bins for the cloud  channel
 
@@ -328,12 +355,12 @@ short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compos
   short snowline = -1;
   if(reverse)
     {
-      for (int i=histogram->GetSize()[0]-1; i>=0; i--)
-	{
-	  snowline = get_elev_snowline_from_bin(histogram, i, fsnow_lim, offset, center_offset);
-	  if(snowline != -1)
-	    return snowline;
-	}
+    for (int i=histogram->GetSize()[0]-1; i>=0; i--)
+      {
+      snowline = get_elev_snowline_from_bin(histogram, i, fsnow_lim, offset, center_offset);
+      if(snowline != -1)
+        return snowline;
+      }
     }
   else
     {
