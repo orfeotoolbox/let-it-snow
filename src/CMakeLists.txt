@@ -6,7 +6,7 @@ add_library( histo_utils SHARED histo_utils.cxx )
 target_link_libraries(histo_utils ${OTB_LIBRARIES})
 # Define the wrapper library that wraps our library
 add_library( histo_utils_ext SHARED histo_utils_ext.cxx )
-target_link_libraries( histo_utils_ext ${Boost_LIBRARIES} histo_utils )
+target_link_libraries( histo_utils_ext ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} histo_utils )
 # don't prepend wrapper library name with lib
 set_target_properties( histo_utils_ext PROPERTIES PREFIX "" )
 
