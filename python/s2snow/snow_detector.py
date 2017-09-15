@@ -24,7 +24,7 @@ import os.path as op
 import json
 import logging
 import gdal
-from gdalconst import *
+from gdalconst import GDT_Int16,GDT_Byte,GA_Update,GA_ReadOnly
 import multiprocessing
 import numpy as np
 import uuid
@@ -77,9 +77,9 @@ def polygonize(input_img, input_mask, output_vec):
     if gdal_trace_outline_path is None:
         # Use gdal_polygonize
         call_subprocess([
-        "gdal_polygonize.py", input_img,
-        "-f", "ESRI Shapefile",
-        "-mask", input_mask, output_vec])
+            "gdal_polygonize.py", input_img,
+            "-f", "ESRI Shapefile",
+            "-mask", input_mask, output_vec])
     else:
         logging.info("Use gdal_trace_outline to polygonize raster mask...")
 
@@ -94,15 +94,15 @@ def polygonize(input_img, input_mask, output_vec):
         # We can use here gina-tools gdal_trace_outline which is faster
         call_subprocess([
             "gdal_trace_outline",
-             input_img,
-             "-classify",
-             "-out-cs",
-             "en",
-             "-ogr-out",
-             tmp_poly_shp,
-             "-dp-toler",
-             "0",
-             "-split-polys"])
+            input_img,
+            "-classify",
+            "-out-cs",
+            "en",
+            "-ogr-out",
+            tmp_poly_shp,
+            "-dp-toler",
+            "0",
+            "-split-polys"])
 
         # Then remove polygons with 0 as field value and rename field from
         # "value" to "DN" to follow same convention as gdal_polygonize
@@ -176,21 +176,21 @@ def burn_polygons_edges(input_img, input_vec):
 
     # Warning: We have to open the input_img (filename) as img_ds (dataset)
     # the gdal.Rasterize method return a segfault when using directly input_img
-    img_ds=gdal.Open(input_img, gdal.GA_Update)
+    img_ds = gdal.Open(input_img, gdal.GA_Update)
 
     # 2) rasterize cloud and cloud shadows polygon borders in green
     gdal.Rasterize(img_ds,
                    tmp_line+".shp",
-                   bands=[1,2,3],
-                   burnValues=[0,255,0],
+                   bands=[1, 2, 3],
+                   burnValues=[0, 255, 0],
                    where='DN=2',
                    layers=str(unique_filename))
 
     # 3) rasterize snow polygon borders in magenta
     gdal.Rasterize(img_ds,
                    tmp_line+".shp",
-                   bands=[1,2,3],
-                   burnValues=[255,0,255],
+                   bands=[1, 2, 3],
+                   burnValues=[255, 0, 255],
                    where='DN=1',
                    layers=str(unique_filename))
 
@@ -241,9 +241,9 @@ def band_math(il, out, exp, ram=None, out_type=None):
         bandMathApp.SetParameterString("exp", exp)
         for image in il:
             if isinstance(image, basestring):
-                bandMathApp.AddParameterStringList("il",image)
+                bandMathApp.AddParameterStringList("il", image)
             else:
-                bandMathApp.AddImageToParameterInputImageList("il",image)
+                bandMathApp.AddImageToParameterInputImageList("il", image)
         bandMathApp.SetParameterString("out", out)
 
         if ram is not None:
@@ -324,6 +324,8 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, ram=None, ou
     else:
         logging.error("Parameters pass1, pass2, cloud_pass1, cloud_refine and out are required")
 
+"""This module does implement the snow detection (all passes)"""
+
 class snow_detector:
     def __init__(self, data):
 
@@ -358,7 +360,7 @@ class snow_detector:
 
         # Parse input parameters
         inputs = data["inputs"]
-        if(self.do_preprocessing):
+        if self.do_preprocessing:
             self.vrt = str(inputs.get("vrt"))
         # self.img=str(inputs.get("image"))
         self.dem = str(inputs.get("dem"))
@@ -518,7 +520,7 @@ class snow_detector:
 
         # resample red band using multiresolution pyramid
         gdal.Warp(
-            op.join(self.path_tmp,"red_coarse.tif"),
+            op.join(self.path_tmp, "red_coarse.tif"),
             self.redBand_path,
             resampleAlg=gdal.GRIORA_Bilinear,
             width=xSize / self.rf,
@@ -527,8 +529,8 @@ class snow_detector:
         # Resample red band nn
         # FIXME: use MACCS resampling filter contribute in OTB 5.6 here
         gdal.Warp(
-            op.join(self.path_tmp,"red_nn.tif"),
-            op.join(self.path_tmp,"red_coarse.tif"),
+            op.join(self.path_tmp, "red_nn.tif"),
+            op.join(self.path_tmp, "red_coarse.tif"),
             resampleAlg=gdal.GRIORA_NearestNeighbour,
             width=xSize,
             height=ySize)
@@ -536,9 +538,9 @@ class snow_detector:
         # edit result to set the resolution to the input image resolution
         # TODO need to find a better solution and also guess the input spacing
         # (using maccs resampling filter)
-        dataset=gdal.Open(op.join(self.path_tmp,"red_nn.tif"),gdal.GA_Update)
+        dataset = gdal.Open(op.join(self.path_tmp, "red_nn.tif"), gdal.GA_Update)
         dataset.SetGeoTransform(geotransform)
-        dataset=None
+        dataset = None
 
         # Extract all masks
         computeCMApp = compute_cloud_mask(self.cloud_init,
@@ -638,8 +640,8 @@ class snow_detector:
         # detect cold clouds in optionnal pass4
 
         histo_log = op.join(self.path_tmp, "histogram.txt")
+
         #c++ function
-        
         logging.info("histo_utils_ext.compute_snowline args:")
         logging.info(self.dem)
         logging.info(self.ndsi_pass1_path)
@@ -659,9 +661,9 @@ class snow_detector:
 
         logging.info("computed ZS:" + str(self.zs))
 
-        if (nb_snow_pixels > self.fsnow_total_lim):
+        if nb_snow_pixels > self.fsnow_total_lim:
             # Test zs value (-1 means that no zs elevation was found)
-            if (self.zs != -1):
+            if self.zs != -1:
                 # NDSI threshold again
                 condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ") and (" + ndsi_formula + "> " + str(
                     self.ndsi_pass2) + ") and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
@@ -714,7 +716,7 @@ class snow_detector:
             # Generate polygons for pass3 (useful for quality check)
             polygonize(generic_snow_path,
                        generic_snow_path,
-                       op.join(self.path_tmp,"pass3_vec.shp"))
+                       op.join(self.path_tmp, "pass3_vec.shp"))
 
         # Final update of the cloud mask
         condition_final = "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + \
@@ -742,7 +744,7 @@ class snow_detector:
         # Fuse pass1 and pass2
         condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
         bandMathPass3 = band_math([self.ndsi_pass1_path,
-                                   op.join(self.path_tmp,"pass2.tif")],
+                                   op.join(self.path_tmp, "pass2.tif")],
                                    op.join(self.path_tmp, "pass3.tif") + GDAL_OPT,
                                    condition_pass3 + "?1:0",
                                    self.ram,
