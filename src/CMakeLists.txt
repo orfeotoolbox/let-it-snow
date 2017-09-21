@@ -10,9 +10,15 @@ target_link_libraries( histo_utils_ext ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} hi
 # don't prepend wrapper library name with lib
 set_target_properties( histo_utils_ext PROPERTIES PREFIX "" )
 
-#Build snow line exe
+# Build snow line exe
 add_executable(compute_snowline compute_snowline.cxx)
 target_link_libraries(compute_snowline histo_utils)
+
+# Install for executables and libraries
+install(TARGETS compute_snowline histo_utils histo_utils_ext
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static)
 
 # Create the ComputeCloudMask OTB application
 otb_create_application(NAME           ComputeCloudMask
