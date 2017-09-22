@@ -110,20 +110,20 @@ Run make in your build folder.
 ```bash
 make
 ```
-To install s2snow python module. 
+To install let-it-snow application and the s2snow python module.
 In your build folder:
 ```bash
-cd python
-python setup.py install
+make install
 ```
-or
-```bash
-python setup.py install --user
-```
+The files will be installed by default into /usr/local and add to the python default modules.
+To overide this behavior, the variable CMAKE_INSTALL_PREFIX must be configure before build step.
+
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
 ```bash
-export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
-export PATH=/your/build/directory/bin:$PATH
+export PATH=/your/install/directory/bin:/your/install/directory/app:$PATH
+export LD_LIBRARY_PATH=/your/install/directory/lib:$LD_LIBRARY_PATH
+export OTB_APPLICATION_PATH=/your/install/directory/lib:$OTB_APPLICATION_PATH
+export PYTHONPATH=/your/install/directory/lib:/your/install/directory/lib/python2.7/site-packages:$PYTHONPATH
 ```
 let-it-snow is now installed.
 
