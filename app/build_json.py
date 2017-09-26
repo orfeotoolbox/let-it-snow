@@ -38,7 +38,7 @@ conf_template={"general":{
                         "ndsi_pass1":0.4,
                         "red_pass1":200,
                         "ndsi_pass2":0.15,
-                        "red_pass2":120,
+                        "red_pass2":40,
                         "fsnow_lim":0.1,
                         "fsnow_total_lim":0.001
                         },
@@ -145,7 +145,7 @@ def main():
 
     parser.add_argument("dataPath", help="input product path (supports S2/L8/Take5 products)")
     parser.add_argument("outputPath", help="output configuration file path")
-    
+
     group_general = parser.add_argument_group('general', 'general parameters')
     group_general.add_argument("-nodata", type=int)
     group_general.add_argument("-ram", type=int)
@@ -154,7 +154,7 @@ def main():
     #group_general.add_argument("-preprocessing", type=bool)
     #group_general.add_argument("-log", type=bool)
     group_general.add_argument("-multi", type=float)
-    
+
     group_snow = parser.add_argument_group('snow', 'snow parameters')
     group_snow.add_argument("-dz", type=int)
     group_snow.add_argument("-ndsi_pass1", type=float)
@@ -163,7 +163,7 @@ def main():
     group_snow.add_argument("-red_pass2", type=float)
     group_snow.add_argument("-fsnow_lim", type=float)
     group_snow.add_argument("-fsnow_total_lim", type=float)
-    
+
     group_cloud = parser.add_argument_group('cloud', 'cloud parameters')
     group_cloud.add_argument("-shadow_in_mask", type=int)
     group_cloud.add_argument("-shadow_out_mask", type=int)
@@ -172,7 +172,7 @@ def main():
     group_cloud.add_argument("-rf", type=int)
     group_cloud.add_argument("-red_darkcloud", type=int)
     group_cloud.add_argument("-red_backtocloud", type=int)
-        
+
     args = parser.parse_args()
 
     dataPath = args.dataPath
