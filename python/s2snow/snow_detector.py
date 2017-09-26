@@ -152,51 +152,27 @@ def burn_polygons_edges(input_img, input_vec):
     - convert mask polygons to lines
 
     """
+    snow_value=str(1)
+    cloud_value=str(2)
 
-    # Save temporary file in working directory
+    # Prepare and execute the two contour extraction
+    contourApp1 = compute_contour(input_vec, None, snow_value,True)
+    contourApp1.Execute()
 
-    # Retrieve directory from input vector file
-    input_dir = os.path.dirname(input_vec)
-    # TODO move to snowdetector class?
-    # Get unique identifier for the temporary file
-    unique_filename = uuid.uuid4()
-    tmp_line = op.join(input_dir, str(unique_filename))
-    logging.info("tmpline: " + str(tmp_line))
+    contourApp2 = compute_contour(input_vec, None, cloud_value,True)
+    contourApp2.Execute()
 
-    gdal.VectorTranslate(
-        tmp_line + ".shp",
-        input_vec,
-        accessMode='overwrite',
-        geometryType='MULTILINESTRING')
+    # Prepare the BandMathX expression
+    condition_shadow = "im1b1=="+snow_value+"?{255,0,255}:(im2b1=="+cloud_value+"?{0,255,0}:im3)"
+    logging.info(condition_shadow)
 
-    logging.info("gdal.Rasterize inputs: ")
-    logging.info("input = " + input_img)
-    logging.info("shapefile = " + tmp_line+".shp")
-    logging.info("layers = " + str(unique_filename))
-
-    # Warning: We have to open the input_img (filename) as img_ds (dataset)
-    # the gdal.Rasterize method return a segfault when using directly input_img
-    img_ds = gdal.Open(input_img, gdal.GA_Update)
-
-    # 2) rasterize cloud and cloud shadows polygon borders in green
-    gdal.Rasterize(img_ds,
-                   tmp_line+".shp",
-                   bands=[1, 2, 3],
-                   burnValues=[0, 255, 0],
-                   where='DN=2',
-                   layers=str(unique_filename))
-
-    # 3) rasterize snow polygon borders in magenta
-    gdal.Rasterize(img_ds,
-                   tmp_line+".shp",
-                   bands=[1, 2, 3],
-                   burnValues=[255, 0, 255],
-                   where='DN=1',
-                   layers=str(unique_filename))
-
-    # 4) remove tmp_line files
-    for shp in glob.glob(tmp_line + "*"):
-        os.remove(shp)
+    # Write the contours onto the composition
+    bandMathFinalShadow = band_mathX([contourApp1.GetParameterOutputImage("out"),
+                                      contourApp2.GetParameterOutputImage("out"),
+                                      input_img],
+                                      input_img,
+                                      condition_shadow)
+    bandMathFinalShadow.ExecuteAndWriteOutput()
 
 def extract_band(inputs, band, path_tmp, noData):
     """ Extract the required band using gdal.Translate
@@ -219,6 +195,7 @@ def extract_band(inputs, band, path_tmp, noData):
     else:
         copyfile(path, path_extracted)
     return path_extracted
+
 
 def band_math(il, out, exp, ram=None, out_type=None):
     """ Create and configure the band math application
@@ -323,6 +300,78 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, ram=None, ou
         return snowMaskApp
     else:
         logging.error("Parameters pass1, pass2, cloud_pass1, cloud_refine and out are required")
+
+def band_mathX(il, out, exp, ram=None, out_type=None):
+    """ Create and configure the band math application
+        using otb.Registry.CreateApplication("BandMathX")
+
+    Keyword arguments:
+    il -- the input image list
+    out -- the output image
+    exp -- the math expression
+    ram -- the ram limitation (not mandatory)
+    out_type -- the output image pixel type  (not mandatory)
+    """
+    if il and out and exp:
+        logging.info("Processing BandMathX with args:")
+        logging.info("il = " + ";".join([str(x) for x in il]))
+        logging.info("out = " + out)
+        logging.info("exp = " + exp)
+
+        bandMathApp = otb.Registry.CreateApplication("BandMathX")
+        bandMathApp.SetParameterString("exp", exp)
+        for image in il:
+            if isinstance(image, basestring):
+                bandMathApp.AddParameterStringList("il", image)
+            else:
+                bandMathApp.AddImageToParameterInputImageList("il", image)
+        bandMathApp.SetParameterString("out", out)
+
+        if ram is not None:
+            logging.info("ram = " + str(ram))
+            bandMathApp.SetParameterString("ram", str(ram))
+        if out_type is not None:
+            logging.info("out_type = " + str(out_type))
+            bandMathApp.SetParameterOutputImagePixelType("out", out_type)
+        return bandMathApp
+    else:
+        logging.error("Parameters il, out and exp are required")
+
+def compute_contour(img_in, img_out, foreground_value, fullyconnected, ram=None, out_type=None):
+    """ Create and configure the Compute Contours application
+        using otb.Registry.CreateApplication("ComputeContours")
+
+    Keyword arguments:
+    img_in -- the input image
+    img_out -- the output image
+    foreground_value -- the value corresponding to the region to extract
+    fullyconnected -- boolean to use 8 connexity
+    ram -- the ram limitation (not mandatory)
+    out_type -- the output image pixel type  (not mandatory)
+    """
+    if img_in and foreground_value:
+        logging.info("Processing ComputeContours with args:")
+        logging.info("in = " + img_in)
+        if img_out is not None:
+            logging.info("out = " + img_out)
+            cloudMaskApp.SetParameterString("out", img_out)
+        logging.info("foreground_value = " + foreground_value)
+        logging.info("fullyconnected = " + str(fullyconnected))
+
+        cloudMaskApp = otb.Registry.CreateApplication("ComputeContours")
+        cloudMaskApp.SetParameterString("foregroundvalue", foreground_value)
+        if fullyconnected:
+            cloudMaskApp.SetParameterString("fullyconnected", "true")
+        cloudMaskApp.SetParameterString("inputmask", img_in)
+        if ram is not None:
+            logging.info("ram = " + str(ram))
+            cloudMaskApp.SetParameterString("ram", str(ram))
+        if out_type is not None:
+            logging.info("outtype = " + str(out_type))
+            cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
+        return cloudMaskApp
+    else:
+        logging.error("Parameters img_in and foreground_value are required")
 
 """This module does implement the snow detection (all passes)"""
 
@@ -493,7 +542,7 @@ class snow_detector:
         # TODO add pass1 snow polygon in yellow
         burn_polygons_edges(
             op.join(self.path_tmp, "composition.tif"),
-            op.join(self.path_tmp, "final_mask_vec.shp"))
+            op.join(self.path_tmp, "final_mask.tif"))
 
         # External postprocessing
         if self.do_postprocessing:

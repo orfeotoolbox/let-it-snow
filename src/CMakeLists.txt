@@ -29,3 +29,8 @@ otb_create_application(NAME           ComputeCloudMask
 otb_create_application(NAME           ComputeSnowMask
                        SOURCES        ComputeSnowMask.cxx
                        LINK_LIBRARIES ${OTB_LIBRARIES})
+
+# Create the ComputeContour OTB application
+otb_create_application(NAME           ComputeContours
+                       SOURCES        ComputeContours.cxx
+                       LINK_LIBRARIES ${OTB_LIBRARIES})
