@@ -49,6 +49,8 @@ public:
         SetParameterDescription("cloudmaskvalue", "Value of the input cloud mask to extract in the output mask");
         MandatoryOn("cloudmaskvalue");
 
+        AddRAMParameter();
+
         AddParameter(ParameterType_OutputImage, "out",  "Output image");
         SetParameterDescription("out", "Output cloud mask");
 

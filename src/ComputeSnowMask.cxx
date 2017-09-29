@@ -59,6 +59,8 @@ public:
         SetParameterDescription( "cloudrefine", "Input cloud refine image");
         MandatoryOn("cloudrefine");
 
+        AddRAMParameter();
+
         AddParameter(ParameterType_OutputImage, "out",  "Output image");
         SetParameterDescription("out", "Output cloud mask");
 

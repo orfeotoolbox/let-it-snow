@@ -72,21 +72,21 @@ foreach( test_name ${TEST_CASES_LIST})
   add_test(NAME ${test_name}_compare_composition_test
     COMMAND gdalcompare.py
     "${CURRENT_TEST_BASELINE}/composition.tif"
-    "${CURRENT_TEST_OUTPUT}/composition.tif"
+    "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_COMPO.TIF"
     )
   set_tests_properties(${test_name}_compare_composition_test PROPERTIES DEPENDS ${test_name}_test)
   
   add_test(NAME ${test_name}_compare_snow_all_test
   COMMAND gdalcompare.py
   "${CURRENT_TEST_BASELINE}/snow_all.tif"
-  "${CURRENT_TEST_OUTPUT}/snow_all.tif"
+  "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_SNOW_ALL.TIF"
   )
   set_tests_properties(${test_name}_compare_snow_all_test PROPERTIES DEPENDS ${test_name}_test)
   
   add_test(NAME ${test_name}_compare_final_mask_output_test
     COMMAND gdalcompare.py
     "${CURRENT_TEST_BASELINE}/final_mask.tif"
-    "${CURRENT_TEST_OUTPUT}/final_mask.tif"
+    "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_SEB.TIF"
     )
   set_tests_properties(${test_name}_compare_final_mask_output_test PROPERTIES DEPENDS ${test_name}_test)
   

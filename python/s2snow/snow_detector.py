@@ -44,6 +44,8 @@ import format_output
 # OTB Applications
 import otbApplication as otb
 
+from app_wrappers import *
+
 # Build gdal option to generate maks of 1 byte using otb extended filename
 # syntaxx
 GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
@@ -144,22 +146,21 @@ def composition_RGB(input_img, output_img, nSWIR, nRed, nGreen, multi):
                              nGreen])
 
 
-def burn_polygons_edges(input_img, input_vec):
+def burn_polygons_edges(input_img, input_vec, snow_value, cloud_value, ram, fullyconnected=True):
     """Burn polygon borders onto an image with the following symbology:
 
     - cloud and cloud shadows: green
     - snow: magenta
     - convert mask polygons to lines
+    - fullyconnected: use 8 connectivity is set to True (instead of 4 connectivity)
 
     """
-    snow_value=str(1)
-    cloud_value=str(2)
 
     # Prepare and execute the two contour extraction
-    contourApp1 = compute_contour(input_vec, None, snow_value,True)
+    contourApp1 = compute_contour(input_vec, None, snow_value, fullyconnected, ram)
     contourApp1.Execute()
 
-    contourApp2 = compute_contour(input_vec, None, cloud_value,True)
+    contourApp2 = compute_contour(input_vec, None, cloud_value, fullyconnected, ram)
     contourApp2.Execute()
 
     # Prepare the BandMathX expression
@@ -171,7 +172,8 @@ def burn_polygons_edges(input_img, input_vec):
                                       contourApp2.GetParameterOutputImage("out"),
                                       input_img],
                                       input_img,
-                                      condition_shadow)
+                                      condition_shadow,
+                                      ram)
     bandMathFinalShadow.ExecuteAndWriteOutput()
 
 def extract_band(inputs, band, path_tmp, noData):
@@ -195,183 +197,6 @@ def extract_band(inputs, band, path_tmp, noData):
     else:
         copyfile(path, path_extracted)
     return path_extracted
-
-
-def band_math(il, out, exp, ram=None, out_type=None):
-    """ Create and configure the band math application
-        using otb.Registry.CreateApplication("BandMath")
-
-    Keyword arguments:
-    il -- the input image list
-    out -- the output image
-    exp -- the math expression
-    ram -- the ram limitation (not mandatory)
-    out_type -- the output image pixel type  (not mandatory)
-    """
-    if il and out and exp:
-        logging.info("Processing BandMath with args:")
-        logging.info("il = " + ";".join([str(x) for x in il]))
-        logging.info("out = " + out)
-        logging.info("exp = " + exp)
-
-        bandMathApp = otb.Registry.CreateApplication("BandMath")
-        bandMathApp.SetParameterString("exp", exp)
-        for image in il:
-            if isinstance(image, basestring):
-                bandMathApp.AddParameterStringList("il", image)
-            else:
-                bandMathApp.AddImageToParameterInputImageList("il", image)
-        bandMathApp.SetParameterString("out", out)
-
-        if ram is not None:
-            logging.info("ram = " + str(ram))
-            bandMathApp.SetParameterString("ram", str(ram))
-        if out_type is not None:
-            logging.info("out_type = " + str(out_type))
-            bandMathApp.SetParameterOutputImagePixelType("out", out_type)
-        return bandMathApp
-    else:
-        logging.error("Parameters il, out and exp are required")
-
-def compute_cloud_mask(img_in, img_out, cloudmaskvalue, ram=None, out_type=None):
-    """ Create and configure the Compute Cloud Mask application
-        using otb.Registry.CreateApplication("ComputeCloudMask")
-
-    Keyword arguments:
-    img_in -- the input image
-    img_out -- the output image
-    cloudmaskvalue -- the value corresponding to cloud
-    ram -- the ram limitation (not mandatory)
-    out_type -- the output image pixel type  (not mandatory)
-    """
-    if img_in and img_out and cloudmaskvalue:
-        logging.info("Processing ComputeCloudMask with args:")
-        logging.info("in = " + img_in)
-        logging.info("out = " + img_out)
-        logging.info("cloudmaskvalue = " + cloudmaskvalue)
-
-        cloudMaskApp = otb.Registry.CreateApplication("ComputeCloudMask")
-        cloudMaskApp.SetParameterString("cloudmaskvalue", cloudmaskvalue)
-        cloudMaskApp.SetParameterString("in", img_in)
-        cloudMaskApp.SetParameterString("out", img_out)
-        if ram is not None:
-            logging.info("ram = " + str(ram))
-            cloudMaskApp.SetParameterString("ram", str(ram))
-        if out_type is not None:
-            logging.info("out_type = " + str(out_type))
-            cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
-        return cloudMaskApp
-    else:
-        logging.error("Parameters img_in, img_out and cloudmaskvalue are required")
-
-def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, ram=None, out_type=None):
-    """ Create and configure the Compute Cloud Snow application
-        using otb.Registry.CreateApplication("ComputeSnowMask")
-
-    Keyword arguments:
-    pass1 -- the input pass1 image
-    pass2 -- the input pass2 image
-    cloud_pass1 -- the input cloud pass1 image
-    cloud_refine -- the input cloud refine image
-    out -- the output image
-    ram -- the ram limitation (not mandatory)
-    out_type -- the output image pixel type  (not mandatory)
-    """
-    if pass1 and pass2 and cloud_pass1 and cloud_refine and out:
-        logging.info("Processing ComputeSnowMask with args:")
-        logging.info("pass1 = " + pass1)
-        logging.info("pass2 = " + pass2)
-        logging.info("cloud_pass1 = " + cloud_pass1)
-        logging.info("cloud_refine = " + cloud_refine)
-        logging.info("out = " + out)
-
-        snowMaskApp = otb.Registry.CreateApplication("ComputeSnowMask")
-        snowMaskApp.SetParameterString("pass1", pass1)
-        snowMaskApp.SetParameterString("pass2", pass2)
-        snowMaskApp.SetParameterString("cloudpass1", cloud_pass1)
-        snowMaskApp.SetParameterString("cloudrefine", cloud_refine)
-        snowMaskApp.SetParameterString("out", out)
-        if ram is not None:
-            logging.info("ram = " + str(ram))
-            snowMaskApp.SetParameterString("ram", str(ram))
-        if out_type is not None:
-            logging.info("out_type = " + str(out_type))
-            snowMaskApp.SetParameterOutputImagePixelType("out", out_type)
-        return snowMaskApp
-    else:
-        logging.error("Parameters pass1, pass2, cloud_pass1, cloud_refine and out are required")
-
-def band_mathX(il, out, exp, ram=None, out_type=None):
-    """ Create and configure the band math application
-        using otb.Registry.CreateApplication("BandMathX")
-
-    Keyword arguments:
-    il -- the input image list
-    out -- the output image
-    exp -- the math expression
-    ram -- the ram limitation (not mandatory)
-    out_type -- the output image pixel type  (not mandatory)
-    """
-    if il and out and exp:
-        logging.info("Processing BandMathX with args:")
-        logging.info("il = " + ";".join([str(x) for x in il]))
-        logging.info("out = " + out)
-        logging.info("exp = " + exp)
-
-        bandMathApp = otb.Registry.CreateApplication("BandMathX")
-        bandMathApp.SetParameterString("exp", exp)
-        for image in il:
-            if isinstance(image, basestring):
-                bandMathApp.AddParameterStringList("il", image)
-            else:
-                bandMathApp.AddImageToParameterInputImageList("il", image)
-        bandMathApp.SetParameterString("out", out)
-
-        if ram is not None:
-            logging.info("ram = " + str(ram))
-            bandMathApp.SetParameterString("ram", str(ram))
-        if out_type is not None:
-            logging.info("out_type = " + str(out_type))
-            bandMathApp.SetParameterOutputImagePixelType("out", out_type)
-        return bandMathApp
-    else:
-        logging.error("Parameters il, out and exp are required")
-
-def compute_contour(img_in, img_out, foreground_value, fullyconnected, ram=None, out_type=None):
-    """ Create and configure the Compute Contours application
-        using otb.Registry.CreateApplication("ComputeContours")
-
-    Keyword arguments:
-    img_in -- the input image
-    img_out -- the output image
-    foreground_value -- the value corresponding to the region to extract
-    fullyconnected -- boolean to use 8 connexity
-    ram -- the ram limitation (not mandatory)
-    out_type -- the output image pixel type  (not mandatory)
-    """
-    if img_in and foreground_value:
-        logging.info("Processing ComputeContours with args:")
-        logging.info("in = " + img_in)
-        if img_out is not None:
-            logging.info("out = " + img_out)
-            cloudMaskApp.SetParameterString("out", img_out)
-        logging.info("foreground_value = " + foreground_value)
-        logging.info("fullyconnected = " + str(fullyconnected))
-
-        cloudMaskApp = otb.Registry.CreateApplication("ComputeContours")
-        cloudMaskApp.SetParameterString("foregroundvalue", foreground_value)
-        if fullyconnected:
-            cloudMaskApp.SetParameterString("fullyconnected", "true")
-        cloudMaskApp.SetParameterString("inputmask", img_in)
-        if ram is not None:
-            logging.info("ram = " + str(ram))
-            cloudMaskApp.SetParameterString("ram", str(ram))
-        if out_type is not None:
-            logging.info("outtype = " + str(out_type))
-            cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
-        return cloudMaskApp
-    else:
-        logging.error("Parameters img_in and foreground_value are required")
 
 """This module does implement the snow detection (all passes)"""
 
@@ -492,11 +317,26 @@ class snow_detector:
         self.fsnow_total_lim = snow.get("fsnow_total_lim")
         self.zs = -1  # default value when zs is not set
 
+        # Define label for output snow product
+        self.label_no_snow = "0"
+        self.label_snow = "100"
+        self.label_cloud = "205"
+        self.label_no_data = "254"
+
         # Build useful paths
+        self.pass1_path = op.join(self.path_tmp, "pass1.tif")
+        self.pass2_path = op.join(self.path_tmp, "pass2.tif")
+        self.pass3_path = op.join(self.path_tmp, "pass3.tif")
         self.redBand_path = op.join(self.path_tmp, "red.tif")
-        self.ndsi_pass1_path = op.join(self.path_tmp, "pass1.tif")
-        self.cloud_refine = op.join(self.path_tmp, "cloud_refine.tif")
+        self.cloud_refine_path = op.join(self.path_tmp, "cloud_refine.tif")
         self.nodata_path = op.join(self.path_tmp, "nodata_mask.tif")
+
+        # Build product file paths
+        self.snow_all_path = op.join(self.path_tmp, "snow_all.tif")
+        self.final_mask_path = op.join(self.path_tmp, "final_mask.tif")
+        self.final_mask_vec_path = op.join(self.path_tmp, "final_mask_vec.shp")
+        self.composition_path = op.join(self.path_tmp, "composition.tif")
+        self.histogram_path = op.join(self.path_tmp, "histogram.txt")
 
     def detect_snow(self, nbPass):
         # Set maximum ITK threads
@@ -525,7 +365,7 @@ class snow_detector:
         # RGB composition
         composition_RGB(
             self.img,
-            op.join(self.path_tmp, "composition.tif"),
+            self.composition_path,
             self.nSWIR,
             self.nRed,
             self.nGreen,
@@ -534,15 +374,18 @@ class snow_detector:
         # Gdal polygonize (needed to produce composition)
         # TODO: Study possible loss and issue with vectorization product
         polygonize(
-            op.join(self.path_tmp, "final_mask.tif"),
-            op.join(self.path_tmp, "final_mask.tif"),
-            op.join(self.path_tmp, "final_mask_vec.shp"))
+            self.final_mask_path,
+            self.final_mask_path,
+            self.final_mask_vec_path)
 
         # Burn polygons edges on the composition
         # TODO add pass1 snow polygon in yellow
         burn_polygons_edges(
-            op.join(self.path_tmp, "composition.tif"),
-            op.join(self.path_tmp, "final_mask.tif"))
+            self.composition_path,
+            self.final_mask_path,
+            self.label_snow,
+            self.label_cloud,
+            self.ram)
 
         # External postprocessing
         if self.do_postprocessing:
@@ -625,7 +468,8 @@ class snow_detector:
         # Extract high clouds
         computeCMApp = compute_cloud_mask(self.cloud_init,
                                           op.join(self.path_tmp, "high_cloud_mask.tif"),
-                                          str(self.high_cloud_mask))
+                                          str(self.high_cloud_mask),
+                                          self.ram)
         computeCMApp.ExecuteAndWriteOutput()
 
         cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
@@ -638,7 +482,7 @@ class snow_detector:
                                 op.join(self.path_tmp, "shadow_mask.tif"),
                                 op.join(self.path_tmp, "red_nn.tif"),
                                 op.join(self.path_tmp, "high_cloud_mask.tif")],
-                                self.cloud_refine+GDAL_OPT,
+                                self.cloud_refine_path+GDAL_OPT,
                                 condition_shadow,
                                 self.ram,
                                 otb.ImagePixelType_uint8)
@@ -653,8 +497,8 @@ class snow_detector:
         condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + \
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
 
-        bandMathPass1 = band_math([self.img, self.cloud_refine],
-                                self.ndsi_pass1_path + GDAL_OPT,
+        bandMathPass1 = band_math([self.img, self.cloud_refine_path],
+                                self.pass1_path + GDAL_OPT,
                                 condition_pass1 + "?1:0",
                                 self.ram,
                                 otb.ImagePixelType_uint8)
@@ -665,8 +509,8 @@ class snow_detector:
         condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + \
             str(self.rRed_backtocloud) + "))"
 
-        bandMathCloudPass1 = band_math([self.cloud_refine,
-                                self.ndsi_pass1_path,
+        bandMathCloudPass1 = band_math([self.cloud_refine_path,
+                                self.pass1_path,
                                 self.cloud_init,
                                 self.redBand_path],
                                 op.join(self.path_tmp, "cloud_pass1.tif") + GDAL_OPT,
@@ -681,32 +525,30 @@ class snow_detector:
         # Pass 2: compute snow fraction (c++)
         # FIXME: use np.count here ?
         nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(
-            self.ndsi_pass1_path, 0, 1)
+            self.pass1_path, 0, 1)
         logging.info("Number of snow pixels =" + str(nb_snow_pixels))
 
         # Compute Zs elevation fraction and histogram values
         # We compute it in all case as we need to check histogram values to
         # detect cold clouds in optionnal pass4
 
-        histo_log = op.join(self.path_tmp, "histogram.txt")
-
         #c++ function
         logging.info("histo_utils_ext.compute_snowline args:")
         logging.info(self.dem)
-        logging.info(self.ndsi_pass1_path)
+        logging.info(self.pass1_path)
         logging.info(op.join(self.path_tmp, "cloud_pass1.tif"))
         logging.info(self.dz)
         logging.info(self.fsnow_lim)
-        logging.info(histo_log)
-        self.zs = histo_utils_ext.compute_snowline(self.dem, 
-                                    self.ndsi_pass1_path,
+        logging.info(self.histogram_path)
+        self.zs = histo_utils_ext.compute_snowline(self.dem,
+                                    self.pass1_path,
                                     op.join(self.path_tmp, "cloud_pass1.tif"),
                                     self.dz,
                                     self.fsnow_lim,
                                     False,
                                     -2,
                                     -self.dz / 2,
-                                    histo_log)
+                                    self.histogram_path)
 
         logging.info("computed ZS:" + str(self.zs))
 
@@ -719,8 +561,8 @@ class snow_detector:
 
                 bandMathPass2 = band_math([self.img,
                                 self.dem,
-                                self.cloud_refine],
-                                op.join(self.path_tmp, "pass2.tif") + GDAL_OPT,
+                                self.cloud_refine_path],
+                                self.pass2_path + GDAL_OPT,
                                 condition_pass2 + "?1:0",
                                 self.ram,
                                 otb.ImagePixelType_uint8)
@@ -730,32 +572,32 @@ class snow_detector:
                 if self.generate_vector:
                     # Generate polygons for pass2 (useful for quality check)
                     # TODO
-                    polygonize(op.join(self.path_tmp, "pass2.tif"),
-                               op.join(self.path_tmp, "pass2.tif"),
+                    polygonize(self.pass2_path,
+                               self.pass2_path,
                                op.join(self.path_tmp, "pass2_vec.shp"))
                 self.pass3()
-                generic_snow_path = op.join(self.path_tmp, "pass3.tif")
+                generic_snow_path = self.pass3_path
             else:
                 # No zs elevation found, take result of pass1 in the output
                 # product
                 logging.warning("did not find zs, keep pass 1 result.")
-                generic_snow_path = self.ndsi_pass1_path
+                generic_snow_path = self.pass1_path
                 # empty image pass2 is needed for computing snow_all
 
-                bandMathEmptyPass2 = band_math([op.join(self.path_tmp, "pass1.tif")],
-                                op.join(self.path_tmp, "pass2.tif") + GDAL_OPT,
+                bandMathEmptyPass2 = band_math([self.pass1_path],
+                                self.pass2_path + GDAL_OPT,
                                 "0",
                                 self.ram,
                                 otb.ImagePixelType_uint8)
                 bandMathEmptyPass2.ExecuteAndWriteOutput()
 
         else:
-            generic_snow_path = self.ndsi_pass1_path
+            generic_snow_path = self.pass1_path
             # empty image pass2 is needed for computing snow_all
             # FIXME: A bit overkill to need to BandMath to create an image with
             # 0
-            bandMathEmptyPass2 = band_math([op.join(self.path_tmp, "pass1.tif")],
-                                op.join(self.path_tmp, "pass2.tif") + GDAL_OPT,
+            bandMathEmptyPass2 = band_math([self.pass1_path],
+                                self.pass2_path + GDAL_OPT,
                                 "0",
                                 self.ram,
                                 otb.ImagePixelType_uint8)
@@ -768,33 +610,43 @@ class snow_detector:
                        op.join(self.path_tmp, "pass3_vec.shp"))
 
         # Final update of the cloud mask
-        condition_final = "(im2b1==1)?1:((im1b1==1) or ((im3b1>0) and (im4b1> " + \
-            str(self.rRed_backtocloud) + ")))?2:0"
+        condition_final = "(im2b1==1)?"+str(self.label_snow)+":((im1b1==1) or ((im3b1>0) and (im4b1> " + \
+            str(self.rRed_backtocloud) + ")))?"+str(self.label_cloud)+":0"
 
-        bandMathFinalCloud = band_math([self.cloud_refine,
+        bandMathFinalCloud = band_math([self.cloud_refine_path,
                             generic_snow_path,
                             self.cloud_init,
                             self.redBand_path],
-                            op.join(self.path_tmp, "final_mask.tif") + GDAL_OPT_2B,
+                            self.final_mask_path,
                             condition_final,
                             self.ram,
                             otb.ImagePixelType_uint8)
         bandMathFinalCloud.ExecuteAndWriteOutput()
 
-        app = compute_snow_mask(op.join(self.path_tmp, "pass1.tif"),
-                                op.join(self.path_tmp, "pass2.tif"),
+        # Apply the no-data mask (this may be call later in the process to maintain the previous behavior)
+        bandMathNoData = band_math([self.final_mask_path,
+                                   self.nodata_path],
+                                   self.final_mask_path,
+                                   "im2b1==1?"+str(self.label_no_data)+":im1b1",
+                                   self.ram,
+                                   otb.ImagePixelType_uint8)
+        bandMathNoData.ExecuteAndWriteOutput()
+
+        app = compute_snow_mask(self.pass1_path,
+                                self.pass2_path,
                                 op.join(self.path_tmp, "cloud_pass1.tif"),
-                                op.join(self.path_tmp, "cloud_refine.tif"),
-                                op.join(self.path_tmp, "snow_all.tif"),
-                                out_type=otb.ImagePixelType_uint8)
+                                self.cloud_refine_path,
+                                self.snow_all_path,
+                                self.ram,
+                                otb.ImagePixelType_uint8)
         app.ExecuteAndWriteOutput()
 
     def pass3(self):
         # Fuse pass1 and pass2
         condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
-        bandMathPass3 = band_math([self.ndsi_pass1_path,
-                                   op.join(self.path_tmp, "pass2.tif")],
-                                   op.join(self.path_tmp, "pass3.tif") + GDAL_OPT,
+        bandMathPass3 = band_math([self.pass1_path,
+                                   self.pass2_path],
+                                   self.pass3_path + GDAL_OPT,
                                    condition_pass3 + "?1:0",
                                    self.ram,
                                    otb.ImagePixelType_uint8)

@@ -57,6 +57,8 @@ public:
         AddParameter(ParameterType_Empty, "fullyconnected", "cloud refine image");
         SetParameterDescription( "fullyconnected", "Input cloud refine image");
 
+        AddRAMParameter();
+
         AddParameter(ParameterType_OutputImage, "out",  "Output image");
         SetParameterDescription("out", "Output contour image");
 
