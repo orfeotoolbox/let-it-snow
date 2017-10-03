@@ -56,7 +56,8 @@ def band_math(il, out, exp, ram=None, out_type=None):
     else:
         logging.error("Parameters il, out and exp are required")
 
-def compute_cloud_mask(img_in, img_out, cloudmaskvalue, ram=None, out_type=None):
+def compute_cloud_mask(img_in, img_out, cloudmaskvalue, \
+                    ram=None, out_type=None):
     """ Create and configure the Compute Cloud Mask application
         using otb.Registry.CreateApplication("ComputeCloudMask")
 
@@ -85,9 +86,11 @@ def compute_cloud_mask(img_in, img_out, cloudmaskvalue, ram=None, out_type=None)
             cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
         return cloudMaskApp
     else:
-        logging.error("Parameters img_in, img_out and cloudmaskvalue are required")
+        logging.error("Parameters img_in, img_out \
+                       and cloudmaskvalue are required")
 
-def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, ram=None, out_type=None):
+def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, \
+                      ram=None, out_type=None):
     """ Create and configure the Compute Cloud Snow application
         using otb.Registry.CreateApplication("ComputeSnowMask")
 
@@ -122,7 +125,8 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, ram=None, ou
             snowMaskApp.SetParameterOutputImagePixelType("out", out_type)
         return snowMaskApp
     else:
-        logging.error("Parameters pass1, pass2, cloud_pass1, cloud_refine and out are required")
+        logging.error("Parameters pass1, pass2, cloud_pass1, \
+                       cloud_refine and out are required")
 
 def band_mathX(il, out, exp, ram=None, out_type=None):
     """ Create and configure the band math application
@@ -160,7 +164,8 @@ def band_mathX(il, out, exp, ram=None, out_type=None):
     else:
         logging.error("Parameters il, out and exp are required")
 
-def compute_contour(img_in, img_out, foreground_value, fullyconnected, ram=None, out_type=None):
+def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
+                    ram=None, out_type=None):
     """ Create and configure the Compute Contours application
         using otb.Registry.CreateApplication("ComputeContours")
 

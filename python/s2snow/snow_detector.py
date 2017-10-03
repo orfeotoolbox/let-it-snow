@@ -28,23 +28,27 @@ from gdalconst import GDT_Int16,GDT_Byte,GA_Update,GA_ReadOnly
 import multiprocessing
 import numpy as np
 import uuid
-from shutil import copyfile
-from distutils import spawn
-# this allows GDAL to throw Python Exceptions
-gdal.UseExceptions()
+from lxml import etree
+
+# OTB Applications
+import otbApplication as otb
 
 # Internal C++ lib to compute histograms and minimum elevation threshold
 # (step 2)
 import histo_utils_ext
 
-# Preprocessing an postprocessing script
+# Preprocessing script
 import dem_builder
-import format_output
 
-# OTB Applications
-import otbApplication as otb
+# Import python decorators for the different needed OTB applications
+from app_wrappers import compute_snow_mask, compute_cloud_mask, band_math
 
-from app_wrappers import *
+# Import utilities for snow detection
+from utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
+from utils import compute_percent, format_SEB_VEC_values
+
+# this allows GDAL to throw Python Exceptions
+gdal.UseExceptions()
 
 # Build gdal option to generate maks of 1 byte using otb extended filename
 # syntaxx
@@ -55,151 +59,7 @@ GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 GDAL_OPT_2B = "?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
 
-def call_subprocess(process_list):
-    """ Run subprocess and write to stdout and stderr
-    """
-    logging.info("Running: " + " ".join(process_list))
-    process = subprocess.Popen(
-        process_list,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    logging.info(out)
-    sys.stderr.write(err)
-
-
-def polygonize(input_img, input_mask, output_vec):
-    """Helper function to polygonize raster mask using gdal polygonize
-
-    if gina-tools is available it use gdal_trace_outline instead of
-    gdal_polygonize (faster)
-    """
-    # Test if gdal_trace_outline is available
-    gdal_trace_outline_path = spawn.find_executable("gdal_trace_outline")
-    if gdal_trace_outline_path is None:
-        # Use gdal_polygonize
-        call_subprocess([
-            "gdal_polygonize.py", input_img,
-            "-f", "ESRI Shapefile",
-            "-mask", input_mask, output_vec])
-    else:
-        logging.info("Use gdal_trace_outline to polygonize raster mask...")
-
-        # Temporary file to store result of outline tool
-        # Get unique identifier for the temporary file
-        # Retrieve directory from input vector file
-        input_dir = os.path.dirname(output_vec)
-        unique_filename = uuid.uuid4()
-        tmp_poly = op.join(input_dir, str(unique_filename))
-
-        tmp_poly_shp = tmp_poly + ".shp"
-        # We can use here gina-tools gdal_trace_outline which is faster
-        call_subprocess([
-            "gdal_trace_outline",
-            input_img,
-            "-classify",
-            "-out-cs",
-            "en",
-            "-ogr-out",
-            tmp_poly_shp,
-            "-dp-toler",
-            "0",
-            "-split-polys"])
-
-        # Then remove polygons with 0 as field value and rename field from
-        # "value" to "DN" to follow same convention as gdal_polygonize
-        call_subprocess([
-            "ogr2ogr",
-            "-sql",
-            'SELECT value AS DN from \"' +
-            str(unique_filename) +
-            '\" where value != 0',
-            output_vec,
-            tmp_poly_shp])
-
-        # Remove temporary vectors
-        for shp in glob.glob(tmp_poly + "*"):
-            os.remove(shp)
-
-
-def composition_RGB(input_img, output_img, nSWIR, nRed, nGreen, multi):
-    """Make a RGB composition to highlight the snow cover
-
-    input_img: multispectral tiff, output_img: false color
-    composite RGB image (GTiff).nRed,nGreen,nSWIR are index of red, green and
-    SWIR in in put images.
-
-    """
-    scale_factor = 300 * multi
-
-    gdal.Translate(output_img,
-                   input_img,
-                   format='GTiff',
-                   creationOptions=['PHOTOMETRIC=RGB'],
-                   outputType=gdal.GDT_Byte,
-                   scaleParams=[[0,
-                                 scale_factor,
-                                 0,
-                                 255]],
-                   bandList=[nSWIR,
-                             nRed,
-                             nGreen])
-
-
-def burn_polygons_edges(input_img, input_vec, snow_value, cloud_value, ram, fullyconnected=True):
-    """Burn polygon borders onto an image with the following symbology:
-
-    - cloud and cloud shadows: green
-    - snow: magenta
-    - convert mask polygons to lines
-    - fullyconnected: use 8 connectivity is set to True (instead of 4 connectivity)
-
-    """
-
-    # Prepare and execute the two contour extraction
-    contourApp1 = compute_contour(input_vec, None, snow_value, fullyconnected, ram)
-    contourApp1.Execute()
-
-    contourApp2 = compute_contour(input_vec, None, cloud_value, fullyconnected, ram)
-    contourApp2.Execute()
-
-    # Prepare the BandMathX expression
-    condition_shadow = "im1b1=="+snow_value+"?{255,0,255}:(im2b1=="+cloud_value+"?{0,255,0}:im3)"
-    logging.info(condition_shadow)
-
-    # Write the contours onto the composition
-    bandMathFinalShadow = band_mathX([contourApp1.GetParameterOutputImage("out"),
-                                      contourApp2.GetParameterOutputImage("out"),
-                                      input_img],
-                                      input_img,
-                                      condition_shadow,
-                                      ram)
-    bandMathFinalShadow.ExecuteAndWriteOutput()
-
-def extract_band(inputs, band, path_tmp, noData):
-    """ Extract the required band using gdal.Translate
-    """
-    data_band = inputs[band]
-    path = data_band["path"]
-    band_no = data_band["noBand"]
-
-    dataset = gdal.Open(path, GA_ReadOnly)
-    path_extracted = op.join(path_tmp, band+"_extracted.tif")
-    if dataset.RasterCount > 1:
-        logging.info("extracting "+band)
-        gdal.Translate(
-            path_extracted,
-            path,
-            format='GTiff',
-            outputType=gdal.GDT_Int16,
-            noData=noData,
-            bandList=[band_no])
-    else:
-        copyfile(path, path_extracted)
-    return path_extracted
-
 """This module does implement the snow detection (all passes)"""
-
 class snow_detector:
     def __init__(self, data):
 
@@ -216,7 +76,6 @@ class snow_detector:
         self.mode = general.get("mode")
         self.generate_vector = general.get("generate_vector", False)
         self.do_preprocessing = general.get("preprocessing", False)
-        self.do_postprocessing = general.get("postprocessing", True)
         self.nodata = general.get("nodata", -10000)
         self.multi = general.get("multi", 1)  # Multiplier to handle S2 scaling
 
@@ -331,12 +190,18 @@ class snow_detector:
         self.cloud_refine_path = op.join(self.path_tmp, "cloud_refine.tif")
         self.nodata_path = op.join(self.path_tmp, "nodata_mask.tif")
 
+        # Prepare product directory
+        self.product_path = op.join(self.path_tmp, "LIS_PRODUCTS")
+        if not op.exists(self.product_path):
+            os.makedirs(self.product_path)
+
         # Build product file paths
-        self.snow_all_path = op.join(self.path_tmp, "snow_all.tif")
-        self.final_mask_path = op.join(self.path_tmp, "final_mask.tif")
-        self.final_mask_vec_path = op.join(self.path_tmp, "final_mask_vec.shp")
-        self.composition_path = op.join(self.path_tmp, "composition.tif")
-        self.histogram_path = op.join(self.path_tmp, "histogram.txt")
+        self.snow_all_path = op.join(self.product_path, "LIS_SNOW_ALL.TIF")
+        self.final_mask_path = op.join(self.product_path, "LIS_SEB.TIF")
+        self.final_mask_vec_path = op.join(self.product_path, "LIS_SEB_VEC.shp")
+        self.composition_path = op.join(self.product_path, "LIS_COMPO.TIF")
+        self.histogram_path = op.join(self.product_path, "LIS_HISTO.TXT")
+        self.metadata_path = op.join(self.product_path, "LIS_METADATA.XML")
 
     def detect_snow(self, nbPass):
         # Set maximum ITK threads
@@ -387,9 +252,39 @@ class snow_detector:
             self.label_cloud,
             self.ram)
 
-        # External postprocessing
-        if self.do_postprocessing:
-            format_output.format_LIS(self)
+        # Product formating
+        format_SEB_VEC_values(self.final_mask_vec_path,
+                              self.label_snow,
+                              self.label_cloud,
+                              self.label_no_data)
+        self.create_metadata()
+
+    def create_metadata(self):
+        # Compute and create the content for the product metadata file.
+        snow_percent = compute_percent(self.final_mask_path,
+                                self.label_snow,
+                                self.label_no_data)
+        logging.info("Snow percent = " + str(snow_percent))
+
+        cloud_percent = compute_percent(self.final_mask_path,
+                                        self.label_cloud,
+                                        self.label_no_data)
+        logging.info("Cloud percent = " + str(cloud_percent))
+
+        root = etree.Element("Source_Product")
+        etree.SubElement(root, "PRODUCT_ID").text = "LIS"
+        egil = etree.SubElement(root, "Global_Index_List")
+        etree.SubElement(egil, "QUALITY_INDEX", name='ZS').text = str(self.zs)
+        etree.SubElement(
+            egil,
+            "QUALITY_INDEX",
+            name='SnowPercent').text = str(snow_percent)
+        etree.SubElement(
+            egil,
+            "QUALITY_INDEX",
+            name='CloudPercent').text = str(cloud_percent)
+        et = etree.ElementTree(root)
+        et.write(self.metadata_path, pretty_print=True)
 
     def pass0(self):
         # Pass -0 : generate custom cloud mask
@@ -430,34 +325,39 @@ class snow_detector:
         # edit result to set the resolution to the input image resolution
         # TODO need to find a better solution and also guess the input spacing
         # (using maccs resampling filter)
-        dataset = gdal.Open(op.join(self.path_tmp, "red_nn.tif"), gdal.GA_Update)
+        dataset = gdal.Open(
+                        op.join(self.path_tmp, "red_nn.tif"),
+                        gdal.GA_Update)
         dataset.SetGeoTransform(geotransform)
         dataset = None
 
         # Extract all masks
-        computeCMApp = compute_cloud_mask(self.cloud_init,
-                                          op.join(self.path_tmp, "all_cloud_mask.tif"),
-                                          str(self.all_cloud_mask))
+        computeCMApp = compute_cloud_mask(
+                                self.cloud_init,
+                                op.join(self.path_tmp, "all_cloud_mask.tif"),
+                                str(self.all_cloud_mask))
         computeCMApp.ExecuteAndWriteOutput()
 
         # Extract shadow masks
         # First extract shadow wich corresponds to shadow of clouds inside the
         # image
-        computeCMApp = compute_cloud_mask(self.cloud_init,
-                                          op.join(self.path_tmp, "shadow_in_mask.tif"),
-                                          str(self.shadow_in_mask))
+        computeCMApp = compute_cloud_mask(
+                                self.cloud_init,
+                                op.join(self.path_tmp, "shadow_in_mask.tif"),
+                                str(self.shadow_in_mask))
         computeCMApp.ExecuteAndWriteOutput()
 
         # Then extract shadow mask of shadows from clouds outside the image
-        computeCMApp = compute_cloud_mask(self.cloud_init,
-                                          op.join(self.path_tmp, "shadow_out_mask.tif"),
-                                          str(self.shadow_out_mask))
+        computeCMApp = compute_cloud_mask(
+                                self.cloud_init,
+                                op.join(self.path_tmp, "shadow_out_mask.tif"),
+                                str(self.shadow_out_mask))
         computeCMApp.ExecuteAndWriteOutput()
 
         # The output shadow mask corresponds to a OR logic between the 2 shadow
         # masks
-        bandMathShadow = band_math([
-                                op.join(self.path_tmp, "shadow_in_mask.tif"),
+        bandMathShadow = band_math(
+                                [op.join(self.path_tmp, "shadow_in_mask.tif"),
                                 op.join(self.path_tmp, "shadow_out_mask.tif")],
                                 op.join(self.path_tmp, "shadow_mask.tif"),
                                 "(im1b1 == 1) || (im2b1 == 1)",
@@ -466,10 +366,11 @@ class snow_detector:
         bandMathShadow.ExecuteAndWriteOutput()
 
         # Extract high clouds
-        computeCMApp = compute_cloud_mask(self.cloud_init,
-                                          op.join(self.path_tmp, "high_cloud_mask.tif"),
-                                          str(self.high_cloud_mask),
-                                          self.ram)
+        computeCMApp = compute_cloud_mask(
+                                self.cloud_init,
+                                op.join(self.path_tmp, "high_cloud_mask.tif"),
+                                str(self.high_cloud_mask),
+                                self.ram)
         computeCMApp.ExecuteAndWriteOutput()
 
         cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
@@ -478,7 +379,8 @@ class snow_detector:
 
         logging.info(condition_shadow)
 
-        bandMathFinalShadow = band_math([op.join(self.path_tmp, "all_cloud_mask.tif"),
+        bandMathFinalShadow = band_math(
+                                [op.join(self.path_tmp, "all_cloud_mask.tif"),
                                 op.join(self.path_tmp, "shadow_mask.tif"),
                                 op.join(self.path_tmp, "red_nn.tif"),
                                 op.join(self.path_tmp, "high_cloud_mask.tif")],
@@ -497,7 +399,8 @@ class snow_detector:
         condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + \
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
 
-        bandMathPass1 = band_math([self.img, self.cloud_refine_path],
+        bandMathPass1 = band_math(
+                                [self.img, self.cloud_refine_path],
                                 self.pass1_path + GDAL_OPT,
                                 condition_pass1 + "?1:0",
                                 self.ram,
@@ -509,14 +412,13 @@ class snow_detector:
         condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + \
             str(self.rRed_backtocloud) + "))"
 
-        bandMathCloudPass1 = band_math([self.cloud_refine_path,
-                                self.pass1_path,
-                                self.cloud_init,
-                                self.redBand_path],
-                                op.join(self.path_tmp, "cloud_pass1.tif") + GDAL_OPT,
-                                condition_cloud_pass1 + "?1:0",
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+        bandMathCloudPass1 = band_math(
+                        [self.cloud_refine_path, self.pass1_path,
+                        self.cloud_init, self.redBand_path],
+                        op.join(self.path_tmp, "cloud_pass1.tif") + GDAL_OPT,
+                        condition_cloud_pass1 + "?1:0",
+                        self.ram,
+                        otb.ImagePixelType_uint8)
         bandMathCloudPass1.ExecuteAndWriteOutput()
 
     def pass2(self):
@@ -623,7 +525,7 @@ class snow_detector:
                             otb.ImagePixelType_uint8)
         bandMathFinalCloud.ExecuteAndWriteOutput()
 
-        # Apply the no-data mask (this may be call later in the process to maintain the previous behavior)
+        # Apply the no-data mask
         bandMathNoData = band_math([self.final_mask_path,
                                    self.nodata_path],
                                    self.final_mask_path,
@@ -632,6 +534,7 @@ class snow_detector:
                                    otb.ImagePixelType_uint8)
         bandMathNoData.ExecuteAndWriteOutput()
 
+        # Compute the complete snow mask
         app = compute_snow_mask(self.pass1_path,
                                 self.pass2_path,
                                 op.join(self.path_tmp, "cloud_pass1.tif"),

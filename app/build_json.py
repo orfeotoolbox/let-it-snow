@@ -99,7 +99,9 @@ L8_parameters={"multi":1,
                "high_cloud_mask":32,
                "rf":8}
 
-mission_parameters = {"S2":S2_parameters,"LANDSAT8":L8_parameters,"Take5":Take5_parameters}
+mission_parameters = {"S2":S2_parameters,\
+                      "LANDSAT8":L8_parameters,\
+                      "Take5":Take5_parameters}
 
 def findFiles(folder,pattern):
     matches=[]
@@ -141,9 +143,11 @@ def read_product(dataPath, mission):
 
 def main():
     # Parse arguments
-    parser = argparse.ArgumentParser(description='This script is used to generate the snow detector configuration file')
+    parser = argparse.ArgumentParser(description='This script is used to \
+                                generate the snow detector configuration file')
 
-    parser.add_argument("dataPath", help="input product path (supports S2/L8/Take5 products)")
+    parser.add_argument("dataPath", help="input product path \
+                                         (supports S2/L8/Take5 products)")
     parser.add_argument("outputPath", help="output configuration file path")
 
     group_general = parser.add_argument_group('general', 'general parameters')
@@ -154,6 +158,10 @@ def main():
     #group_general.add_argument("-preprocessing", type=bool)
     #group_general.add_argument("-log", type=bool)
     group_general.add_argument("-multi", type=float)
+
+    
+    group_snow = parser.add_argument_group('inputs', 'input files')
+    group_general.add_argument("-dem", help="dem file path")
 
     group_snow = parser.add_argument_group('snow', 'snow parameters')
     group_snow.add_argument("-dz", type=int)
@@ -178,7 +186,7 @@ def main():
     dataPath = args.dataPath
     outputPath = args.outputPath
 
-    if "S2" in dataPath:
+    if ("S2" in dataPath) or ("SENTINEL2" in dataPath):
         jsonData = read_product(dataPath,"S2")
     elif "Take5" in dataPath:
         jsonData = read_product(dataPath,"Take5")
@@ -202,6 +210,10 @@ def main():
             jsonData["general"]["nb_threads"] = args.nb_threads
         if args.multi:
             jsonData["general"]["multi"] = args.multi
+
+        # Overide dem location
+        if args.dem:
+            jsonData["inputs"]["dem"] = args.dem
 
         # Overide parameters for group snow
         if args.dz:
@@ -241,5 +253,6 @@ def main():
 
 if __name__ == "__main__":
     # Set logging level and format.
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=\
+        '%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
     main()
