@@ -16,19 +16,14 @@
 #
 #=========================================================================
 
-import sys
-import subprocess
-import glob
 import os
 import os.path as op
-import json
 import logging
-import gdal
-from gdalconst import GDT_Int16,GDT_Byte,GA_Update,GA_ReadOnly
 import multiprocessing
-import numpy as np
-import uuid
 from lxml import etree
+
+import gdal
+from gdalconst import GA_ReadOnly
 
 # OTB Applications
 import otbApplication as otb
@@ -38,14 +33,14 @@ import otbApplication as otb
 import histo_utils_ext
 
 # Preprocessing script
-import dem_builder
+from s2snow.dem_builder import build_dem
 
 # Import python decorators for the different needed OTB applications
-from app_wrappers import compute_snow_mask, compute_cloud_mask, band_math
+from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask, band_math
 
 # Import utilities for snow detection
-from utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
-from utils import compute_percent, format_SEB_VEC_values
+from s2snow.utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
+from s2snow.utils import compute_percent, format_SEB_VEC_values
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
@@ -209,7 +204,7 @@ class snow_detector:
 
         # External preprocessing
         if self.do_preprocessing:
-            dem_builder.build_dem(self.vrt, self.img, self.dem)
+            build_dem(self.vrt, self.img, self.dem)
 
         # Initialize the mask
         noDataMaskExpr = "im1b1==" + str(self.nodata) + "?1:0"
@@ -262,8 +257,8 @@ class snow_detector:
     def create_metadata(self):
         # Compute and create the content for the product metadata file.
         snow_percent = compute_percent(self.final_mask_path,
-                                self.label_snow,
-                                self.label_no_data)
+                                       self.label_snow,
+                                       self.label_no_data)
         logging.info("Snow percent = " + str(snow_percent))
 
         cloud_percent = compute_percent(self.final_mask_path,
@@ -325,52 +320,51 @@ class snow_detector:
         # edit result to set the resolution to the input image resolution
         # TODO need to find a better solution and also guess the input spacing
         # (using maccs resampling filter)
-        dataset = gdal.Open(
-                        op.join(self.path_tmp, "red_nn.tif"),
-                        gdal.GA_Update)
+        dataset = gdal.Open(op.join(self.path_tmp, "red_nn.tif"),
+                            gdal.GA_Update)
         dataset.SetGeoTransform(geotransform)
         dataset = None
 
         # Extract all masks
         computeCMApp = compute_cloud_mask(
-                                self.cloud_init,
-                                op.join(self.path_tmp, "all_cloud_mask.tif"),
-                                str(self.all_cloud_mask))
+            self.cloud_init,
+            op.join(self.path_tmp, "all_cloud_mask.tif"),
+            str(self.all_cloud_mask))
         computeCMApp.ExecuteAndWriteOutput()
 
         # Extract shadow masks
         # First extract shadow wich corresponds to shadow of clouds inside the
         # image
         computeCMApp = compute_cloud_mask(
-                                self.cloud_init,
-                                op.join(self.path_tmp, "shadow_in_mask.tif"),
-                                str(self.shadow_in_mask))
+            self.cloud_init,
+            op.join(self.path_tmp, "shadow_in_mask.tif"),
+            str(self.shadow_in_mask))
         computeCMApp.ExecuteAndWriteOutput()
 
         # Then extract shadow mask of shadows from clouds outside the image
         computeCMApp = compute_cloud_mask(
-                                self.cloud_init,
-                                op.join(self.path_tmp, "shadow_out_mask.tif"),
-                                str(self.shadow_out_mask))
+            self.cloud_init,
+            op.join(self.path_tmp, "shadow_out_mask.tif"),
+            str(self.shadow_out_mask))
         computeCMApp.ExecuteAndWriteOutput()
 
         # The output shadow mask corresponds to a OR logic between the 2 shadow
         # masks
         bandMathShadow = band_math(
-                                [op.join(self.path_tmp, "shadow_in_mask.tif"),
-                                op.join(self.path_tmp, "shadow_out_mask.tif")],
-                                op.join(self.path_tmp, "shadow_mask.tif"),
-                                "(im1b1 == 1) || (im2b1 == 1)",
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+            [op.join(self.path_tmp, "shadow_in_mask.tif"),
+             op.join(self.path_tmp, "shadow_out_mask.tif")],
+            op.join(self.path_tmp, "shadow_mask.tif"),
+            "(im1b1 == 1) || (im2b1 == 1)",
+            self.ram,
+            otb.ImagePixelType_uint8)
         bandMathShadow.ExecuteAndWriteOutput()
 
         # Extract high clouds
         computeCMApp = compute_cloud_mask(
-                                self.cloud_init,
-                                op.join(self.path_tmp, "high_cloud_mask.tif"),
-                                str(self.high_cloud_mask),
-                                self.ram)
+            self.cloud_init,
+            op.join(self.path_tmp, "high_cloud_mask.tif"),
+            str(self.high_cloud_mask),
+            self.ram)
         computeCMApp.ExecuteAndWriteOutput()
 
         cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
@@ -380,14 +374,14 @@ class snow_detector:
         logging.info(condition_shadow)
 
         bandMathFinalShadow = band_math(
-                                [op.join(self.path_tmp, "all_cloud_mask.tif"),
-                                op.join(self.path_tmp, "shadow_mask.tif"),
-                                op.join(self.path_tmp, "red_nn.tif"),
-                                op.join(self.path_tmp, "high_cloud_mask.tif")],
-                                self.cloud_refine_path+GDAL_OPT,
-                                condition_shadow,
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+            [op.join(self.path_tmp, "all_cloud_mask.tif"),
+             op.join(self.path_tmp, "shadow_mask.tif"),
+             op.join(self.path_tmp, "red_nn.tif"),
+             op.join(self.path_tmp, "high_cloud_mask.tif")],
+            self.cloud_refine_path+GDAL_OPT,
+            condition_shadow,
+            self.ram,
+            otb.ImagePixelType_uint8)
         bandMathFinalShadow.ExecuteAndWriteOutput()
 
     def pass1(self):
@@ -400,11 +394,11 @@ class snow_detector:
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
 
         bandMathPass1 = band_math(
-                                [self.img, self.cloud_refine_path],
-                                self.pass1_path + GDAL_OPT,
-                                condition_pass1 + "?1:0",
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+            [self.img, self.cloud_refine_path],
+            self.pass1_path + GDAL_OPT,
+            condition_pass1 + "?1:0",
+            self.ram,
+            otb.ImagePixelType_uint8)
         bandMathPass1.ExecuteAndWriteOutput()
         # bandMathPass1.Execute()
 
@@ -413,12 +407,12 @@ class snow_detector:
             str(self.rRed_backtocloud) + "))"
 
         bandMathCloudPass1 = band_math(
-                        [self.cloud_refine_path, self.pass1_path,
-                        self.cloud_init, self.redBand_path],
-                        op.join(self.path_tmp, "cloud_pass1.tif") + GDAL_OPT,
-                        condition_cloud_pass1 + "?1:0",
-                        self.ram,
-                        otb.ImagePixelType_uint8)
+            [self.cloud_refine_path, self.pass1_path,
+             self.cloud_init, self.redBand_path],
+            op.join(self.path_tmp, "cloud_pass1.tif") + GDAL_OPT,
+            condition_cloud_pass1 + "?1:0",
+            self.ram,
+            otb.ImagePixelType_uint8)
         bandMathCloudPass1.ExecuteAndWriteOutput()
 
     def pass2(self):
@@ -442,15 +436,16 @@ class snow_detector:
         logging.info(self.dz)
         logging.info(self.fsnow_lim)
         logging.info(self.histogram_path)
-        self.zs = histo_utils_ext.compute_snowline(self.dem,
-                                    self.pass1_path,
-                                    op.join(self.path_tmp, "cloud_pass1.tif"),
-                                    self.dz,
-                                    self.fsnow_lim,
-                                    False,
-                                    -2,
-                                    -self.dz / 2,
-                                    self.histogram_path)
+        self.zs = histo_utils_ext.compute_snowline(
+            self.dem,
+            self.pass1_path,
+            op.join(self.path_tmp, "cloud_pass1.tif"),
+            self.dz,
+            self.fsnow_lim,
+            False,
+            -2,
+            -self.dz / 2,
+            self.histogram_path)
 
         logging.info("computed ZS:" + str(self.zs))
 
@@ -462,12 +457,12 @@ class snow_detector:
                     self.ndsi_pass2) + ") and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
 
                 bandMathPass2 = band_math([self.img,
-                                self.dem,
-                                self.cloud_refine_path],
-                                self.pass2_path + GDAL_OPT,
-                                condition_pass2 + "?1:0",
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+                                           self.dem,
+                                           self.cloud_refine_path],
+                                          self.pass2_path + GDAL_OPT,
+                                          condition_pass2 + "?1:0",
+                                          self.ram,
+                                          otb.ImagePixelType_uint8)
 
                 bandMathPass2.ExecuteAndWriteOutput()
 
@@ -487,10 +482,10 @@ class snow_detector:
                 # empty image pass2 is needed for computing snow_all
 
                 bandMathEmptyPass2 = band_math([self.pass1_path],
-                                self.pass2_path + GDAL_OPT,
-                                "0",
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+                                               self.pass2_path + GDAL_OPT,
+                                               "0",
+                                               self.ram,
+                                               otb.ImagePixelType_uint8)
                 bandMathEmptyPass2.ExecuteAndWriteOutput()
 
         else:
@@ -499,10 +494,10 @@ class snow_detector:
             # FIXME: A bit overkill to need to BandMath to create an image with
             # 0
             bandMathEmptyPass2 = band_math([self.pass1_path],
-                                self.pass2_path + GDAL_OPT,
-                                "0",
-                                self.ram,
-                                otb.ImagePixelType_uint8)
+                                           self.pass2_path + GDAL_OPT,
+                                           "0",
+                                           self.ram,
+                                           otb.ImagePixelType_uint8)
             bandMathEmptyPass2.ExecuteAndWriteOutput()
 
         if self.generate_vector:
@@ -516,18 +511,18 @@ class snow_detector:
             str(self.rRed_backtocloud) + ")))?"+str(self.label_cloud)+":0"
 
         bandMathFinalCloud = band_math([self.cloud_refine_path,
-                            generic_snow_path,
-                            self.cloud_init,
-                            self.redBand_path],
-                            self.final_mask_path,
-                            condition_final,
-                            self.ram,
-                            otb.ImagePixelType_uint8)
+                                        generic_snow_path,
+                                        self.cloud_init,
+                                        self.redBand_path],
+                                       self.final_mask_path,
+                                       condition_final,
+                                       self.ram,
+                                       otb.ImagePixelType_uint8)
         bandMathFinalCloud.ExecuteAndWriteOutput()
 
         # Apply the no-data mask
         bandMathNoData = band_math([self.final_mask_path,
-                                   self.nodata_path],
+                                    self.nodata_path],
                                    self.final_mask_path,
                                    "im2b1==1?"+str(self.label_no_data)+":im1b1",
                                    self.ram,
@@ -549,8 +544,8 @@ class snow_detector:
         condition_pass3 = "(im1b1 == 1 or im2b1 == 1)"
         bandMathPass3 = band_math([self.pass1_path,
                                    self.pass2_path],
-                                   self.pass3_path + GDAL_OPT,
-                                   condition_pass3 + "?1:0",
-                                   self.ram,
-                                   otb.ImagePixelType_uint8)
+                                  self.pass3_path + GDAL_OPT,
+                                  condition_pass3 + "?1:0",
+                                  self.ram,
+                                  otb.ImagePixelType_uint8)
         bandMathPass3.ExecuteAndWriteOutput()

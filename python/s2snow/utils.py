@@ -1,22 +1,25 @@
 #!/usr/bin/python
 # coding=utf8
 
+import os
+import os.path as op
 import sys
+import uuid
+import glob
 import logging
 import subprocess
-import os.path as op
-import numpy as np
-import gdal
-import gdalconst
-from gdalconst import GDT_Int16,GDT_Byte,GA_Update,GA_ReadOnly
 from shutil import copyfile
 from distutils import spawn
 
-# OTB Applications
-import otbApplication as otb
+import numpy as np
+
+import gdal
+import gdalconst
+from gdalconst import GA_ReadOnly
 
 # Import python decorators for the different needed OTB applications
-from app_wrappers import compute_contour, band_mathX
+from s2snow.app_wrappers import compute_contour, band_mathX
+
 
 def call_subprocess(process_list):
     """ Run subprocess and write to stdout and stderr
@@ -134,12 +137,13 @@ def burn_polygons_edges(input_img, input_vec, snow_value, cloud_value, \
     logging.info(condition_shadow)
 
     # Write the contours onto the composition
-    bandMathFinalShadow=band_mathX([contourApp1.GetParameterOutputImage("out"),
-                                    contourApp2.GetParameterOutputImage("out"),
-                                    input_img],
-                                    input_img,
-                                    condition_shadow,
-                                    ram)
+    bandMathFinalShadow = band_mathX(
+        [contourApp1.GetParameterOutputImage("out"),
+         contourApp2.GetParameterOutputImage("out"),
+         input_img],
+        input_img,
+        condition_shadow,
+        ram)
     bandMathFinalShadow.ExecuteAndWriteOutput()
 
 
@@ -167,6 +171,8 @@ def extract_band(inputs, band, path_tmp, noData):
 
 
 def get_raster_as_array(raster_file_name):
+    """ Open image file as numpy array using gdal
+    """
     dataset = gdal.Open(raster_file_name, gdalconst.GA_ReadOnly)
     band = dataset.GetRasterBand(1)
     array = band.ReadAsArray()
@@ -174,6 +180,8 @@ def get_raster_as_array(raster_file_name):
 
 
 def compute_percent(image_path, value, no_data):
+    """ Compute the ocurrence of value as percentage in the input image
+    """
     array_image = get_raster_as_array(image_path)
     count_pix = np.sum(array_image == int(value))
     tot_pix = np.sum(array_image != int(no_data))
@@ -181,6 +189,8 @@ def compute_percent(image_path, value, no_data):
 
 
 def format_SEB_VEC_values(path, snow_label, cloud_label, nodata_label):
+    """ Update the shapfile according lis product specifications
+    """
     table = op.splitext(op.basename(path))[0]
     ds = gdal.OpenEx(path, gdal.OF_VECTOR | gdal.OF_UPDATE)
     ds.ExecuteSQL("ALTER TABLE " + table + " ADD COLUMN type varchar(15)")

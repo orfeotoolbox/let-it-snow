@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from osgeo import gdal, gdalconst, osr
 import sys
 import subprocess
 import logging
 import ast
 
+from osgeo import gdal, gdalconst, osr
 
 def show_help():
     print "This script is used to compute srtm mask from a vrt file to a region extent"

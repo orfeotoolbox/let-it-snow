@@ -180,14 +180,14 @@ def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
     if img_in and foreground_value:
         logging.info("Processing ComputeContours with args:")
         logging.info("in = " + img_in)
-        if img_out is not None:
-            logging.info("out = " + img_out)
-            cloudMaskApp.SetParameterString("out", img_out)
         logging.info("foreground_value = " + foreground_value)
         logging.info("fullyconnected = " + str(fullyconnected))
 
         cloudMaskApp = otb.Registry.CreateApplication("ComputeContours")
         cloudMaskApp.SetParameterString("foregroundvalue", foreground_value)
+        if img_out is not None:
+            logging.info("out = " + img_out)
+            cloudMaskApp.SetParameterString("out", img_out)
         if fullyconnected:
             cloudMaskApp.SetParameterString("fullyconnected", "true")
         cloudMaskApp.SetParameterString("inputmask", img_in)
