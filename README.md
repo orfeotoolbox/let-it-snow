@@ -74,7 +74,7 @@ Code to generate the snow cover extent product on Theia platform.
 lis dependencies:
 
 GDAL >=2.0
-OTB >= 5.0
+OTB >= 6.0
 Boost-Python
 Python interpreter >= 2.7
 Python libs >= 2.7
@@ -115,6 +115,12 @@ In your build folder:
 ```bash
 make install
 ```
+
+Add appropriate executable rights
+```bash
+chmod -R 755 ${install_dir}
+```
+
 The files will be installed by default into /usr/local and add to the python default modules.
 To overide this behavior, the variable CMAKE_INSTALL_PREFIX must be configure before build step.
 
