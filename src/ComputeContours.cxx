@@ -80,8 +80,6 @@ public:
 
     void DoExecute() override
     {
-        std::cout << "Starting..." << std::endl;
-
         // Open list of inputs
         InputImageType::Pointer input_mask = GetParameterImage<InputImageType>("inputmask");
 

@@ -4,7 +4,7 @@ int main(int argc, char * argv[])
 {
   if (argc != 10)
     {
-      std::cout << "infname inmasksnowfname inmaskcloudfname dz fsnow_lim reverse offset center_offset histo_file" << std::endl;
+    std::cout << "usage: " << argv[0] <<  " infname inmasksnowfname inmaskcloudfname dz fsnow_lim reverse offset center_offset histo_file" << std::endl;
       return EXIT_FAILURE;
     }
 
