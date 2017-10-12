@@ -60,7 +60,7 @@ def build_dem(psrtm, pimg, pout):
 
     # gdalwarp call
     subprocess.check_output(
-        "gdalwarp -dstnodata -32768 -tr " +
+        "gdalwarp -overwrite -dstnodata -32768 -tr " +
         str(resolution) +
         " " +
         str(resolution) +
