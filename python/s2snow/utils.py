@@ -17,6 +17,9 @@ import gdal
 import gdalconst
 from gdalconst import GA_ReadOnly
 
+# OTB Applications
+import otbApplication as otb
+
 # Import python decorators for the different needed OTB applications
 from s2snow.app_wrappers import compute_contour, band_mathX
 
@@ -143,7 +146,8 @@ def burn_polygons_edges(input_img, input_vec, snow_value, cloud_value, \
          input_img],
         input_img,
         condition_shadow,
-        ram)
+        ram,
+        otb.ImagePixelType_uint8)
     bandMathFinalShadow.ExecuteAndWriteOutput()
 
 
