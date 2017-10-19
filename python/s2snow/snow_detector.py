@@ -67,7 +67,8 @@ class snow_detector:
         except NotImplementedError:
             logging.error("Cannot get max number of CPU on the system. nbDefaultThreads set to 1.")
             nbDefaultThreads = 1
-        self.nbThreads = general.get("nbThreads", nbDefaultThreads)
+        self.nbThreads = general.get("nb_threads", nbDefaultThreads)
+        logging.info("Actual number of threads: " + str(self.nbThreads))
         self.mode = general.get("mode")
         self.generate_vector = general.get("generate_vector", False)
         self.do_preprocessing = general.get("preprocessing", False)
