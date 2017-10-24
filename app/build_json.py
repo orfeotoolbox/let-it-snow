@@ -168,8 +168,8 @@ def main():
 
     args = parser.parse_args()
 
-    dataPath = args.dataPath
-    outputPath = args.outputPath
+    dataPath = os.path.abspath(args.dataPath)
+    outputPath = os.path.abspath(args.outputPath)
 
     if ("S2" in dataPath) or ("SENTINEL2" in dataPath):
         jsonData = read_product(dataPath, "S2")
@@ -198,7 +198,7 @@ def main():
 
         # Overide dem location
         if args.dem:
-            jsonData["inputs"]["dem"] = args.dem
+            jsonData["inputs"]["dem"] = os.path.abspath(args.dem)
 
         # Overide parameters for group snow
         if args.dz:
