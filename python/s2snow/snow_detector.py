@@ -110,6 +110,9 @@ class snow_detector:
         logging.info("green band resolution : " + str(gb_resolution))
         logging.info("red band resolution : " + str(rb_resolution))
         logging.info("swir band resolution : " + str(sb_resolution))
+        gb_dataset = None
+        rb_dataset = None
+        sb_dataset = None
 
         # test if different reso
         gb_path_resampled = op.join(self.path_tmp, "green_band_resampled.tif")
@@ -215,7 +218,8 @@ class snow_detector:
             noDataMaskExpr,
             self.ram)
         bandMath.ExecuteAndWriteOutput()
-
+        bandMath = None
+        
         if nbPass >= 0:
             self.pass0()
         if nbPass >= 1:
@@ -300,6 +304,7 @@ class snow_detector:
 
         # Get geotransform to retrieve resolution
         geotransform = dataset.GetGeoTransform()
+        dataset = None
 
         # resample red band using multiresolution pyramid
         gdal.Warp(
@@ -332,6 +337,7 @@ class snow_detector:
             op.join(self.path_tmp, "all_cloud_mask.tif"),
             str(self.all_cloud_mask))
         computeCMApp.ExecuteAndWriteOutput()
+        computeCMApp = None
 
         # Extract shadow masks
         # First extract shadow wich corresponds to shadow of clouds inside the
@@ -341,6 +347,7 @@ class snow_detector:
             op.join(self.path_tmp, "shadow_in_mask.tif"),
             str(self.shadow_in_mask))
         computeCMApp.ExecuteAndWriteOutput()
+        computeCMApp = None
 
         # Then extract shadow mask of shadows from clouds outside the image
         computeCMApp = compute_cloud_mask(
@@ -348,6 +355,7 @@ class snow_detector:
             op.join(self.path_tmp, "shadow_out_mask.tif"),
             str(self.shadow_out_mask))
         computeCMApp.ExecuteAndWriteOutput()
+        computeCMApp = None
 
         # The output shadow mask corresponds to a OR logic between the 2 shadow
         # masks
@@ -359,6 +367,7 @@ class snow_detector:
             self.ram,
             otb.ImagePixelType_uint8)
         bandMathShadow.ExecuteAndWriteOutput()
+        bandMathShadow = None
 
         # Extract high clouds
         computeCMApp = compute_cloud_mask(
@@ -367,6 +376,7 @@ class snow_detector:
             str(self.high_cloud_mask),
             self.ram)
         computeCMApp.ExecuteAndWriteOutput()
+        computeCMApp = None
 
         cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
         condition_shadow = "((im1b1==1 and " + cond_cloud2 + \
@@ -401,7 +411,7 @@ class snow_detector:
             self.ram,
             otb.ImagePixelType_uint8)
         bandMathPass1.ExecuteAndWriteOutput()
-        # bandMathPass1.Execute()
+        bandMathPass1 = None
 
         # Update the cloud mask (again)
         condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + \
@@ -466,6 +476,7 @@ class snow_detector:
                                           otb.ImagePixelType_uint8)
 
                 bandMathPass2.ExecuteAndWriteOutput()
+                bandMathPass2 = None
 
                 if self.generate_vector:
                     # Generate polygons for pass2 (useful for quality check)
@@ -520,6 +531,7 @@ class snow_detector:
                                        self.ram,
                                        otb.ImagePixelType_uint8)
         bandMathFinalCloud.ExecuteAndWriteOutput()
+        bandMathFinalCloud = None
 
         # Apply the no-data mask
         bandMathNoData = band_math([self.final_mask_path,
@@ -529,6 +541,7 @@ class snow_detector:
                                    self.ram,
                                    otb.ImagePixelType_uint8)
         bandMathNoData.ExecuteAndWriteOutput()
+        bandMathNoData = None
 
         # Compute the complete snow mask
         app = compute_snow_mask(self.pass1_path,
