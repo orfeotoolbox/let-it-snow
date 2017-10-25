@@ -89,6 +89,8 @@ mission_parameters = {"S2":S2_parameters,\
                       "Take5":Take5_parameters}
 
 def findFiles(folder, pattern):
+    """ Search recursively into a folder to find a patern match
+    """
     matches = []
     for root, dirs, files in os.walk(folder):
         for file in files:
@@ -96,21 +98,24 @@ def findFiles(folder, pattern):
                 matches.append(os.path.join(root, file))
     return matches
 
-def read_product(dataPath, mission):
-    if os.path.exists(dataPath):
+def read_product(inputPath, mission):
+    """ Read the content of the input product folder
+    and load the data information required for snow detection.
+    """
+    if os.path.exists(inputPath):
         params = mission_parameters[mission]
         conf_json = conf_template
 
         conf_json["general"]["multi"] = params["multi"]
 
-        conf_json["inputs"]["green_band"]["path"] = findFiles(dataPath, params["green_band"])[0]
-        conf_json["inputs"]["red_band"]["path"] = findFiles(dataPath, params["red_band"])[0]
-        conf_json["inputs"]["swir_band"]["path"] = findFiles(dataPath, params["swir_band"])[0]
+        conf_json["inputs"]["green_band"]["path"] = findFiles(inputPath, params["green_band"])[0]
+        conf_json["inputs"]["red_band"]["path"] = findFiles(inputPath, params["red_band"])[0]
+        conf_json["inputs"]["swir_band"]["path"] = findFiles(inputPath, params["swir_band"])[0]
         conf_json["inputs"]["green_band"]["noBand"] = params["green_bandNumber"]
         conf_json["inputs"]["red_band"]["noBand"] = params["red_bandNumber"]
         conf_json["inputs"]["swir_band"]["noBand"] = params["swir_bandNumber"]
-        conf_json["inputs"]["cloud_mask"] = findFiles(dataPath, params["cloud_mask"])[0]
-        result = findFiles(os.path.join(dataPath, "SRTM"), params["dem"])
+        conf_json["inputs"]["cloud_mask"] = findFiles(inputPath, params["cloud_mask"])[0]
+        result = findFiles(os.path.join(inputPath, "SRTM"), params["dem"])
         if result:
             conf_json["inputs"]["dem"] = result[0]
         else:
@@ -124,16 +129,19 @@ def read_product(dataPath, mission):
 
         return conf_json
     else:
-        logging.error(dataPath + " doesn't exist.")
+        logging.error(inputPath + " doesn't exist.")
 
 def main():
     # Parse arguments
     parser = argparse.ArgumentParser(description='This script is used to \
-                                generate the snow detector configuration file')
+                                generate the snow detector configuration json file.\
+                                This configuration requires at least the input product path\
+                                and the output path in which will be generated snow product.')
 
-    parser.add_argument("dataPath", help="input product path \
+    parser.add_argument("inputPath", help="input product path \
                                          (supports S2/L8/Take5 products)")
-    parser.add_argument("outputPath", help="output configuration file path")
+    parser.add_argument("outputPath", help="output folder for the json configuration file, \
+                                and also the configured output path for the snow product")
 
     group_general = parser.add_argument_group('general', 'general parameters')
     group_general.add_argument("-nodata", type=int)
@@ -146,7 +154,7 @@ def main():
 
 
     group_snow = parser.add_argument_group('inputs', 'input files')
-    group_general.add_argument("-dem", help="dem file path")
+    group_general.add_argument("-dem", help="dem file path, to use for processing the input product")
 
     group_snow = parser.add_argument_group('snow', 'snow parameters')
     group_snow.add_argument("-dz", type=int)
@@ -168,15 +176,15 @@ def main():
 
     args = parser.parse_args()
 
-    dataPath = os.path.abspath(args.dataPath)
+    inputPath = os.path.abspath(args.inputPath)
     outputPath = os.path.abspath(args.outputPath)
 
-    if ("S2" in dataPath) or ("SENTINEL2" in dataPath):
-        jsonData = read_product(dataPath, "S2")
-    elif "Take5" in dataPath:
-        jsonData = read_product(dataPath, "Take5")
-    elif "LANDSAT8" in dataPath:
-        jsonData = read_product(dataPath, "LANDSAT8")
+    if ("S2" in inputPath) or ("SENTINEL2" in inputPath):
+        jsonData = read_product(inputPath, "S2")
+    elif "Take5" in inputPath:
+        jsonData = read_product(inputPath, "Take5")
+    elif "LANDSAT8" in inputPath:
+        jsonData = read_product(inputPath, "LANDSAT8")
     else:
         logging.error("Unknown product type.")
 
