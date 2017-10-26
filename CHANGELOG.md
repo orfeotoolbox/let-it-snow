@@ -18,7 +18,9 @@ All notable changes to LIS will be documented in this file.
 - Change rasterize step to contour detection using 8 connectivity to generate the rgb composition
 - Improved detection by adjusting default parameter red_pass2 from 0.120 to 0.40
 - Improve code quality (pep8 and pylint)
-- Improve installation instructions in the README.md 
+- Improve installation instructions in the README.md
+- Fix cpu usage to respect the "nb_threads" parameter set in the json file.
+- The output product now use the input product directory name as PRODUCT_ID in the xml file.
 
 ## [1.2.1] - 2017-09-14
 - Fix segfault in case number of histogram bins for the altitude channel is zero 
