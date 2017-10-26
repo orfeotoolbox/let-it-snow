@@ -100,6 +100,9 @@ class snow_detector:
         rb_path_extracted = extract_band(inputs, "red_band", self.path_tmp, self.nodata)
         sb_path_extracted = extract_band(inputs, "swir_band", self.path_tmp, self.nodata)
 
+        # Keep the input product directory basename as product_id
+        self.product_id = op.basename(op.dirname(inputs["green_band"]["path"]))
+
         # check for same res
         gb_dataset = gdal.Open(gb_path_extracted, GA_ReadOnly)
         rb_dataset = gdal.Open(rb_path_extracted, GA_ReadOnly)
@@ -272,7 +275,7 @@ class snow_detector:
         logging.info("Cloud percent = " + str(cloud_percent))
 
         root = etree.Element("Source_Product")
-        etree.SubElement(root, "PRODUCT_ID").text = "LIS"
+        etree.SubElement(root, "PRODUCT_ID").text = self.product_id
         egil = etree.SubElement(root, "Global_Index_List")
         etree.SubElement(egil, "QUALITY_INDEX", name='ZS').text = str(self.zs)
         etree.SubElement(
