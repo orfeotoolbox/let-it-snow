@@ -1,0 +1,45 @@
+{
+    "general":{
+        "pout":"outputdir",
+        "nodata":-10000,
+        "ram":1024,
+	"nb_threads":1,
+	"generate_vector":false,
+	"preprocessing":false,
+	"log":true
+    },
+    "inputs":{
+	"green_band": {
+	    "path": "inputimage",
+	    "noBand": 3
+	},
+	"red_band": {
+	    "path": "inputimage",
+	    "noBand": 4
+	},
+	"swir_band": {
+	    "path": "inputimage",
+	    "noBand": 6
+	},
+        "dem":"inputdem",
+        "cloud_mask":"inputcloud"
+    },
+    "cloud":
+    {
+        "shadow_mask":64,
+        "all_cloud_mask":0,
+        "high_cloud_mask":64,
+        "rf":8,
+        "red_darkcloud":650,
+        "red_backtocloud":100
+    },
+    "snow":{
+        "dz":100,
+        "ndsi_pass1":0.4,
+        "red_pass1":200,
+        "ndsi_pass2":0.15,
+        "red_pass2":120,
+        "fsnow_lim":0.1,
+        "fsnow_total_lim":0.001
+    }
+}

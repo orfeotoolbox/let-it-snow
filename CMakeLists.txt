@@ -31,7 +31,8 @@ if (GDAL_CONFIG)
   endif ()
 endif()
 
-#Set python home (needed on the cnes cluster)
+#Set python home (needed on the cnes hpc)
+# FIXME Is it still needed on hal?
 set(PYTHON_INCLUDE_DIRS $ENV{PYTHONHOME}/include)
 
 find_package(PythonInterp REQUIRED)
@@ -40,22 +41,24 @@ find_package( PythonLibs 2.7 REQUIRED)
 include_directories( ${PYTHON_INCLUDE_DIRS} )
  
 find_package( Boost COMPONENTS python REQUIRED )
-
 include_directories( ${Boost_INCLUDE_DIR} )
 
 # Link to the Orfeo ToolBox
-FIND_PACKAGE(OTB)
-IF(OTB_FOUND)
-  INCLUDE(${OTB_USE_FILE})
-ELSE(OTB_FOUND)
-  MESSAGE(FATAL_ERROR
+# LIS required OTB 6.0 which provides patch regarding management of 1 byte tiff image)
+SET(OTB_MIN_VERSION "6.0.0")
+
+find_package(OTB ${OTB_MIN_VERSION} REQUIRED)
+if(OTB_FOUND)
+  include(${OTB_USE_FILE})
+else(OTB_FOUND)
+  message(FATAL_ERROR
           "OTB not found. Please set OTB_DIR")
-ENDIF(OTB_FOUND)
+endif(OTB_FOUND)
 
 
 # Output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${lis_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for all ARCHIVE products (static libs, import libs)")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${lis_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for all LIBRARY products (so, modules)")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${lis_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for all LIBRARY products (so, modules)")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${lis_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for all RUNTIME products (executables, dlls)")
 
 # Install dirs
@@ -71,7 +74,7 @@ if(NOT lis_INSTALL_INCLUDE_DIR)
   set(lis_INSTALL_INCLUDE_DIR "include")
 endif(NOT lis_INSTALL_INCLUDE_DIR)
 
-SET(BUILD_SHARED_LIBS ON)
+set(BUILD_SHARED_LIBS ON)
 
 add_subdirectory(src)
 add_subdirectory(python)

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-from osgeo import gdal, gdalconst, osr
 import sys
 import subprocess
+import logging
 import ast
 
+from osgeo import gdal, gdalconst, osr
 
 def show_help():
     print "This script is used to compute srtm mask from a vrt file to a region extent"
@@ -41,25 +42,25 @@ def build_dem(psrtm, pimg, pout):
 
     # compute extent xminymin and yminymax
     extent = get_extent(target_geotransform, wide, high)
-    print("Extent: " + str(extent))
+    logging.info("Extent: " + str(extent))
     te = "".join(str(extent[1] + extent[3]))  # xminymin xmaxymax
     te = ast.literal_eval(te)
     te = ' '.join([str(x) for x in te])
-    print(te)
+    logging.info(te)
 
     # get target resolution
     resolution = target_geotransform[1]  # or geotransform[5]
-    print(str(resolution))
+    logging.info(str(resolution))
 
     # get target projection
     spatial_ref = osr.SpatialReference()
     spatial_ref.ImportFromWkt(target_projection)
     spatial_ref_projection = spatial_ref.ExportToProj4()
-    print(spatial_ref_projection)
+    logging.info(spatial_ref_projection)
 
     # gdalwarp call
     subprocess.check_output(
-        "gdalwarp -dstnodata -32768 -tr " +
+        "gdalwarp -overwrite -dstnodata -32768 -tr " +
         str(resolution) +
         " " +
         str(resolution) +
@@ -84,6 +85,9 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    # Set logging level and format.
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+    
     if len(sys.argv) != 4:
         show_help()
     else:

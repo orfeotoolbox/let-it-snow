@@ -26,7 +26,7 @@ All the parameters of the algorithm, paths to input and output data are stored i
 
 Moreover The JSON schema is available in the [Algorithm theoritical basis documentation](doc/tex/ATBD_CES-Neige.tex) and gives more information about the roles of these parameters.
 
-NB: To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path. 
+NB: To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path.
 
 
 ## Products format
@@ -35,14 +35,14 @@ NB: To build DEM data download the SRTM files corresponding to the study area an
 * SNOW_ALL: Binary mask of snow and clouds.
   * 1st bit: Snow mask after pass1
   * 2nd bit: Snow mask after pass2
-  * 3rd bit: Clouds detected at pass0 
+  * 3rd bit: Clouds detected at pass0
   * 4th bit: Clouds refined  at pass0
 
-For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do: 
+For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do:
 ```python
-pixel_value & 00000101  
+pixel_value & 00000101
 ```
-* SEB: Raster image of the snow mask and cloud mask. 
+* SEB: Raster image of the snow mask and cloud mask.
   * 0: No-snow
   * 100: Snow
   * 205: Cloud including cloud shadow
@@ -71,10 +71,10 @@ Code to generate the snow cover extent product on Theia platform.
 
 ### Dependencies
 
-lis dependencies: 
+lis dependencies:
 
 GDAL >=2.0
-OTB >= 5.0 
+OTB >= 6.0
 Boost-Python
 Python interpreter >= 2.7
 Python libs >= 2.7
@@ -110,52 +110,26 @@ Run make in your build folder.
 ```bash
 make
 ```
-To install s2snow python module. 
+To install let-it-snow application and the s2snow python module.
 In your build folder:
 ```bash
-cd python
-python setup.py install
+make install
 ```
-or
+
+Add appropriate executable rights
 ```bash
-python setup.py install --user
+chmod -R 755 ${install_dir}
 ```
+
+The files will be installed by default into /usr/local and add to the python default modules.
+To overide this behavior, the variable CMAKE_INSTALL_PREFIX must be configure before build step.
+
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
 ```bash
-export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
-export PATH=/your/build/directory/bin:$PATH
-```
-let-it-snow is now installed.
-
-#### On venuscalc
-
-To configure OTB 5.2.1:
-
-Create a bash file which contains:
-```bash
-source /mnt/data/home/grizonnetm/config_otb_5.6.sh
-```
-
-Then build the lis project using cmake
-```bash
-cd $build_dir
-cmake -DCMAKE_CXX_FLAGS:STRING=-std=c++11 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-4.8 -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-4.8 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGDAL_INCLUDE_DIR=/mnt/data/home/grizonnetm/build/OTB-install/include -DGDAL_LIBRARY=/mnt/data/home/grizonnetm/build/OTB-install/lib/libgdal.so $source_dir
-make
-```
-To install s2snow python module. 
-In your build folder:
-```bash
-cd python
-python setup.py install
-```
-or
-```bash
-python setup.py install --user
-```
-Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
-```bash
-export PYTHONPATH=/your/build/directory/bin/:$PYTHONPATH
-export PATH=/your/build/directory/bin:$PATH
+export PATH=/your/install/directory/bin:/your/install/directory/app:$PATH
+export LD_LIBRARY_PATH=/your/install/directory/lib:$LD_LIBRARY_PATH
+export OTB_APPLICATION_PATH=/your/install/directory/lib:$OTB_APPLICATION_PATH
+export PYTHONPATH=/your/install/directory/lib:/your/install/directory/lib/python2.7/site-packages:$PYTHONPATH
 ```
 let-it-snow is now installed.
 
@@ -165,8 +139,8 @@ Enable tests with BUILD_TESTING cmake option. Use ctest to run tests. Do not for
 
 Data (input and baseline) to run validation tests are available on [Zenodo](http://doi.org/10.5281/zenodo.166511).
 
-Download LIS-Data and extract the folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files. 
-Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated. 
+Download LIS-Data and extract the folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files.
+Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated.
 Data-Test : Test data folder needed to run tests. It contains Landsat, Take5 and SRTM data.
 Output-Test : Temporary output tests folder.
 Do not modify these folders.

@@ -239,7 +239,7 @@
                     "type": "integer"
                 },
                 "red_pass2": {
-                    "default": 120,
+                    "default": 40,
                     "description": "Minimum value of the red band reflectance the pass 2 snow test.",
                     "id": "red_pass2",
                     "title": "The Red_pass2 schema.",
