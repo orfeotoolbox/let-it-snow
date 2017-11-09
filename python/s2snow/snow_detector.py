@@ -62,12 +62,7 @@ class snow_detector:
         general = data["general"]
         self.path_tmp = str(general.get("pout"))
         self.ram = general.get("ram", 512)
-        try:
-            nbDefaultThreads = multiprocessing.cpu_count()
-        except NotImplementedError:
-            logging.error("Cannot get max number of CPU on the system. nbDefaultThreads set to 1.")
-            nbDefaultThreads = 1
-        self.nbThreads = general.get("nb_threads", nbDefaultThreads)
+        self.nbThreads = general.get("nb_threads", None)
         logging.info("Actual number of threads: " + str(self.nbThreads))
         self.mode = general.get("mode")
         self.generate_vector = general.get("generate_vector", False)
@@ -207,7 +202,8 @@ class snow_detector:
 
     def detect_snow(self, nbPass):
         # Set maximum ITK threads
-        os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
+        if self.nbThreads:
+            os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # External preprocessing
         if self.do_preprocessing:
