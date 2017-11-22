@@ -92,6 +92,10 @@ class snow_product:
             if sub_file.upper().endswith("_SNW_R2.TIF"):
                 self.is_extracted = True
                 self.snow_mask = op.join(absoluteFilename, sub_file)
+            if sub_file.upper() == "LIS_PRODUCTS":
+                self.is_extracted = True
+                self.extracted_product = op.join(absoluteFilename, sub_file)
+                self.snow_mask = op.join(self.extracted_product, "LIS_SEB.TIF")
 
         self.metadata_file = op.join(absoluteFilename,
                                       self.product_name + "_MTD_ALL.xml")
@@ -141,7 +145,7 @@ def main():
     print a.get_metadata()
     print a.acquisition_date
 
-    b = snow_product("./SENTINEL2A_20170314-104411-573_L2B-SNOW_T31TGK_D_V1-0")
+    b = snow_product("/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH/SENTINEL2A_20170602-104212-697_L2A_T31TCH_D_V1-4")
     print a.get_snow_mask()
     a.extract_snow_mask(".")
     print a.get_snow_mask()
