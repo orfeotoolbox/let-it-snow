@@ -81,7 +81,10 @@ class snow_detector:
         self.shadow_out_mask = cloud.get("shadow_out_mask")
         self.all_cloud_mask = cloud.get("all_cloud_mask")
         self.high_cloud_mask = cloud.get("high_cloud_mask")
-
+        ## Strict cloud mask usage (off by default)
+        ## If set to True no pixel from the cloud mask will be marked as snow
+        self.strict_cloud_mask = cloud.get("strict_cloud_mask", False)
+        
         # Parse input parameters
         inputs = data["inputs"]
         if self.do_preprocessing:
@@ -400,11 +403,14 @@ class snow_detector:
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
         logging.info("ndsi formula: "+ ndsi_formula)
 
-        condition_pass1 = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + \
+        # NDSI condition (ndsi > x and not cloud_refine)
+        condition_ndsi = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + " "
+
+        condition_pass1 = condition_ndsi + \
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
 
         bandMathPass1 = band_math(
-            [self.img, self.cloud_refine_path],
+            [self.img, self.cloud_refine_path, op.join(self.path_tmp, "all_cloud_mask.tif")],
             self.pass1_path + GDAL_OPT,
             condition_pass1 + "?1:0",
             self.ram,
@@ -517,8 +523,20 @@ class snow_detector:
                        generic_snow_path,
                        op.join(self.path_tmp, "pass3_vec.shp"))
 
-        # Final update of the cloud mask
-        condition_final = "(im2b1==1)?"+str(self.label_snow)+":((im1b1==1) or ((im3b1>0) and (im4b1> " + \
+        # Final update of the snow  mask (include snow/nosnow/cloud)
+
+        ## Strict cloud mask checking
+        logging.info("Strict cloud masking of snow pixels :")
+        logging.info(self.strict_cloud_mask)
+        if self.strict_cloud_mask == True:
+            logging.info("Only keep snow pixels which are not in the initial cloud mask in the final mask.")
+            condition_snow = "(im2b1==1) and (im3b1==0)"
+        else:
+            condition_snow = "(im2b1==1)"
+
+        logging.info("condition snow " + condition_snow)
+        
+        condition_final = condition_snow + "?"+str(self.label_snow)+":((im1b1==1) or ((im3b1>0) and (im4b1> " + \
             str(self.rRed_backtocloud) + ")))?"+str(self.label_cloud)+":0"
 
         bandMathFinalCloud = band_math([self.cloud_refine_path,
