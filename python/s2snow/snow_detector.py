@@ -337,8 +337,10 @@ class snow_detector:
         # Extract all masks
         computeCMApp = compute_cloud_mask(
             self.cloud_init,
-            op.join(self.path_tmp, "all_cloud_mask.tif"),
-            str(self.all_cloud_mask))
+            op.join(self.path_tmp, "all_cloud_mask.tif") + GDAL_OPT,
+            str(self.all_cloud_mask),
+            self.ram,
+            otb.ImagePixelType_uint8)
         computeCMApp.ExecuteAndWriteOutput()
         computeCMApp = None
 
@@ -347,16 +349,20 @@ class snow_detector:
         # image
         computeCMApp = compute_cloud_mask(
             self.cloud_init,
-            op.join(self.path_tmp, "shadow_in_mask.tif"),
-            str(self.shadow_in_mask))
+            op.join(self.path_tmp, "shadow_in_mask.tif") + GDAL_OPT,
+            str(self.shadow_in_mask),
+            self.ram,
+            otb.ImagePixelType_uint8)
         computeCMApp.ExecuteAndWriteOutput()
         computeCMApp = None
 
         # Then extract shadow mask of shadows from clouds outside the image
         computeCMApp = compute_cloud_mask(
             self.cloud_init,
-            op.join(self.path_tmp, "shadow_out_mask.tif"),
-            str(self.shadow_out_mask))
+            op.join(self.path_tmp, "shadow_out_mask.tif") + GDAL_OPT,
+            str(self.shadow_out_mask),
+            self.ram,
+            otb.ImagePixelType_uint8)
         computeCMApp.ExecuteAndWriteOutput()
         computeCMApp = None
 
@@ -365,7 +371,7 @@ class snow_detector:
         bandMathShadow = band_math(
             [op.join(self.path_tmp, "shadow_in_mask.tif"),
              op.join(self.path_tmp, "shadow_out_mask.tif")],
-            op.join(self.path_tmp, "shadow_mask.tif"),
+            op.join(self.path_tmp, "shadow_mask.tif")+GDAL_OPT,
             "(im1b1 == 1) || (im2b1 == 1)",
             self.ram,
             otb.ImagePixelType_uint8)
@@ -375,9 +381,10 @@ class snow_detector:
         # Extract high clouds
         computeCMApp = compute_cloud_mask(
             self.cloud_init,
-            op.join(self.path_tmp, "high_cloud_mask.tif"),
+            op.join(self.path_tmp, "high_cloud_mask.tif") + GDAL_OPT,
             str(self.high_cloud_mask),
-            self.ram)
+            self.ram,
+            otb.ImagePixelType_uint8)
         computeCMApp.ExecuteAndWriteOutput()
         computeCMApp = None
 
@@ -392,7 +399,7 @@ class snow_detector:
              op.join(self.path_tmp, "shadow_mask.tif"),
              op.join(self.path_tmp, "red_nn.tif"),
              op.join(self.path_tmp, "high_cloud_mask.tif")],
-            self.cloud_refine_path+GDAL_OPT,
+            self.cloud_refine_path + GDAL_OPT,
             condition_shadow,
             self.ram,
             otb.ImagePixelType_uint8)
