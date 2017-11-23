@@ -33,7 +33,7 @@ GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 import otbApplication as otb
 
 # Import python decorators for the different needed OTB applications
-from s2snow.app_wrappers import band_math
+from s2snow.app_wrappers import band_math, get_app_output
 
 from snow_product_parser import load_snow_product, str_to_datetime, datetime_to_str
 
@@ -101,20 +101,21 @@ def write_list_to_file(filename, str_list):
         output_file.close()
 
 class snow_multitemp():
-    def __init__(self, input_dir):
+    def __init__(self, params):
         logging.info("Init snow_multitemp")
-        
-        self.tile_id = "T31TCH"
-        self.date_start = str_to_datetime("01/01/2016", "%d/%m/%Y")
-        self.date_stop = str_to_datetime("01/05/2016", "%d/%m/%Y")
-        
-        self.path_tmp = os.environ['TMPDIR']
-        self.path_out = "/home/qt/salguesg/scratch/workdir"
 
-        self.ram = "2048"
-        self.nbThreads = 8
+        self.tile_id = params.get("tile_id")
+        self.date_start = params.get("date_start")
+        self.date_stop = params.get("date_stop")
+        self.mode = params.get("mode", "RUNTIME")
 
-        self.input_dir = input_dir
+        self.input_dir = params.get("input_dir")
+        self.path_tmp = params.get("path_tmp")
+        self.path_out = params.get("path_out")
+
+        self.ram = params.get("ram", 512)
+        self.nbThreads = params.get("nbThreads", None)
+
 
         # Define label for output snow product
         self.label_no_snow = "0"
@@ -194,26 +195,28 @@ class snow_multitemp():
                                       self.output_dates_filename,
                                       self.ram,
                                       otb.ImagePixelType_uint8)
-        app_gap_filling.ExecuteAndWriteOutput()
-        app_gap_filling = None
 
+        img_in = get_app_output(app_gap_filling, "out", self.mode)
 
         # generate the summary map
         band_index = range(1,len(output_dates)+1)
         expression = "+".join(["im1b" + str(i) for i in band_index])
-        
+
         img_out = op.join(self.path_tmp, op.basename(self.gapfilled_timeserie.replace(".tif","_annual_snow.tif")))
-        bandMathApp = band_math([self.gapfilled_timeserie],
+        bandMathApp = band_math([img_in],
                                 img_out,
                                 expression,
                                 self.ram,
-                                otb.ImagePixelType_uint8)
+                                otb.ImagePixelType_uint16)
         bandMathApp.ExecuteAndWriteOutput()
         bandMathApp = None
 
-        shutil.copy2(self.gapfilled_timeserie, self.path_out)
+        logging.info("Copying output images from tmp to output folder")
+        if self.mode == "DEBUG":
+            shutil.copy2(self.gapfilled_timeserie, self.path_out)
         shutil.copy2(img_out, self.path_out)
 
+        logging.info("End snow_multitemp")
 
     def convert_mask_list(self, label, type_name):
         binary_mask_list = []
@@ -248,7 +251,7 @@ class snow_multitemp():
 
     def extract_binary_mask(self, mask, label, type_name):
         img_out = op.join(self.path_tmp, op.basename(mask.replace(".tif","_"+ type_name +"_binary.tif")))
-        
+
         bandMathApp = band_math([mask],
                                 img_out+GDAL_OPT,
                                 "(im1b1==" + label + ")?1:0",
@@ -259,10 +262,10 @@ class snow_multitemp():
 
     def extract_binary_cloud_mask(self, mask, label, type_name):
         img_out = op.join(self.path_tmp, op.basename(mask.replace(".tif","_"+ type_name +"_binary.tif")))
-        
+
         bandMathApp = band_math([mask],
                                 img_out+GDAL_OPT,
-                                "im1b1=="+label+"?1:(im1b1=="+"254"+"?1:0)",
+                                "im1b1=="+label+"?1:(im1b1=="+self.label_no_data+"?1:0)",
                                 self.ram,
                                 otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
@@ -272,9 +275,19 @@ class snow_multitemp():
 #   Main Test
 ###############################################################
 def main():
+    params = {"tile_id":"T31TCH",
+              "date_start":str_to_datetime("01/09/2015", "%d/%m/%Y"),
+              "date_stop":str_to_datetime("31/08/2016", "%d/%m/%Y"),
+              "mode":"RUNTIME",
+              "input_dir":"/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW",
+              "path_tmp":os.environ['TMPDIR'],
+              "path_out":"/home/qt/salguesg/scratch/workdir",
+              "ram":"4096",
+              "nbThreads":8}
 
-    # multitempApp = snow_multitemp("/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH")
-    multitempApp = snow_multitemp("/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW")
+    #params["input_dir"] = "/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH"
+    
+    multitempApp = snow_multitemp(params)
     multitempApp.run()
 
 if __name__ == '__main__':

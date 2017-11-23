@@ -200,3 +200,18 @@ def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
         return cloudMaskApp
     else:
         logging.error("Parameters img_in and foreground_value are required")
+
+
+def get_app_output(app, out_key, mode="RUNTIME"):
+    app_output = app.GetParameterString(out_key)
+
+    if mode == "RUNTIME":
+        app.Execute()
+        app_output = app.GetParameterOutputImage(out_key)
+    elif mode == "DEBUG":
+        app.ExecuteAndWriteOutput()
+        # @TODO uneffective command, this must be done outside the function
+        app = None
+    else:
+        logging.error("Unexpected mode")
+    return app_output
