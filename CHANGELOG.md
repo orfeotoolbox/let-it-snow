@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
-## [Unreleased]
+## [1.3] - 2017-11-02
 
 ### Added
 - Use gdal_trace_outline from the gina-alaska package instead of gdal_polygonize if available
