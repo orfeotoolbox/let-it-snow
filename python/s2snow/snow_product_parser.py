@@ -53,7 +53,8 @@ def load_snow_product(absoluteFilename):
 
 class snow_product:
     def __init__(self, absoluteFilename):
-        # absoluteFilename example "SENTINEL2A_20160912-103551-370_L2B-SNOW_T32TLS_D_V1-0"
+        # example 1 "SENTINEL2A_20160912-103551-370_L2B-SNOW_T32TLS_D_V1-0"
+        # example 2 "LANDSAT8_OLITIRS_XS_20160812_N2A_France-MetropoleD0005H0001"
 
         self.product_name = basename(absoluteFilename)
         self.product_path = dirname(absoluteFilename)
@@ -61,18 +62,26 @@ class snow_product:
         name_splitted = self.product_name.split("_")
 
         self.platform = name_splitted[0]
-        self.acquisition_date = str_to_datetime(name_splitted[1], MUSCATE_DATETIME_FORMAT)
-        self.product_level = name_splitted[2]
-        self.tile_id = name_splitted[3]
-        self.flag = name_splitted[4]
-        self.product_version = name_splitted[5]
+        if "SENTINEL2" in self.platform:
+            self.acquisition_date = str_to_datetime(name_splitted[1], MUSCATE_DATETIME_FORMAT)
+            self.product_level = name_splitted[2]
+            self.tile_id = name_splitted[3]
+            self.flag = name_splitted[4]
+            self.product_version = name_splitted[5]
+        elif "LANDSAT8" == self.platform:
+            self.acquisition_date = str_to_datetime(name_splitted[3], "%Y%m%d")
+            self.product_level = name_splitted[4]
+            self.tile_id = name_splitted[5]
+            self.flag = None
+            self.product_version = None
+        else:
+            logging.error("Unknown platform: " + self.platform)
+            raise Exception()
 
         logging.debug("New snow_product:")
         logging.debug(absoluteFilename)
         logging.debug(str(self.acquisition_date))
         logging.debug(self.tile_id)
-
-
 
         self.zip_product = None
         self.is_extracted = False
@@ -145,11 +154,17 @@ def main():
     print a.get_metadata()
     print a.acquisition_date
 
-    b = snow_product("/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH/SENTINEL2A_20170602-104212-697_L2A_T31TCH_D_V1-4")
-    print a.get_snow_mask()
-    a.extract_snow_mask(".")
-    print a.get_snow_mask()
-    print a.get_metadata()
+    b = snow_product("/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TGL/SENTINEL2A_20151230-105153-392_L2A_T31TGL_D_V1-0")
+    print b.get_snow_mask()
+    b.extract_snow_mask(".")
+    print b.get_snow_mask()
+    print b.get_metadata()
+    
+    c = snow_product("/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/Landsat-8/D0005H0001/LANDSAT8_OLITIRS_XS_20160812_N2A_France-MetropoleD0005H0001")
+    print c.get_snow_mask()
+    c.extract_snow_mask(".")
+    print c.get_snow_mask()
+    print c.get_metadata()
 
 if __name__ == '__main__':
     main()
