@@ -117,7 +117,13 @@ class snow_multitemp():
 
         self.input_dir = params.get("input_dir")
         self.path_tmp = params.get("path_tmp")
-        self.path_out = params.get("path_out")
+
+        self.path_out = op.join(params.get("path_out"),
+                self.tile_id + "_" + datetime_to_str(self.date_start) +
+                                        "-" + datetime_to_str(self.date_stop))
+
+        if not os.path.exists(self.path_out):
+            os.mkdir(self.path_out)
 
         self.ram = params.get("ram", 512)
         self.nbThreads = params.get("nbThreads", None)
@@ -180,13 +186,13 @@ class snow_multitemp():
 
         # convert the snow masks into binary snow masks
         expression = "(im1b1==" + self.label_snow + ")?1:0"
-        self.binary_snowmask_list = self.convert_mask_list(expression, "snow")
+        self.binary_snowmask_list = self.convert_mask_list(expression, "snow", GDAL_OPT)
         logging.debug("Binary snow mask list:")
         print self.binary_snowmask_list
 
         # convert the snow masks into binary cloud masks
         expression = "im1b1=="+self.label_cloud+"?1:(im1b1=="+self.label_no_data+"?1:0)"
-        self.binary_cloudmask_list = self.convert_mask_list(expression, "cloud")
+        self.binary_cloudmask_list = self.convert_mask_list(expression, "cloud", GDAL_OPT)
         logging.debug("Binary cloud mask list:")
         print self.binary_cloudmask_list
 
@@ -217,6 +223,7 @@ class snow_multitemp():
 
         if self.mode == "DEBUG":
             shutil.copy2(self.gapfilled_timeserie, self.path_out)
+            app_gap_filling = None
 
         # generate the summary map
         band_index = range(1,len(output_dates)+1)
@@ -234,6 +241,9 @@ class snow_multitemp():
         shutil.copy2(self.annual_snow_map, self.path_out)
 
         logging.info("End snow_multitemp")
+
+        if self.mode == "DEBUG":
+            shutil.copytree(self.path_tmp, op.join(self.path_out, "tmpdir"))
 
 
     def find_products(self):
@@ -257,20 +267,20 @@ class snow_multitemp():
         return [i.get_snow_mask() for i in self.product_list]
 
 
-    def convert_mask_list(self, expression, type_name):
+    def convert_mask_list(self, expression, type_name, mask_format=""):
         binary_mask_list = []
         for product in self.product_list:
             mask_in = product.get_snow_mask()
             binary_mask = op.join(self.path_tmp, product.product_name + "_" + type_name + "_binary.tif")
-            binary_mask = self.extract_binary_mask(mask_in, binary_mask, expression)
+            binary_mask = self.extract_binary_mask(mask_in, binary_mask, expression, mask_format)
             binary_mask_list.append(binary_mask)
         return binary_mask_list
 
 
-    def extract_binary_mask(self, mask_in, mask_out, expression):
+    def extract_binary_mask(self, mask_in, mask_out, expression, mask_format=""):
         #if not os.path.exists(mask_out):
         bandMathApp = band_math([mask_in],
-                                mask_out,
+                                mask_out + mask_format,
                                 expression,
                                 self.ram,
                                 otb.ImagePixelType_uint8)
@@ -288,19 +298,24 @@ def main():
               "input_dir":"/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW",
               "path_tmp":os.environ['TMPDIR'],
               "path_out":"/home/qt/salguesg/scratch/workdir",
-              "ram":"4096",
-              "nbThreads":8}
+              "ram":"2048",
+              "nbThreads":5}
 
-    params["input_dir"] = "/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH"
-    # params["input_dir"] = "/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH"
+    # params["input_dir"] = "/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH"
+    params["input_dir"] = "/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH"
 
-    
-    # params["tile_id"] = "T31TGL"
-    # params["date_start"] = str_to_datetime("01/11/2015", "%d/%m/%Y")
-    # params["date_stop"] = str_to_datetime("30/04/2017", "%d/%m/%Y")
-    # params["input_dir"] = "/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TGL"
-    # params["path_out"] = "/work/OT/siaa/Theia/Neige/tmp_gapfilled_data"
-    
+
+    #params = {"tile_id":"T32TLS",
+              #"date_start":str_to_datetime("01/09/2015", "%d/%m/%Y"),
+              #"date_stop":str_to_datetime("31/08/2016", "%d/%m/%Y"),
+              #"mode":"DEBUG",
+              #"input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T32TLS",
+              #"path_tmp":os.environ['TMPDIR'],
+              #"path_out":"/home/qt/salguesg/scratch/workdir",
+              #"ram":"4096",
+              #"nbThreads":8}
+
+
     multitempApp = snow_multitemp(params)
     multitempApp.run()
 
