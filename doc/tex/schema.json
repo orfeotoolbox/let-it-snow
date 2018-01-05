@@ -76,7 +76,7 @@
                 },
                 "multi": {
                     "default": 10,
-                    "description": "Scale input paramters to map reflectance interval (parameters are provided in milli-reflectance but L2A S2 Theia product are between 0 and 10000).",
+                    "description": "Scale input parameters to map reflectance interval (parameters are provided in milli-reflectance but L2A S2 Theia product are between 0 and 10000).",
                     "id": "multi",
                     "title": "The Multi schema.",
                     "type": "integer"
@@ -114,6 +114,13 @@
                     "id": "ram",
                     "title": "The Ram schema.",
                     "type": "integer"
+                }
+                "target_resolution": {
+                    "default": -1,
+                    "description": "Resolution of the output SNOW products (automatically use the input product resolution in case target_resolution=-1)",
+                    "id": "target_resolution",
+                    "title": "The target_resolution schema.",
+                    "type": "float"
                 }
             },
             "type": "object"

@@ -14,7 +14,8 @@ conf_template = {"general":{"pout":"",
                             "generate_vector":False,
                             "preprocessing":False,
                             "log":True,
-                            "multi":1},
+                            "multi":1,
+                            "target_resolution":-1},
                  "inputs":{"green_band":{"path": "",
                                          "noBand": 1},
                            "red_band":{"path": "",
@@ -151,11 +152,13 @@ def main():
     #group_general.add_argument("-preprocessing", type=bool)
     #group_general.add_argument("-log", type=bool)
     group_general.add_argument("-multi", type=float)
+    group_general.add_argument("-target_resolution", type=float)
 
 
-    group_snow = parser.add_argument_group('inputs', 'input files')
-    group_general.add_argument("-dem", help="dem file path, to use for processing the input product")
-
+    group_inputs = parser.add_argument_group('inputs', 'input files')
+    group_inputs.add_argument("-dem", help="dem file path, to use for processing the input product")
+    group_inputs.add_argument("-cloud_mask", help="cloud mask file path")
+    
     group_snow = parser.add_argument_group('snow', 'snow parameters')
     group_snow.add_argument("-dz", type=int)
     group_snow.add_argument("-ndsi_pass1", type=float)
@@ -203,10 +206,15 @@ def main():
             jsonData["general"]["nb_threads"] = args.nb_threads
         if args.multi:
             jsonData["general"]["multi"] = args.multi
-
+        if args.target_resolution:
+            jsonData["general"]["target_resolution"] = args.target_resolution
+            
         # Overide dem location
         if args.dem:
             jsonData["inputs"]["dem"] = os.path.abspath(args.dem)
+        # Overide cloud mask location
+        if args.cloud_mask:
+            jsonData["inputs"]["cloud_mask"] = os.path.abspath(args.cloud_mask)
 
         # Overide parameters for group snow
         if args.dz:
@@ -224,7 +232,7 @@ def main():
         if args.fsnow_total_lim:
             jsonData["snow"]["fsnow_total_lim"] = args.fsnow_total_lim
 
-        # Overide parameters for group cloud
+        # Override parameters for group cloud
         if args.shadow_in_mask:
             jsonData["cloud"]["shadow_in_mask"] = args.shadow_in_mask
         if args.shadow_out_mask:

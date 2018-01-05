@@ -69,6 +69,7 @@ class snow_detector:
         self.do_preprocessing = general.get("preprocessing", False)
         self.nodata = general.get("nodata", -10000)
         self.multi = general.get("multi", 1)  # Multiplier to handle S2 scaling
+        self.target_resolution = general.get("target_resolution", -1)  # Resolutions in meter for the snow product (if -1 the target resolution is equal to the max resolution of the input band)
 
         # Parse cloud data
         cloud = data["cloud"]
@@ -119,33 +120,46 @@ class snow_detector:
         gb_path_resampled = op.join(self.path_tmp, "green_band_resampled.tif")
         rb_path_resampled = op.join(self.path_tmp, "red_band_resampled.tif")
         sb_path_resampled = op.join(self.path_tmp, "swir_band_resampled.tif")
-        if not gb_resolution == rb_resolution == sb_resolution:
-            logging.info("resolution is different among band files")
-            # gdalwarp to max reso
-            max_res = max(gb_resolution, rb_resolution, sb_resolution)
-            logging.info("cubic resampling to " + str(max_res) + " meters.")
 
-            gdal.Warp(
-                gb_path_resampled,
-                gb_path_extracted,
-                resampleAlg=gdal.GRIORA_Cubic,
-                xRes=max_res,
-                yRes=max_res)
+        # target resolution of the snow product
+        max_res = max(gb_resolution, rb_resolution, sb_resolution)
+        if self.target_resolution == -1:
+            self.target_resolution = max(gb_resolution, rb_resolution, sb_resolution)
+        else:
+            logging.info("Snow product will be at the resolution of " + str(self.target_resolution) + " meters.")
+            
+        # Change target resolution
+        if (rb_resolution != self.target_resolution):
+            logging.info("cubic resampling of red band to " + str(self.target_resolution) + " meters.")
             gdal.Warp(
                 rb_path_resampled,
                 rb_path_extracted,
                 resampleAlg=gdal.GRIORA_Cubic,
-                xRes=max_res,
-                yRes=max_res)
+                xRes=self.target_resolution,
+                yRes=self.target_resolution)
+        else:
+            rb_path_resampled = rb_path_extracted
+
+        if (gb_resolution != self.target_resolution):
+            logging.info("cubic resampling of green band to " + str(self.target_resolution) + " meters.")
+            gdal.Warp(
+                gb_path_resampled,
+                gb_path_extracted,
+                resampleAlg=gdal.GRIORA_Cubic,
+                xRes=self.target_resolution,
+                yRes=self.target_resolution)
+        else:
+            gb_path_resampled = gb_path_extracted
+
+        if (sb_resolution != self.target_resolution):
+            logging.info("cubic resampling of swir band to " + str(self.target_resolution) + " meters.")
             gdal.Warp(
                 sb_path_resampled,
                 sb_path_extracted,
                 resampleAlg=gdal.GRIORA_Cubic,
-                xRes=max_res,
-                yRes=max_res)
+                xRes=self.target_resolution,
+                yRes=self.target_resolution)
         else:
-            gb_path_resampled = gb_path_extracted
-            rb_path_resampled = rb_path_extracted
             sb_path_resampled = sb_path_extracted
 
         # build vrt
