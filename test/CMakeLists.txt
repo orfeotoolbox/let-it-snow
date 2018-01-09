@@ -28,9 +28,9 @@ add_test(NAME s2_test_json_builder_test
   "${DATA_TEST}/S2"
   "${OUTPUT_TEST_S2}"
 # Test with an alternative target resolution
-  -target_resolution 10
-  -dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
-  -cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
+  #-target_resolution 10
+  #-dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
+  #-cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
   )
 
 #Add Test with extract 1000*1000 of S2 (x=1400,y=2200 pixel coord at 20 meters)
