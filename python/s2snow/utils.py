@@ -8,6 +8,7 @@ import uuid
 import glob
 import logging
 import subprocess
+from datetime import datetime
 from shutil import copyfile
 from distutils import spawn
 
@@ -36,7 +37,30 @@ def call_subprocess(process_list):
     logging.info(out)
     sys.stderr.write(err)
 
-def polygonize(input_img, input_mask, output_vec):
+def str_to_datetime(date_string, format = "%Y%m%d"):
+    """ Return the datetime corresponding to the input string
+    """
+    logging.debug(date_string)
+    return datetime.strptime(date_string, format)
+
+def datetime_to_str(date, format = "%Y%m%d"):
+    """ Return the datetime corresponding to the input string
+    """
+    logging.debug(date)
+    return date.strftime(format)
+
+def write_list_to_file(filename, str_list):
+    output_file = open(filename, "w")
+    output_file.write("\n".join(str_list))
+    output_file.close()
+
+def read_list_from_file(filename):
+    output_file = open(filename, "r")
+    lines = output_file.readlines()
+    output_file.close()
+    return [line.rstrip() for line in lines]
+
+def polygonize(input_img, input_mask, output_vec, use_gina, min_area, dp_toler):
     """Helper function to polygonize raster mask using gdal polygonize
 
     if gina-tools is available it use gdal_trace_outline instead of
@@ -44,12 +68,16 @@ def polygonize(input_img, input_mask, output_vec):
     """
     # Test if gdal_trace_outline is available
     gdal_trace_outline_path = spawn.find_executable("gdal_trace_outline")
-    if gdal_trace_outline_path is None:
+    if not use_gina:
         # Use gdal_polygonize
+        logging.info("Use gdal_polygonize to polygonize raster mask...")
         call_subprocess([
             "gdal_polygonize.py", input_img,
             "-f", "ESRI Shapefile",
             "-mask", input_mask, output_vec])
+    elif use_gina and (gdal_trace_outline_path is None):
+        logging.error("Cannot use gdal_trace_outline, executable not found on system!")
+        logging.error("You can disable the use_gdal_trace_outline option or install the tools")
     else:
         logging.info("Use gdal_trace_outline to polygonize raster mask...")
 
@@ -62,7 +90,7 @@ def polygonize(input_img, input_mask, output_vec):
 
         tmp_poly_shp = tmp_poly + ".shp"
         # We can use here gina-tools gdal_trace_outline which is faster
-        call_subprocess([
+        command = [
             "gdal_trace_outline",
             input_img,
             "-classify",
@@ -71,8 +99,11 @@ def polygonize(input_img, input_mask, output_vec):
             "-ogr-out",
             tmp_poly_shp,
             "-dp-toler",
-            "0",
-            "-split-polys"])
+            str(dp_toler),
+            "-split-polys"]
+        if min_area:
+            command.extend(["-min-ring-area", str(min_area)])
+        call_subprocess(command)
 
         # Then remove polygons with 0 as field value and rename field from
         # "value" to "DN" to follow same convention as gdal_polygonize
@@ -174,6 +205,14 @@ def extract_band(inputs, band, path_tmp, noData):
     return path_extracted
 
 
+def apply_color_table(raster_file_name, color_table):
+    """ Edit image file to apply a color table
+    """
+    dataset = gdal.Open(raster_file_name, gdalconst.GA_Update)
+    dataset.GetRasterBand(1).SetColorTable(color_table)
+    dataset = None
+
+
 def get_raster_as_array(raster_file_name):
     """ Open image file as numpy array using gdal
     """
@@ -195,6 +234,7 @@ def compute_percent(image_path, value, no_data):
 def format_SEB_VEC_values(path, snow_label, cloud_label, nodata_label):
     """ Update the shapfile according lis product specifications
     """
+    logging.info("Formatting snow/cloud shapefile")
     table = op.splitext(op.basename(path))[0]
     ds = gdal.OpenEx(path, gdal.OF_VECTOR | gdal.OF_UPDATE)
     ds.ExecuteSQL("ALTER TABLE " + table + " ADD COLUMN type varchar(15)")

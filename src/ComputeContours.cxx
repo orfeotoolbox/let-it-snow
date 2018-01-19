@@ -53,19 +53,19 @@ public:
 
         AddParameter(ParameterType_Int, "backgroundvalue", "backgroundvalue");
         SetParameterDescription( "backgroundvalue", "value corresponding to the mask background");
-	MandatoryOff("backgroundvalue");
-	SetDefaultParameterInt("backgroundvalue", 0);
+        MandatoryOff("backgroundvalue");
+        SetDefaultParameterInt("backgroundvalue", 0);
 
         AddParameter(ParameterType_Empty, "fullyconnected", "cloud refine image");
         SetParameterDescription( "fullyconnected", "Input cloud refine image");
-	DisableParameter("fullyconnected");
+        DisableParameter("fullyconnected");
 
         AddRAMParameter();
 
         AddParameter(ParameterType_OutputImage, "out",  "Output image");
         SetParameterDescription("out", "Output contour image");
-	// TODO Application can write uint8 by default
-	//SetDefaultOutputPixelType("out",ImagePixelType_uint8);
+        // TODO Application can write uint8 by default
+        //SetDefaultOutputPixelType("out",ImagePixelType_uint8);
 
         SetDocExampleParameterValue("inputmask", "input_mask.tif");
         SetDocExampleParameterValue("foregroundvalue", "255");

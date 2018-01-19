@@ -65,11 +65,18 @@ class snow_detector:
         self.nbThreads = general.get("nb_threads", None)
         logging.info("Actual number of threads: " + str(self.nbThreads))
         self.mode = general.get("mode")
-        self.generate_vector = general.get("generate_vector", False)
         self.do_preprocessing = general.get("preprocessing", False)
         self.nodata = general.get("nodata", -10000)
         self.multi = general.get("multi", 1)  # Multiplier to handle S2 scaling
         self.target_resolution = general.get("target_resolution", -1)  # Resolutions in meter for the snow product (if -1 the target resolution is equal to the max resolution of the input band)
+
+        # Parse vector option
+        vector_options = data["vector"]
+        self.generate_vector = vector_options.get("generate_vector", True)
+        self.generate_intermediate_vectors = vector_options.get("generate_intermediate_vectors", False)
+        self.use_gdal_trace_outline = vector_options.get("use_gdal_trace_outline", True)
+        self.gdal_trace_outline_dp_toler = vector_options.get("gdal_trace_outline_dp_toler", 0)
+        self.gdal_trace_outline_min_area = vector_options.get("gdal_trace_outline_min_area", 0)
 
         # Parse cloud data
         cloud = data["cloud"]
@@ -254,10 +261,14 @@ class snow_detector:
 
         # Gdal polygonize (needed to produce composition)
         # TODO: Study possible loss and issue with vectorization product
-        polygonize(
-            self.final_mask_path,
-            self.final_mask_path,
-            self.final_mask_vec_path)
+        if self.generate_vector:
+            polygonize(
+                self.final_mask_path,
+                self.final_mask_path,
+                self.final_mask_vec_path,
+                self.use_gdal_trace_outline,
+                self.gdal_trace_outline_min_area,
+                self.gdal_trace_outline_dp_toler)
 
         # Burn polygons edges on the composition
         # TODO add pass1 snow polygon in yellow
@@ -269,10 +280,10 @@ class snow_detector:
             self.ram)
 
         # Product formating
-        format_SEB_VEC_values(self.final_mask_vec_path,
-                              self.label_snow,
-                              self.label_cloud,
-                              self.label_no_data)
+        #~ format_SEB_VEC_values(self.final_mask_vec_path,
+                              #~ self.label_snow,
+                              #~ self.label_cloud,
+                              #~ self.label_no_data)
         self.create_metadata()
 
     def create_metadata(self):
@@ -504,12 +515,15 @@ class snow_detector:
                 bandMathPass2.ExecuteAndWriteOutput()
                 bandMathPass2 = None
 
-                if self.generate_vector:
+                if self.generate_intermediate_vectors:
                     # Generate polygons for pass2 (useful for quality check)
                     # TODO
                     polygonize(self.pass2_path,
                                self.pass2_path,
-                               op.join(self.path_tmp, "pass2_vec.shp"))
+                               op.join(self.path_tmp, "pass2_vec.shp"),
+                               self.use_gdal_trace_outline,
+                               self.gdal_trace_outline_min_area,
+                               self.gdal_trace_outline_dp_toler)
                 self.pass3()
                 generic_snow_path = self.pass3_path
             else:
@@ -538,11 +552,14 @@ class snow_detector:
                                            otb.ImagePixelType_uint8)
             bandMathEmptyPass2.ExecuteAndWriteOutput()
 
-        if self.generate_vector:
+        if self.generate_intermediate_vectors:
             # Generate polygons for pass3 (useful for quality check)
             polygonize(generic_snow_path,
                        generic_snow_path,
-                       op.join(self.path_tmp, "pass3_vec.shp"))
+                       op.join(self.path_tmp, "pass3_vec.shp"),
+                       self.use_gdal_trace_outline,
+                       self.gdal_trace_outline_min_area,
+                       self.gdal_trace_outline_dp_toler)
 
         # Final update of the snow  mask (include snow/nosnow/cloud)
 

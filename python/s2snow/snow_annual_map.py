@@ -35,7 +35,9 @@ import otbApplication as otb
 # Import python decorators for the different needed OTB applications
 from s2snow.app_wrappers import band_math, get_app_output
 
-from snow_product_parser import load_snow_product, str_to_datetime, datetime_to_str
+from s2snow.utils import str_to_datetime, datetime_to_str
+from s2snow.utils import write_list_to_file, read_list_from_file
+from s2snow.snow_product_parser import load_snow_product
 
 def parse_xml(filepath):
     logging.debug("Parsing " + filepath)
@@ -95,24 +97,15 @@ def gap_filling(img_in, mask_in, img_out, input_dates_file = None,
     else:
         logging.error("Parameters img_in, img_out and mask_in are required")
 
-def write_list_to_file(filename, str_list):
-        output_file = open(filename, "w")
-        output_file.write("\n".join(str_list))
-        output_file.close()
-
-def read_list_from_file(filename):
-    output_file = open(filename, "r")
-    lines = output_file.readlines()
-    output_file.close()
-    return [line.rstrip() for line in lines]
-
-class snow_multitemp():
+class snow_annual_map():
     def __init__(self, params):
         logging.info("Init snow_multitemp")
 
         self.tile_id = params.get("tile_id")
         self.date_start = params.get("date_start")
         self.date_stop = params.get("date_stop")
+        self.date_margin = timedelta(days=params.get("date_margin", 0))
+        self.output_dates_filename = params.get("output_dates_filename", None)
         self.mode = params.get("mode", "RUNTIME")
 
         self.input_dir = params.get("input_dir")
@@ -136,21 +129,22 @@ class snow_multitemp():
 
         # Build useful paths
         self.input_dates_filename = op.join(self.path_tmp, "input_dates.txt")
-        self.output_dates_filename = op.join(self.path_tmp, "output_dates.txt")
+        if not self.output_dates_filename:
+            self.output_dates_filename = op.join(self.path_tmp, "output_dates.txt")
         self.multitemp_snow_vrt = op.join(self.path_tmp, "multitemp_snow_mask.vrt")
         self.multitemp_cloud_vrt = op.join(self.path_tmp, "multitemp_cloud_mask.vrt")
         self.gapfilled_timeserie = op.join(self.path_tmp, "gap_filled_snow_mask.tif")
         self.annual_snow_map = op.join(self.path_tmp, "gap_filled_snow_mask_annual_snow.tif")
 
     def run(self):
-        logging.info("Run snow_multitemp")
+        logging.info("Run snow_annual_map")
 
         # Set maximum ITK threads
         if self.nbThreads:
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # search matching snow product
-        self.product_list = self.find_products()
+        self.product_list = self.find_products(self.input_dir, self.tile_id)
         logging.debug("Product list:")
         print self.product_list
 
@@ -163,18 +157,15 @@ class snow_multitemp():
             input_dates.append(datetime_to_str(product.acquisition_date))
         write_list_to_file(self.input_dates_filename, input_dates)
 
-        tmp_date = self.date_start
         output_dates = []
-        while tmp_date < self.date_stop:
-                output_dates.append(datetime_to_str(tmp_date))
-                tmp_date += timedelta(days=1)
-
-        ######################## to remove #######################
-        # output_dates = read_list_from_file(os.path.join(self.path_out,"dates_S1_T31TGL.txt"))
-        ######################## to remove #######################
-
-        write_list_to_file(self.output_dates_filename, output_dates)
-
+        if op.exists(self.output_dates_filename):
+            output_dates = read_list_from_file(self.output_dates_filename)
+        else:
+            tmp_date = self.date_start
+            while tmp_date < self.date_stop:
+                    output_dates.append(datetime_to_str(tmp_date))
+                    tmp_date += timedelta(days=1)
+            write_list_to_file(self.output_dates_filename, output_dates)
 
         shutil.copy2(self.input_dates_filename, self.path_out)
         shutil.copy2(self.output_dates_filename, self.path_out)
@@ -240,26 +231,29 @@ class snow_multitemp():
         logging.info("Copying outputs from tmp to output folder")
         shutil.copy2(self.annual_snow_map, self.path_out)
 
-        logging.info("End snow_multitemp")
+        logging.info("End snow_annual_map")
 
         if self.mode == "DEBUG":
             shutil.copytree(self.path_tmp, op.join(self.path_out, "tmpdir"))
 
 
-    def find_products(self):
-        logging.info("Retrieving products")
-        product_files = os.listdir(self.input_dir)
+    def find_products(self, input_dir, tile_id):
+        logging.info("Retrieving products in " + input_dir)
+        product_files = os.listdir(input_dir)
         product_list = []
+        search_start_date = self.date_start - self.date_margin
+        search_stop_date = self.date_stop + self.date_margin
         for product_name in product_files:
+            product_path = op.join(input_dir, product_name)
             try:
-                product = load_snow_product(op.join(self.input_dir, product_name))
+                product = load_snow_product(product_path)
                 print product
-                if self.tile_id in product.tile_id and \
-                   self.date_start <= product.acquisition_date and \
-                   self.date_stop >= product.acquisition_date:
+                if tile_id in product.tile_id and \
+                   search_start_date <= product.acquisition_date and \
+                   search_stop_date >= product.acquisition_date:
                     product_list.append(product)
             except Exception:
-                logging.error("Unable to load product :" + product_name)
+                logging.error("Unable to load product :" + product_path)
         return product_list
 
 
@@ -278,7 +272,6 @@ class snow_multitemp():
 
 
     def extract_binary_mask(self, mask_in, mask_out, expression, mask_format=""):
-        #if not os.path.exists(mask_out):
         bandMathApp = band_math([mask_in],
                                 mask_out + mask_format,
                                 expression,
@@ -295,15 +288,14 @@ def main():
               "date_start":str_to_datetime("01/09/2015", "%d/%m/%Y"),
               "date_stop":str_to_datetime("31/08/2016", "%d/%m/%Y"),
               "mode":"DEBUG",
-              "input_dir":"/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW",
+              "input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH",
               "path_tmp":os.environ['TMPDIR'],
               "path_out":"/home/qt/salguesg/scratch/workdir",
               "ram":"2048",
               "nbThreads":5}
 
     # params["input_dir"] = "/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH"
-    params["input_dir"] = "/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH"
-
+    # params["input_dir"] = "/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW"
 
     #params = {"tile_id":"T32TLS",
               #"date_start":str_to_datetime("01/09/2015", "%d/%m/%Y"),
@@ -316,8 +308,8 @@ def main():
               #"nbThreads":8}
 
 
-    multitempApp = snow_multitemp(params)
-    multitempApp.run()
+    snow_annual_map_app = snow_annual_map(params)
+    snow_annual_map_app.run()
 
 if __name__ == '__main__':
     # Set logging level and format.

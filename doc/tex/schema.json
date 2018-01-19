@@ -60,13 +60,6 @@
         "general": {
             "id": "general",
             "properties": {
-                "generate_vector": {
-                    "default": false,
-                    "description": "Generate vector masks of the detection (pass 1 and 2 and final result).",
-                    "id": "generate_vector",
-                    "title": "The Generate_vector schema.",
-                    "type": "boolean"
-                },
                 "log": {
                     "default": true,
                     "description": "Log output and error to files (std***.log).",
@@ -123,6 +116,46 @@
                     "type": "float"
                 }
             },
+            "type": "object"
+        },
+        "vector": {
+            "id": "vector",
+            "properties": {
+                "generate_vector": {
+                    "default": true,
+                    "description": "Generate vector with snow and cloud masks of the final detection.",
+                    "id": "generate_vector",
+                    "title": "The Generate_vector schema.",
+                    "type": "boolean"
+                },
+                "generate_intermediate_vectors": {
+                    "default": false,
+                    "description": "Generate vector masks of the detection (pass 1 and 2 and final result).",
+                    "id": "generate_intermediate_vectors",
+                    "title": "The generate_intermediate_vectors schema.",
+                    "type": "boolean"
+                },
+                "use_gdal_trace_outline": {
+                    "default": true,
+                    "description": "Generate vector mask using gdal_trace_outline from gina_tools.",
+                    "id": "use_gdal_trace_outline",
+                    "title": "The use_gdal_trace_outline schema.",
+                    "type": "boolean"
+                },
+                "gdal_trace_outline_min_area": {
+                    "default": 0,
+                    "description": "Minimum area to keep in vector mask when using gdal_trace_outline.",
+                    "id": "gdal_trace_outline_min_area",
+                    "title": "The gdal_trace_outline_min_area schema.",
+                    "type": "int"
+                },
+                "gdal_trace_outline_dp_toler": {
+                    "default": 0,
+                    "description": "Tolered pixel approximation in vector mask when using gdal_trace_outline (0 no approximation).",
+                    "id": "gdal_trace_outline_dp_toler",
+                    "title": "The gdal_trace_outline_dp_toler schema.",
+                    "type": "int"
+                },
             "type": "object"
         },
         "inputs": {

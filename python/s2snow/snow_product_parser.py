@@ -3,10 +3,9 @@ import sys
 import os.path as op
 import zipfile
 import logging
-from datetime import datetime
 from os.path import basename, dirname
 
-SNOW_PRODUCT_PATH = "/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW"
+from s2snow.utils import str_to_datetime, datetime_to_str
 
 MUSCATE_DATETIME_FORMAT = "%Y%m%d-%H%M%S-%f"
 METADATA_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -26,18 +25,6 @@ def extract_from_zipfile(file_name, output_folder, patterns=[]):
                 extracted_files.append(op.join(output_folder,name))
     f.close()
     return extracted_files
-
-def str_to_datetime(date_string, format = MUSCATE_DATETIME_FORMAT):
-    """ Return the datetime corresponding to the input string
-    """
-    logging.debug(date_string)
-    return datetime.strptime(date_string, format)
-
-def datetime_to_str(date, format = "%Y%m%d"):
-    """ Return the datetime corresponding to the input string
-    """
-    logging.debug(date)
-    return date.strftime(format)
 
 def load_snow_product(absoluteFilename):
     pathname = dirname(absoluteFilename)
