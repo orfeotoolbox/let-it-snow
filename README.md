@@ -69,23 +69,36 @@ Code to generate the snow cover extent product on Theia platform.
 
 ## Installation
 
+LIS processing chain uses CMake (http://www.cmake.org) for building from source.
+
 ### Dependencies
 
-lis dependencies:
+Following a summary of the required dependencies: 
 
-GDAL >=2.0
-OTB >= 6.0
-Boost-Python
-Python interpreter >= 2.7
-Python libs >= 2.7
-Python packages:
-numpy
-lxml
-matplotlib
+* GDAL >=2.0
+* OTB >= 6.0
+* Boost-Python
+* Python interpreter >= 2.7
+* Python libs >= 2.7
+* Python packages:
+* numpy
+* lxml
+* matplotlib
 
 GDAL itself depends on a number of other libraries provided by most major operating systems and also depends on the non standard GEOS and PROJ4 libraries. GDAl- Python bindings are also required
 
-Python package dependencies: sys, subprocess, glob, os, json, gdal
+Python package dependencies:
+
+* sys
+* subprocess
+* glob
+* os
+* json
+* gdal
+
+Optional dependencies:
+
+* gdal_trace_outline can be used alternatively to gdal_polygonize.py to generate the vector layer. It requires to install [dans-gdal-scripts utilities](https://github.com/gina-alaska/dans-gdal-scripts).
 
 ### Installing from the source distribution
 
