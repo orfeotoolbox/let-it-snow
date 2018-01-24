@@ -23,7 +23,7 @@ import multiprocessing
 from lxml import etree
 
 import gdal
-from gdalconst import GA_ReadOnly
+from gdalconst import GA_ReadOnly, GA_Update
 
 # OTB Applications
 import otbApplication as otb
@@ -40,7 +40,7 @@ from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask, band_math
 
 # Import utilities for snow detection
 from s2snow.utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
-from s2snow.utils import compute_percent, format_SEB_VEC_values
+from s2snow.utils import compute_percent, format_SEB_VEC_values, get_raster_as_array
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
@@ -92,7 +92,10 @@ class snow_detector:
         ## Strict cloud mask usage (off by default)
         ## If set to True no pixel from the cloud mask will be marked as snow
         self.strict_cloud_mask = cloud.get("strict_cloud_mask", False)
-        
+
+        ## Suppress snow area surrounded by cloud (off by default)
+        self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", False)
+
         # Parse input parameters
         inputs = data["inputs"]
         if self.do_preprocessing:
@@ -359,6 +362,7 @@ class snow_detector:
         dataset = None
 
         # Extract all masks
+        # Warning, this actually concern all cloud except the thiner ones.
         computeCMApp = compute_cloud_mask(
             self.cloud_init,
             op.join(self.path_tmp, "all_cloud_mask.tif") + GDAL_OPT,
@@ -429,7 +433,22 @@ class snow_detector:
             otb.ImagePixelType_uint8)
         bandMathFinalShadow.ExecuteAndWriteOutput()
 
+        # Extract also a mask for condition back to cloud
+        self.mask_backtocloud = op.join(self.path_tmp, "mask_backtocloud.tif")
+        cloud_mask_for_backtocloud = self.cloud_init
+
+        condition_back_to_cloud = "(im1b1 > 0) and (im2b1 > " + str(self.rRed_backtocloud) + ")"
+        bandMathBackToCloud = band_math(
+            [cloud_mask_for_backtocloud, self.redBand_path],
+            self.mask_backtocloud + GDAL_OPT,
+            condition_back_to_cloud + "?1:0",
+            self.ram,
+            otb.ImagePixelType_uint8)
+        bandMathBackToCloud.ExecuteAndWriteOutput()
+
     def pass1(self):
+        logging.info("Start pass 1")
+
         # Pass1 : NDSI threshold
         ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
@@ -442,7 +461,7 @@ class snow_detector:
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
 
         bandMathPass1 = band_math(
-            [self.img, self.cloud_refine_path, op.join(self.path_tmp, "all_cloud_mask.tif")],
+            [self.img, self.cloud_refine_path],
             self.pass1_path + GDAL_OPT,
             condition_pass1 + "?1:0",
             self.ram,
@@ -450,8 +469,13 @@ class snow_detector:
         bandMathPass1.ExecuteAndWriteOutput()
         bandMathPass1 = None
 
+        # apply pass 1.5 to discard uncertain snow area
+        if self.rm_snow_inside_cloud:
+            self.pass1_5(self.pass1_path, self.mask_backtocloud)
+
         # Update the cloud mask (again)
-        condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1==1 and im4b1> " + \
+        # TODO use mask_backtocloud
+        condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1>0 and im4b1> " + \
             str(self.rRed_backtocloud) + "))"
 
         bandMathCloudPass1 = band_math(
@@ -462,6 +486,56 @@ class snow_detector:
             self.ram,
             otb.ImagePixelType_uint8)
         bandMathCloudPass1.ExecuteAndWriteOutput()
+        logging.info("End of pass 1")
+
+    def pass1_5(self, snow_mask_path, cloud_mask_path):
+        logging.info("Start pass 1.5")
+        import numpy as np
+        import scipy.ndimage as nd
+
+        snow_mask = get_raster_as_array(snow_mask_path)
+        cloud_mask = get_raster_as_array(cloud_mask_path)
+        cloud_threshold = 0.85
+
+        discarded_snow_area = 0
+
+        (snowlabels, nb_label) = nd.measurements.label(snow_mask)
+
+        # For each snow area
+        for lab in range(1, nb_label+1):
+            # Compute external contours
+            patch_neige_dilat = nd.binary_dilation(np.where(snowlabels == lab, 1, 0))
+            contour = np.where((snow_mask==0) & (patch_neige_dilat==1))
+
+            # Compute percent of surronding cloudy pixels
+            cloud_contour = cloud_mask[contour]
+            # print cloud_contour
+
+            result = np.bincount(cloud_contour)
+            #logging.info(result)
+            cloud_percent = 0
+            if len(result) > 1:
+                cloud_percent = float(result[1]) / (result[0] + result[1])
+                logging.info(result)
+                logging.info(", " + str(cloud_percent*100) + "% of surrounding cloud")
+
+            # Discard snow area where cloud_percent > threshold
+            if cloud_percent > cloud_threshold:
+                discarded_snow_area += 1
+                snow_mask = np.where(snowlabels == lab, 0, snow_mask)
+
+        logging.info(str(discarded_snow_area) + ' labels entoures de nuages (sur ' + str(nb_label) + ' labels)')
+
+        (snowlabels, nb_label) = nd.measurements.label(snow_mask)
+
+        logging.info(str(nb_label) + ' labels neige apres correction')
+
+        dataset = gdal.Open(snow_mask_path, GA_Update)
+        band = dataset.GetRasterBand(1)
+        dataset.GetRasterBand(1).WriteArray(snow_mask)
+        dataset=None
+
+        logging.info("End of pass 1.5")
 
     def pass2(self):
         ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
@@ -574,6 +648,7 @@ class snow_detector:
 
         logging.info("condition snow " + condition_snow)
         
+        # TODO use mask_backtocloud
         condition_final = condition_snow + "?"+str(self.label_snow)+":((im1b1==1) or ((im3b1>0) and (im4b1> " + \
             str(self.rRed_backtocloud) + ")))?"+str(self.label_cloud)+":0"
 
