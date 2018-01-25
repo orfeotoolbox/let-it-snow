@@ -1,7 +1,7 @@
 # Let-it-snow
 ## Synopsis
 
-This code is a Python/OTB version of the snow cover extent detection algorithm for Sentinel-2 and Landsat-8 data.
+This code implements the snow cover extent detection algorithm LIS (Let It Snow) for Sentinel-2, Landsat-8 and SPOT4-Take5 data.
 
 The algorithm documentation with examples is available here:
 
@@ -77,7 +77,6 @@ Following a summary of the required dependencies:
 
 * GDAL >=2.0
 * OTB >= 6.0
-* Boost-Python
 * Python interpreter >= 2.7
 * Python libs >= 2.7
 * Python packages:
@@ -160,7 +159,7 @@ Do not modify these folders.
 
 ## Contributors
 
-Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES)
+Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES), Germain Salgues (Magellium)
 
 ## License
 
