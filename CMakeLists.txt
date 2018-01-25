@@ -40,9 +40,6 @@ find_package(PythonInterp REQUIRED)
 find_package( PythonLibs 2.7 REQUIRED)
 include_directories( ${PYTHON_INCLUDE_DIRS} )
  
-find_package( Boost COMPONENTS python REQUIRED )
-include_directories( ${Boost_INCLUDE_DIR} )
-
 # Link to the Orfeo ToolBox
 # LIS required OTB 6.0 which provides patch regarding management of 1 byte tiff image)
 SET(OTB_MIN_VERSION "6.0.0")

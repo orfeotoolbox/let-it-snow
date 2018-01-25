@@ -1,21 +1,9 @@
-file(GLOB hdrs "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-file(GLOB thdrs "${CMAKE_CURRENT_SOURCE_DIR}/*.txx")
-
 # Build our library
 add_library( histo_utils SHARED histo_utils.cxx )
 target_link_libraries(histo_utils ${OTB_LIBRARIES})
-# Define the wrapper library that wraps our library
-add_library( histo_utils_ext SHARED histo_utils_ext.cxx )
-target_link_libraries( histo_utils_ext ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} histo_utils )
-# don't prepend wrapper library name with lib
-set_target_properties( histo_utils_ext PROPERTIES PREFIX "" )
-
-# Build snow line exe
-add_executable(compute_snowline compute_snowline.cxx)
-target_link_libraries(compute_snowline histo_utils)
 
 # Install for executables and libraries
-install(TARGETS compute_snowline histo_utils histo_utils_ext
+install(TARGETS histo_utils
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
@@ -33,4 +21,14 @@ otb_create_application(NAME           ComputeSnowMask
 # Create the ComputeContour OTB application
 otb_create_application(NAME           ComputeContours
                        SOURCES        ComputeContours.cxx
+                       LINK_LIBRARIES ${OTB_LIBRARIES})
+
+# Create the ComputeSnowLine OTB application
+otb_create_application(NAME           ComputeSnowLine
+                       SOURCES        ComputeSnowLine.cxx
+                       LINK_LIBRARIES ${OTB_LIBRARIES} histo_utils)
+
+# Create the ComputeNbPixels OTB application
+otb_create_application(NAME           ComputeNbPixels
+                       SOURCES        ComputeNbPixels.cxx
                        LINK_LIBRARIES ${OTB_LIBRARIES})
