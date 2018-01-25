@@ -90,7 +90,8 @@ class snow_detector:
         self.strict_cloud_mask = cloud.get("strict_cloud_mask", False)
 
         ## Suppress snow area surrounded by cloud (off by default)
-        self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", False)
+        self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", True)
+        self.dilation_radius = cloud.get("rm_snow_inside_cloud_dilation_radius", 5)
 
         # Parse input parameters
         inputs = data["inputs"]
@@ -467,7 +468,7 @@ class snow_detector:
 
         # apply pass 1.5 to discard uncertain snow area
         if self.rm_snow_inside_cloud:
-            self.pass1_5(self.pass1_path, self.mask_backtocloud)
+            self.pass1_5(self.pass1_path, self.mask_backtocloud, self.dilation_radius)
 
         # Update the cloud mask (again)
         # TODO use mask_backtocloud
@@ -484,7 +485,7 @@ class snow_detector:
         bandMathCloudPass1.ExecuteAndWriteOutput()
         logging.info("End of pass 1")
 
-    def pass1_5(self, snow_mask_path, cloud_mask_path):
+    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1):
         logging.info("Start pass 1.5")
         import numpy as np
         import scipy.ndimage as nd
@@ -497,10 +498,16 @@ class snow_detector:
 
         (snowlabels, nb_label) = nd.measurements.label(snow_mask)
 
+        # build the structuring element for dilation
+        struct = np.zeros((2*radius+1, 2*radius+1))
+        y,x = np.ogrid[-radius:radius+1, -radius:radius+1]
+        mask = x**2 + y**2 <= radius**2
+        struct[mask] = 1
+
         # For each snow area
         for lab in range(1, nb_label+1):
             # Compute external contours
-            patch_neige_dilat = nd.binary_dilation(np.where(snowlabels == lab, 1, 0))
+            patch_neige_dilat = nd.binary_dilation(np.where(snowlabels == lab, 1, 0), struct)
             contour = np.where((snow_mask==0) & (patch_neige_dilat==1))
 
             # Compute percent of surronding cloudy pixels
