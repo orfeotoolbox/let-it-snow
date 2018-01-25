@@ -164,42 +164,73 @@ def band_mathX(il, out, exp, ram=None, out_type=None):
     else:
         logging.error("Parameters il, out and exp are required")
 
-def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
-                    ram=None, out_type=None):
-    """ Create and configure the Compute Contours application
-        using otb.Registry.CreateApplication("ComputeContours")
+def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, reverse, offset, centeroffset, outhist, \
+                    ram=None):
+    """ Create and configure the ComputeSnowLine application
+        using otb.Registry.CreateApplication("ComputeSnowLine")
 
     Keyword arguments:
-    img_in -- the input image
-    img_out -- the output image
-    foreground_value -- the value corresponding to the region to extract
-    fullyconnected -- boolean to use 8 connexity
-    ram -- the ram limitation (not mandatory)
-    out_type -- the output image pixel type  (not mandatory)
+    TODO
     """
-    if img_in and foreground_value:
-        logging.info("Processing ComputeContours with args:")
-        logging.info("in = " + img_in)
-        logging.info("foreground_value = " + foreground_value)
-        logging.info("fullyconnected = " + str(fullyconnected))
+    if img_dem and img_snow and img_cloud:
+        logging.info("Processing ComputeSnowLine with args:")
+        logging.info(img_dem)
+        logging.info(img_snow)
+        logging.info(img_cloud)
+        logging.info(dz)
+        logging.info(fsnowlim)
+        logging.info(outhist)
+        
+        snowLineApp = otb.Registry.CreateApplication("ComputeSnowLine")
+        snowLineApp.SetParameterString("dem", img_dem)
+        snowLineApp.SetParameterString("ins", img_snow)
+        snowLineApp.SetParameterString("inc", img_cloud)
+        snowLineApp.SetParameterString("outhist", outhist)
 
-        cloudMaskApp = otb.Registry.CreateApplication("ComputeContours")
-        cloudMaskApp.SetParameterString("foregroundvalue", foreground_value)
-        if img_out is not None:
-            logging.info("out = " + img_out)
-            cloudMaskApp.SetParameterString("out", img_out)
-        if fullyconnected:
-            cloudMaskApp.SetParameterString("fullyconnected", "true")
-        cloudMaskApp.SetParameterString("inputmask", img_in)
+        # Scalar parameter
+        snowLineApp.SetParameterInt("dz", dz)
+        snowLineApp.SetParameterFloat("fsnowlim", fsnowlim)
+        snowLineApp.SetParameterInt("offset", offset)
+        snowLineApp.SetParameterInt("centeroffset", centeroffset)
+        
+        if reverse:
+            snowLineApp.SetParameterString("reverse", "true")
+
         if ram is not None:
             logging.info("ram = " + str(ram))
-            cloudMaskApp.SetParameterString("ram", str(ram))
-        if out_type is not None:
-            logging.info("outtype = " + str(out_type))
-            cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
-        return cloudMaskApp
+            snowLineApp.SetParameterString("ram", str(ram))
+        
+        return snowLineApp
     else:
-        logging.error("Parameters img_in and foreground_value are required")
+        logging.error("Parameters img_dem, img_snow, img_cloud and outhist are required")
+
+def compute_nb_pixels(img, lower, upper, ram=None):
+    """ Create and configure the ComputeNbPixels application
+        using otb.Registry.CreateApplication("ComputeNbPixels")
+
+    Keyword arguments:
+    TODO
+    """
+    if img:
+        logging.info("Processing ComputeNbPixels with args:")
+        logging.info(img)
+        logging.info(lower)
+        logging.info(upper)
+        
+        computeNbPixelsApp = otb.Registry.CreateApplication("ComputeNbPixels")
+        computeNbPixelsApp.SetParameterString("in", img)
+
+        # Scalar parameter
+        computeNbPixelsApp.SetParameterInt("lower", lower)
+        computeNbPixelsApp.SetParameterInt("upper", upper)
+        
+        if ram is not None:
+            logging.info("ram = " + str(ram))
+            computeNbPixelsApp.SetParameterString("ram", str(ram))
+        
+        return computeNbPixelsApp
+    else:
+        logging.error("Parameters img is required")
 
 def super_impose(img_in, mask_in, img_out, interpolator = None,
                 fill_value=None, ram=None, out_type=None):
@@ -240,6 +271,44 @@ def super_impose(img_in, mask_in, img_out, interpolator = None,
     else:
         logging.error("Parameters img_in, img_out and mask_in are required")
 
+def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
+                    ram=None, out_type=None):
+    """ Create and configure the Compute Contours application
+        using otb.Registry.CreateApplication("ComputeContours")
+
+    Keyword arguments:
+    img_in -- the input image
+    img_out -- the output image
+    foreground_value -- the value corresponding to the region to extract
+    fullyconnected -- boolean to use 8 connexity
+    ram -- the ram limitation (not mandatory)
+    out_type -- the output image pixel type  (not mandatory)
+    """
+    if img_in and foreground_value:
+        logging.info("Processing ComputeContours with args:")
+        logging.info("in = " + img_in)
+        logging.info("foreground_value = " + foreground_value)
+        logging.info("fullyconnected = " + str(fullyconnected))
+
+        cloudMaskApp = otb.Registry.CreateApplication("ComputeContours")
+        cloudMaskApp.SetParameterString("foregroundvalue", foreground_value)
+        if img_out is not None:
+            logging.info("out = " + img_out)
+            cloudMaskApp.SetParameterString("out", img_out)
+        if fullyconnected:
+            cloudMaskApp.SetParameterString("fullyconnected", "true")
+            cloudMaskApp.SetParameterString("inputmask", img_in)
+        if ram is not None:
+            logging.info("ram = " + str(ram))
+            cloudMaskApp.SetParameterString("ram", str(ram))
+        if out_type is not None:
+            logging.info("outtype = " + str(out_type))
+            cloudMaskApp.SetParameterOutputImagePixelType("out", out_type)
+        return cloudMaskApp
+    else:
+        logging.error("Parameters img_in and foreground_value are required")
+
+        
 def confusion_matrix(img_in, ref_in, out, ref_no_data=None, ram=None):
     """ Create and configure the otbComputeConfusionMatrix application
         using otb.Registry.CreateApplication("ComputeConfusionMatrix")

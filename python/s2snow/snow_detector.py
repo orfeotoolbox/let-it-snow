@@ -28,15 +28,11 @@ from gdalconst import GA_ReadOnly
 # OTB Applications
 import otbApplication as otb
 
-# Internal C++ lib to compute histograms and minimum elevation threshold
-# (step 2)
-import histo_utils_ext
-
 # Preprocessing script
 from s2snow.dem_builder import build_dem
 
 # Import python decorators for the different needed OTB applications
-from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask, band_math
+from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask, band_math, compute_snow_line, compute_nb_pixels
 
 # Import utilities for snow detection
 from s2snow.utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
@@ -466,25 +462,19 @@ class snow_detector:
     def pass2(self):
         ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
-        # Pass 2: compute snow fraction (c++)
-        # FIXME: use np.count here ?
-        nb_snow_pixels = histo_utils_ext.compute_nb_pixels_between_bounds(
-            self.pass1_path, 0, 1)
+
+        # Pass 2: compute snow fraction (c++ app)
+        nb_pixels_app = compute_nb_pixels(self.pass1_path, 0, 1)
+        nb_pixels_app.Execute()
+        
+        nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
         logging.info("Number of snow pixels =" + str(nb_snow_pixels))
 
         # Compute Zs elevation fraction and histogram values
         # We compute it in all case as we need to check histogram values to
         # detect cold clouds in optionnal pass4
 
-        #c++ function
-        logging.info("histo_utils_ext.compute_snowline args:")
-        logging.info(self.dem)
-        logging.info(self.pass1_path)
-        logging.info(op.join(self.path_tmp, "cloud_pass1.tif"))
-        logging.info(self.dz)
-        logging.info(self.fsnow_lim)
-        logging.info(self.histogram_path)
-        self.zs = histo_utils_ext.compute_snowline(
+        snow_line_app = compute_snow_line(
             self.dem,
             self.pass1_path,
             op.join(self.path_tmp, "cloud_pass1.tif"),
@@ -493,8 +483,13 @@ class snow_detector:
             False,
             -2,
             -self.dz / 2,
-            self.histogram_path)
+            self.histogram_path,
+            self.ram)
 
+        snow_line_app.Execute()
+        
+        self.zs = snow_line_app.GetParameterInt("zs")
+        
         logging.info("computed ZS:" + str(self.zs))
 
         if nb_snow_pixels > self.fsnow_total_lim:

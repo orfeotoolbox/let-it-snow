@@ -31,13 +31,18 @@
  * \deprecated Use compute_zs_ng and compute_zs_ng_internal to compute zs elevation
  */
 
+
+/**
+* compute_snowline: DEPRECATED ((use ComputeSnowLine instead)
+*/
 short compute_snowline(const std::string & infname, const std::string & inmasksnowfname, const std::string & inmaskcloudfname, const int dz, const float fsnow_lim, const bool reverse, const int offset, const int center_offset, const char * histo_file=NULL);
 
 short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const bool reverse, const int offset, const int center_offset,  const char* histo_file=NULL);
 
 short get_elev_snowline_from_bin(const itk::Statistics::ImageToHistogramFilter<itk::VectorImage<short, 2> >::HistogramType* histogram, const unsigned int i, const float fsnow_lim, const int offset , const  int center_offset);
 
-/**
+/**e
+ * DEPRECATED (use ComputeNbPixels instead)
  * \f int compute_nb_pixels_between_bounds(const std::string & infname, const int lowerbound, const int upperbound)
  * \brief Compute number of pixels between bounds
  */
