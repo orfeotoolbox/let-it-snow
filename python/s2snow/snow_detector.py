@@ -538,12 +538,35 @@ class snow_detector:
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
 
         # Pass 2: compute snow fraction (c++ app)
-        nb_pixels_app = compute_nb_pixels(self.pass1_path, 0, 1)
-        nb_pixels_app.Execute()
+        # FIXME remove related OTB app
+        # TODO remove related application
         
-        nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
-        logging.info("Number of snow pixels =" + str(nb_snow_pixels))
+        #nb_pixels_app = compute_nb_pixels(self.pass1_path, 0, 1)
+        #nb_pixels_app.Execute()
+        
+        #nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
+        #logging.info("Number of snow pixels =" + str(nb_snow_pixels))
 
+        #Compute snow fraction
+
+        # Apply the no-data mask
+        bandMathNoData = band_math([self.pass1_path,
+                                    self.nodata_path],
+                                   op.join(self.path_tmp, "pass1_with_nodata.tif"),
+                                   "im2b1==1?2:im1b1",
+                                   self.ram,
+                                   otb.ImagePixelType_uint8)
+        
+        bandMathNoData.ExecuteAndWriteOutput()
+        bandMathNoData = None
+        
+        # Compute snow fraction in the pass1 image (and take into account nodata pixels)
+        snow_fraction = compute_percent(op.join(self.path_tmp, "pass1_with_nodata.tif"), 1, 2)/100
+        logging.info("snow fraction in pass1 image:" + str(snow_fraction))
+
+        # Remove pass1_with_nodata.tif
+        os.remove(op.join(self.path_tmp, "pass1_with_nodata.tif"))
+        
         # Compute Zs elevation fraction and histogram values
         # We compute it in all case as we need to check histogram values to
         # detect cold clouds in optionnal pass4
@@ -566,7 +589,7 @@ class snow_detector:
         
         logging.info("computed ZS:" + str(self.zs))
 
-        if nb_snow_pixels > self.fsnow_total_lim:
+        if snow_fraction > self.fsnow_total_lim:
             # Test zs value (-1 means that no zs elevation was found)
             if self.zs != -1:
                 # NDSI threshold again
