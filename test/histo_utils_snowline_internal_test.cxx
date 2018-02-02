@@ -38,7 +38,7 @@ int main(int argc, char * argv [])
   CreateImage(image);
 
   const int result = compute_snowline_internal(image,minValue,maxValue,dz,fsnow_lim,fclear_lim,reverse,offset,center_offset,histo_path);
-  const int expected = atoi(argv[9]); 
+  const int expected = atoi(argv[10]); 
   std::cout << "Computed zs: " << result << std::endl;
 
   if (result == expected)

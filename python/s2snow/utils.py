@@ -77,7 +77,8 @@ def polygonize(input_img, input_mask, output_vec, use_gina, min_area, dp_toler):
             "-mask", input_mask, output_vec])
     elif use_gina and (gdal_trace_outline_path is None):
         logging.error("Cannot use gdal_trace_outline, executable not found on system!")
-        logging.error("You can disable the use_gdal_trace_outline option or install the tools")
+        logging.error("The vector file will not be generated.")
+        logging.error("You can either disable the use_gdal_trace_outline option or install the tools")
     else:
         logging.info("Use gdal_trace_outline to polygonize raster mask...")
 
