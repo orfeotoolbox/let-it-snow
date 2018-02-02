@@ -222,13 +222,19 @@ def get_raster_as_array(raster_file_name):
     return array
 
 
-def compute_percent(image_path, value, no_data):
+def compute_percent(image_path, value, no_data=None):
     """ Compute the ocurrence of value as percentage in the input image
     """
     array_image = get_raster_as_array(image_path)
-    count_pix = np.sum(array_image == int(value))
-    tot_pix = np.sum(array_image != int(no_data))
-    return (float(count_pix) / float(tot_pix)) * 100
+    tot_pix = array_image.size
+    if no_data is not None:
+        tot_pix = np.sum(array_image != int(no_data))
+
+    if tot_pix != 0:
+        count_pix = np.sum(array_image == int(value))
+        return (float(count_pix) / float(tot_pix)) * 100
+    else:
+        return 0
 
 
 def format_SEB_VEC_values(path, snow_label, cloud_label, nodata_label):

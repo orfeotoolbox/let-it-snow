@@ -90,8 +90,9 @@ class snow_detector:
         self.strict_cloud_mask = cloud.get("strict_cloud_mask", False)
 
         ## Suppress snow area surrounded by cloud (off by default)
-        self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", True)
+        self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", False)
         self.dilation_radius = cloud.get("rm_snow_inside_cloud_dilation_radius", 5)
+        self.cloud_threshold = cloud.get("rm_snow_inside_cloud_threshold", 0.85)
 
         # Parse input parameters
         inputs = data["inputs"]
@@ -208,6 +209,7 @@ class snow_detector:
         self.pass2_path = op.join(self.path_tmp, "pass2.tif")
         self.pass3_path = op.join(self.path_tmp, "pass3.tif")
         self.redBand_path = op.join(self.path_tmp, "red.tif")
+        self.all_cloud_path = op.join(self.path_tmp, "all_cloud_mask.tif")
         self.cloud_refine_path = op.join(self.path_tmp, "cloud_refine.tif")
         self.nodata_path = op.join(self.path_tmp, "nodata_mask.tif")
 
@@ -359,15 +361,14 @@ class snow_detector:
         dataset = None
 
         # Extract all masks
-        # Warning, this actually concern all cloud except the thiner ones.
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
+        bandMathAllCloud = band_math(
+            [self.cloud_init],
             op.join(self.path_tmp, "all_cloud_mask.tif") + GDAL_OPT,
-            str(self.all_cloud_mask),
+            "(im1b1 > 0)?1:0",
             self.ram,
             otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
+        bandMathAllCloud.ExecuteAndWriteOutput()
+        bandMathAllCloud=None
 
         # Extract shadow masks
         # First extract shadow wich corresponds to shadow of clouds inside the
@@ -468,7 +469,10 @@ class snow_detector:
 
         # apply pass 1.5 to discard uncertain snow area
         if self.rm_snow_inside_cloud:
-            self.pass1_5(self.pass1_path, self.mask_backtocloud, self.dilation_radius)
+            self.pass1_5(self.pass1_path,
+                         self.mask_backtocloud,
+                         self.dilation_radius,
+                         self.cloud_threshold)
 
         # Update the cloud mask (again)
         # TODO use mask_backtocloud
@@ -485,14 +489,13 @@ class snow_detector:
         bandMathCloudPass1.ExecuteAndWriteOutput()
         logging.info("End of pass 1")
 
-    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1):
+    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85):
         logging.info("Start pass 1.5")
         import numpy as np
         import scipy.ndimage as nd
 
         snow_mask = get_raster_as_array(snow_mask_path)
         cloud_mask = get_raster_as_array(cloud_mask_path)
-        cloud_threshold = 0.85
 
         discarded_snow_area = 0
 
@@ -554,26 +557,10 @@ class snow_detector:
         #nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
         #logging.info("Number of snow pixels =" + str(nb_snow_pixels))
 
-        #Compute snow fraction
-
-        # Apply the no-data mask
-        bandMathNoData = band_math([self.pass1_path,
-                                    self.nodata_path],
-                                   op.join(self.path_tmp, "pass1_with_nodata.tif"),
-                                   "im2b1==1?2:im1b1",
-                                   self.ram,
-                                   otb.ImagePixelType_uint8)
-        
-        bandMathNoData.ExecuteAndWriteOutput()
-        bandMathNoData = None
-        
-        # Compute snow fraction in the pass1 image (and take into account nodata pixels)
-        snow_fraction = compute_percent(op.join(self.path_tmp, "pass1_with_nodata.tif"), 1, 2)/100
+        # Compute snow fraction in the pass1 image (including nodata pixels)
+        snow_fraction = compute_percent(self.pass1_path, 1)/100
         logging.info("snow fraction in pass1 image:" + str(snow_fraction))
 
-        # Remove pass1_with_nodata.tif
-        os.remove(op.join(self.path_tmp, "pass1_with_nodata.tif"))
-        
         # Compute Zs elevation fraction and histogram values
         # We compute it in all case as we need to check histogram values to
         # detect cold clouds in optionnal pass4
