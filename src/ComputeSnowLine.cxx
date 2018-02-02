@@ -57,6 +57,9 @@ public:
     AddParameter(ParameterType_Float, "fsnowlim", "fsnowlim");
     SetParameterDescription("fsnowlim", "fsnowlim");
 
+    AddParameter(ParameterType_Float, "fclearlim", "fclearlim");
+    SetParameterDescription("fclearlim", "fclearlim");
+
     AddParameter(ParameterType_Empty, "reverse", "reverse");
     SetParameterDescription("reverse", "reverse");
     MandatoryOff("reverse");
@@ -126,6 +129,7 @@ public:
                                     max,
                                     GetParameterInt("dz"),
                                     GetParameterFloat("fsnowlim"),
+                                    GetParameterFloat("fclearlim"),
                                     IsParameterEnabled("reverse"),
                                     GetParameterInt("offset"),
                                     GetParameterInt("centeroffset"),

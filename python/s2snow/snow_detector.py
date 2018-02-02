@@ -64,7 +64,9 @@ class snow_detector:
         self.do_preprocessing = general.get("preprocessing", False)
         self.nodata = general.get("nodata", -10000)
         self.multi = general.get("multi", 1)  # Multiplier to handle S2 scaling
-        self.target_resolution = general.get("target_resolution", -1)  # Resolutions in meter for the snow product (if -1 the target resolution is equal to the max resolution of the input band)
+
+        # Resolutions in meter for the snow product (if -1 the target resolution is equal to the max resolution of the input band)
+        self.target_resolution = general.get("target_resolution", -1)  
 
         # Parse vector option
         vector_options = data["vector"]
@@ -85,6 +87,7 @@ class snow_detector:
         self.shadow_out_mask = cloud.get("shadow_out_mask")
         self.all_cloud_mask = cloud.get("all_cloud_mask")
         self.high_cloud_mask = cloud.get("high_cloud_mask")
+
         ## Strict cloud mask usage (off by default)
         ## If set to True no pixel from the cloud mask will be marked as snow
         self.strict_cloud_mask = cloud.get("strict_cloud_mask", False)
@@ -197,6 +200,9 @@ class snow_detector:
         self.fsnow_lim = snow.get("fsnow_lim")
         self.fsnow_total_lim = snow.get("fsnow_total_lim")
         self.zs = -1  # default value when zs is not set
+
+        # Define the minimum amount of clear pixels altitude bin 
+        self.fclear_lim = snow.get("fclear_lim", 0.1)
 
         # Define label for output snow product
         self.label_no_snow = "0"
@@ -559,6 +565,7 @@ class snow_detector:
             self.all_cloud_path,
             self.dz,
             self.fsnow_lim,
+            self.fclear_lim,
             False,
             -2,
             -self.dz / 2,
