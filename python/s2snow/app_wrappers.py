@@ -164,7 +164,7 @@ def band_mathX(il, out, exp, ram=None, out_type=None):
     else:
         logging.error("Parameters il, out and exp are required")
 
-def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, reverse, offset, centeroffset, outhist, \
+def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, reverse, offset, centeroffset, outhist, \
                     ram=None):
     """ Create and configure the ComputeSnowLine application
         using otb.Registry.CreateApplication("ComputeSnowLine")
@@ -190,6 +190,7 @@ def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, reverse, offse
         # Scalar parameter
         snowLineApp.SetParameterInt("dz", dz)
         snowLineApp.SetParameterFloat("fsnowlim", fsnowlim)
+        snowLineApp.SetParameterFloat("fclearlim", fclearlim)
         snowLineApp.SetParameterInt("offset", offset)
         snowLineApp.SetParameterInt("centeroffset", centeroffset)
         
