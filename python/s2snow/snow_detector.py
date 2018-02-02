@@ -459,7 +459,7 @@ class snow_detector:
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
 
         bandMathPass1 = band_math(
-            [self.img, self.cloud_refine_path],
+            [self.img, self.all_cloud_path],
             self.pass1_path + GDAL_OPT,
             condition_pass1 + "?1:0",
             self.ram,
@@ -474,19 +474,7 @@ class snow_detector:
                          self.dilation_radius,
                          self.cloud_threshold)
 
-        # Update the cloud mask (again)
-        # TODO use mask_backtocloud
-        condition_cloud_pass1 = "(im1b1==1 or (im2b1!=1 and im3b1>0 and im4b1> " + \
-            str(self.rRed_backtocloud) + "))"
-
-        bandMathCloudPass1 = band_math(
-            [self.cloud_refine_path, self.pass1_path,
-             self.cloud_init, self.redBand_path],
-            op.join(self.path_tmp, "cloud_pass1.tif") + GDAL_OPT,
-            condition_cloud_pass1 + "?1:0",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathCloudPass1.ExecuteAndWriteOutput()
+        # There is no need to update cloud mask as we do not use the cloud_refine_mask
         logging.info("End of pass 1")
 
     def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85):
@@ -568,7 +556,7 @@ class snow_detector:
         snow_line_app = compute_snow_line(
             self.dem,
             self.pass1_path,
-            op.join(self.path_tmp, "cloud_pass1.tif"),
+            self.all_cloud_path,
             self.dz,
             self.fsnow_lim,
             False,
@@ -688,7 +676,7 @@ class snow_detector:
         # Compute the complete snow mask
         app = compute_snow_mask(self.pass1_path,
                                 self.pass2_path,
-                                op.join(self.path_tmp, "cloud_pass1.tif"),
+                                self.all_cloud_path,
                                 self.cloud_refine_path,
                                 self.snow_all_path,
                                 self.ram,
