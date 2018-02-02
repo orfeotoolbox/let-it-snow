@@ -151,7 +151,7 @@ add_test(NAME histo_utils_snowline_internal_test
     100
     20
     0.1
-    0.1
+    0
     0
     -2
     -10
@@ -164,7 +164,7 @@ add_test(NAME histo_utils_snowline_reverse_internal_test
     100
     20
     0.99
-    0.1
+    0
     1
     0
     0
