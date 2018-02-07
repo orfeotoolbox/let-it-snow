@@ -42,7 +42,11 @@ conf_template = {"general":{"pout":"",
                           "rf":12,
                           "red_darkcloud":500,
                           "red_backtocloud":100,
-                          "strict_cloud_mask":False}}
+                          "strict_cloud_mask":False,
+                          "rm_snow_inside_cloud":False,
+                          "rm_snow_inside_cloud_dilation_radius":1,
+                          "rm_snow_inside_cloud_threshold":0.85}}
+
 
 ### Mission Specific Parameters ###
 S2_parameters = {"multi":10,
@@ -214,11 +218,11 @@ def main():
         # Override parameters for group general
         if args.nodata:
             jsonData["general"]["nodata"] = args.nodata
-        if args.nodata:
+        if args.preprocessing is not None:
             jsonData["general"]["preprocessing"] = args.preprocessing
-        if args.nodata:
+        if args.generate_vector is not None:
             jsonData["vector"]["generate_vector"] = args.generate_vector
-        if args.nodata:
+        if args.log is not None:
             jsonData["general"]["log"] = args.log    
         if args.ram:
             jsonData["general"]["ram"] = args.ram
