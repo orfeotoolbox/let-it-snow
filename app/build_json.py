@@ -124,7 +124,7 @@ def read_product(inputPath, mission):
         if result:
             conf_json["inputs"]["dem"] = result[0]
         else:
-            logging.warning("No DEM found!")
+            logging.warning("No DEM found within product!")
 
         conf_json["cloud"]["shadow_in_mask"] = params["shadow_in_mask"]
         conf_json["cloud"]["shadow_out_mask"] = params["shadow_out_mask"]
@@ -216,6 +216,7 @@ def main():
         # Overide dem location
         if args.dem:
             jsonData["inputs"]["dem"] = os.path.abspath(args.dem)
+            logging.warning("Using optional external DEM!")
         # Overide cloud mask location
         if args.cloud_mask:
             jsonData["inputs"]["cloud_mask"] = os.path.abspath(args.cloud_mask)
@@ -251,6 +252,10 @@ def main():
             jsonData["cloud"]["red_darkcloud"] = args.red_darkcloud
         if args.red_backtocloud:
             jsonData["cloud"]["red_backtocloud"] = args.red_backtocloud
+
+        if not jsonData["inputs"].get("dem"):
+            logging.error("No DEM found!")
+            return 1
 
         jsonFile = open(os.path.join(outputPath, "param_test.json"), "w")
         jsonFile.write(json.dumps(jsonData, indent=4))
