@@ -41,7 +41,8 @@ conf_template = {"general":{"pout":"",
                           "high_cloud_mask":32,
                           "rf":12,
                           "red_darkcloud":500,
-                          "red_backtocloud":100}}
+                          "red_backtocloud":100,
+                          "strict_cloud_mask":False}}
 
 ### Mission Specific Parameters ###
 S2_parameters = {"multi":10,
@@ -92,6 +93,14 @@ L8_parameters = {"multi":1,
 mission_parameters = {"S2":S2_parameters,\
                       "LANDSAT8":L8_parameters,\
                       "Take5":Take5_parameters}
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def findFiles(folder, pattern):
     """ Search recursively into a folder to find a patern match
@@ -152,9 +161,9 @@ def main():
     group_general.add_argument("-nodata", type=int)
     group_general.add_argument("-ram", type=int)
     group_general.add_argument("-nb_threads", type=int)
-    #group_general.add_argument("-generate_vector", type=bool)
-    #group_general.add_argument("-preprocessing", type=bool)
-    #group_general.add_argument("-log", type=bool)
+    group_general.add_argument("-generate_vector", type=str2bool, help="true/false")
+    group_general.add_argument("-preprocessing", type=str2bool, help="true/false")
+    group_general.add_argument("-log", type=str2bool, help="true/false")
     group_general.add_argument("-multi", type=float)
     group_general.add_argument("-target_resolution", type=float)
 
@@ -180,6 +189,7 @@ def main():
     group_cloud.add_argument("-rf", type=int)
     group_cloud.add_argument("-red_darkcloud", type=int)
     group_cloud.add_argument("-red_backtocloud", type=int)
+    group_cloud.add_argument("-strict_cloud_mask", type=str2bool, help="true/false")
 
     args = parser.parse_args()
 
@@ -201,9 +211,15 @@ def main():
 
         jsonData["general"]["pout"] = outputPath
 
-        # Overide parameters for group general
+        # Override parameters for group general
         if args.nodata:
             jsonData["general"]["nodata"] = args.nodata
+        if args.nodata:
+            jsonData["general"]["preprocessing"] = args.preprocessing
+        if args.nodata:
+            jsonData["vector"]["generate_vector"] = args.generate_vector
+        if args.nodata:
+            jsonData["general"]["log"] = args.log    
         if args.ram:
             jsonData["general"]["ram"] = args.ram
         if args.nb_threads:
@@ -213,15 +229,15 @@ def main():
         if args.target_resolution:
             jsonData["general"]["target_resolution"] = args.target_resolution
             
-        # Overide dem location
+        # Override dem location
         if args.dem:
             jsonData["inputs"]["dem"] = os.path.abspath(args.dem)
             logging.warning("Using optional external DEM!")
-        # Overide cloud mask location
+        # Override cloud mask location
         if args.cloud_mask:
             jsonData["inputs"]["cloud_mask"] = os.path.abspath(args.cloud_mask)
 
-        # Overide parameters for group snow
+        # Override parameters for group snow
         if args.dz:
             jsonData["snow"]["dz"] = args.dz
         if args.ndsi_pass1:
@@ -252,7 +268,9 @@ def main():
             jsonData["cloud"]["red_darkcloud"] = args.red_darkcloud
         if args.red_backtocloud:
             jsonData["cloud"]["red_backtocloud"] = args.red_backtocloud
-
+        if args.strict_cloud_mask:
+            jsonData["cloud"]["strict_cloud_mask"] = args.strict_cloud_mask
+            
         if not jsonData["inputs"].get("dem"):
             logging.error("No DEM found!")
             return 1
