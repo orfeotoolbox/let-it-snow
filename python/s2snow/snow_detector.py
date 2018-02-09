@@ -45,10 +45,6 @@ gdal.UseExceptions()
 # syntaxx
 GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 
-# Build gdal option to generate maks of 2 bytes using otb extended filename
-# syntax
-GDAL_OPT_2B = "?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
-
 
 """This module does implement the snow detection (all passes)"""
 class snow_detector:
@@ -369,7 +365,7 @@ class snow_detector:
         # Extract all masks
         bandMathAllCloud = band_math(
             [self.cloud_init],
-            op.join(self.path_tmp, "all_cloud_mask.tif") + GDAL_OPT,
+            self.all_cloud_path + GDAL_OPT,
             "(im1b1 > 0)?1:0",
             self.ram,
             otb.ImagePixelType_uint8)
@@ -403,7 +399,7 @@ class snow_detector:
         bandMathShadow = band_math(
             [op.join(self.path_tmp, "shadow_in_mask.tif"),
              op.join(self.path_tmp, "shadow_out_mask.tif")],
-            op.join(self.path_tmp, "shadow_mask.tif")+GDAL_OPT,
+            op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT,
             "(im1b1 == 1) || (im2b1 == 1)",
             self.ram,
             otb.ImagePixelType_uint8)
@@ -427,7 +423,7 @@ class snow_detector:
         logging.info(condition_shadow)
 
         bandMathFinalShadow = band_math(
-            [op.join(self.path_tmp, "all_cloud_mask.tif"),
+            [self.all_cloud_path,
              op.join(self.path_tmp, "shadow_mask.tif"),
              op.join(self.path_tmp, "red_nn.tif"),
              op.join(self.path_tmp, "high_cloud_mask.tif")],
@@ -458,7 +454,7 @@ class snow_detector:
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
         logging.info("ndsi formula: "+ ndsi_formula)
 
-        # NDSI condition (ndsi > x and not cloud_refine)
+        # NDSI condition (ndsi > x and not cloud)
         condition_ndsi = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + " "
 
         condition_pass1 = condition_ndsi + \
@@ -476,7 +472,7 @@ class snow_detector:
         # apply pass 1.5 to discard uncertain snow area
         if self.rm_snow_inside_cloud:
             self.pass1_5(self.pass1_path,
-                         self.mask_backtocloud,
+                         self.all_cloud_path,
                          self.dilation_radius,
                          self.cloud_threshold)
 
@@ -655,14 +651,12 @@ class snow_detector:
 
         logging.info("condition snow " + condition_snow)
         
-        # TODO use mask_backtocloud
-        condition_final = condition_snow + "?"+str(self.label_snow)+":((im1b1==1) or ((im3b1>0) and (im4b1> " + \
-            str(self.rRed_backtocloud) + ")))?"+str(self.label_cloud)+":0"
+        condition_final = condition_snow + "?"+str(self.label_snow)+":((im1b1==1) or (im3b1==1))" + \
+            "?"+str(self.label_cloud)+":0"
 
         bandMathFinalCloud = band_math([self.cloud_refine_path,
                                         generic_snow_path,
-                                        self.cloud_init,
-                                        self.redBand_path],
+                                        self.mask_backtocloud],
                                        self.final_mask_path,
                                        condition_final,
                                        self.ram,
