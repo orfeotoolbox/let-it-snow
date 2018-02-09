@@ -27,7 +27,7 @@
                     "type": "integer"
                 },
                 "red_darkcloud": {
-                    "default": 500,
+                    "default": 300,
                     "description": "Maximum value of the down-sampled red band reflectance to define a dark cloud pixel.",
                     "id": "red_darkcloud",
                     "title": "The Red_darkcloud schema.",
