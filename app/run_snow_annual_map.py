@@ -46,8 +46,15 @@ def main(argv):
     logging.info("Input args = " + json_file)
 
     # Run the snow detector
-    snow_annual_map_app = snow_annual_map(data)
-    snow_annual_map_app.run()
+    snow_annual_map_evaluation_app = snow_annual_map_evaluation.snow_annual_map_evaluation(data)
+    snow_annual_map_evaluation_app.run()
+
+    if data.get("run_l8_evaluation", False):
+        snow_annual_map_evaluation_app.run_evaluation()
+
+    if data.get("run_modis_comparison", False):
+        snow_annual_map_evaluation_app.compare_modis()
+
     logging.info("End run_snow_annual_map.py")
 
 if __name__ == "__main__":
