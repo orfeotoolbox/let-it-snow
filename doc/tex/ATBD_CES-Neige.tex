@@ -275,31 +275,33 @@ After passing the pass 1 and 2 snow tests, some pixels that were originally mark
     \node[below right] at (leg.north west) {Legend};
     \node [blockinput, below of=MUSCATE] (DEM) {DEM};
     \node [decision, below of=Level 2A product] (is cloud or shadow?) {Is cloud or shadow?};
-    \node [decision, right of=is cloud or shadow?] (darkcloud) {Is shadow or high or bright cloud? \textcolor{red}{$r_D$}};
-    \node [blockfinal, right of=darkcloud] (cloudfinal1) {Cloud (pass 1)};
+    \node [blockfinal, right of=is cloud or shadow?] (cloudfinal1) {Cloud (pass 1)};
     \node [decision, below of=is cloud or shadow?] (snowtest1) {Is snow? \textcolor{red}{$n_1$}, \textcolor{red}{$r_1$}};
     \node [blockfinal, left of=snowtest1] (pass1) {Snow\\(pass 1)};
     \node [decision, below of=snowtest1] (snowlim) {Enough snow?\\ \textcolor{red}{$f_t$}};
     \node [decision, below of=snowlim] (abovezs) {Is above snowline?};
+    \node [decision, right of=abovezs] (darkcloud) {Is shadow or high or bright cloud? \textcolor{red}{$r_D$}};
     \node [block, left of=abovezs] (zs) {Snowline elevation \textcolor{red}{$d_z$}, \textcolor{red}{$f_s$}};       
-    \node [decision, right of=abovezs] (snowtest2) {Is snow? \textcolor{red}{$n_2$}, \textcolor{red}{$r_2$}};
+    \node [decision, below of=darkcloud] (snowtest2) {Is snow? \textcolor{red}{$n_2$}, \textcolor{red}{$r_2$}};
     \node [blockfinal, right of=snowtest2] (pass2) {Snow\\(pass 2)};
     \node [decision, below of=snowtest2] (wascloud) {Was cloud?};
 	\node [blockfinal, right of=wascloud] (nosnow) {No snow};
-    \node [decision, below of=wascloud] (backtocloud) {Is dark? \textcolor{red}{$r_B$}};
-    \node [blockfinal, left of=backtocloud] (cloudfinal) {Cloud (pass 2)};
+    \node [decision, below of=wascloud] (backtocloud) {Is dark?
+      \textcolor{red}{$r_B$}};
+    \node [blockfinal, right of=darkcloud] (cloudfinal2) {Cloud (pass 2)};
+    \node [blockfinal, left of=backtocloud] (cloudfinal) {Cloud (final)};
 
     % Draw edges
     \path [line] (Level 2A product) -- (is cloud or shadow?);
     \path [line,dashed] (MUSCATE) -- (Level 2A product);
-    \path [line] (is cloud or shadow?) -- node[near start]{yes} (darkcloud);
+    \path [line] (is cloud or shadow?) -- node[near start]{yes} (cloudfinal1);
     \path [line] (is cloud or shadow?) -- node[near start]{no} (snowtest1);
-    \path [line] (darkcloud) -- node[near start]{yes}(cloudfinal1);
-    \path [line] (darkcloud) |- node[near start]{no}(snowtest1);
     \path [line] (snowtest1) -- node[near start]{yes} (pass1);
     \path [line] (snowtest1) -- node[near start]{yes} (snowlim);
     \path [line] (snowlim) -- node[near start]{yes} (abovezs);
-    \path [line] (abovezs) -- node[near start]{yes} (snowtest2);
+    \path [line] (abovezs) -- node[near start]{yes} (darkcloud);
+    \path [line] (darkcloud) -- node[near start]{yes}(cloudfinal2);
+    \path [line] (darkcloud) -- node[near start]{no}(snowtest2);
     \path [line] (snowtest2) -- node[near start]{yes} (pass2);
     \path [line] (snowtest2) -- node[near start]{no} (wascloud);
     \path [line,dashed] (pass1) -- (zs);
