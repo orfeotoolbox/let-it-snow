@@ -18,6 +18,7 @@
 
 import os
 import os.path as op
+import shutil
 import logging
 from lxml import etree
 
@@ -213,6 +214,7 @@ class snow_detector:
         self.pass3_path = op.join(self.path_tmp, "pass3.tif")
         self.redBand_path = op.join(self.path_tmp, "red.tif")
         self.all_cloud_path = op.join(self.path_tmp, "all_cloud_mask.tif")
+        self.cloud_pass1_path = op.join(self.path_tmp, "cloud_pass1.tif")
         self.cloud_refine_path = op.join(self.path_tmp, "cloud_refine.tif")
         self.nodata_path = op.join(self.path_tmp, "nodata_mask.tif")
         self.mask_backtocloud = op.join(self.path_tmp, "mask_backtocloud.tif")
@@ -418,23 +420,6 @@ class snow_detector:
         computeCMApp.ExecuteAndWriteOutput()
         computeCMApp = None
 
-        cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
-        condition_shadow = "((im1b1==1 and " + cond_cloud2 + \
-            ") or im2b1==1 or im4b1==1)"
-
-        logging.info(condition_shadow)
-
-        bandMathFinalShadow = band_math(
-            [self.all_cloud_path,
-             op.join(self.path_tmp, "shadow_mask.tif"),
-             op.join(self.path_tmp, "red_nn.tif"),
-             op.join(self.path_tmp, "high_cloud_mask.tif")],
-            self.cloud_refine_path + GDAL_OPT,
-            condition_shadow,
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathFinalShadow.ExecuteAndWriteOutput()
-
         # Extract also a mask for condition back to cloud
         cloud_mask_for_backtocloud = self.cloud_init
 
@@ -470,14 +455,43 @@ class snow_detector:
         bandMathPass1.ExecuteAndWriteOutput()
         bandMathPass1 = None
 
+        # create a working copy of all cloud mask
+        shutil.copy(self.all_cloud_path, self.cloud_pass1_path)
+
         # apply pass 1.5 to discard uncertain snow area
+        # warn this function update in-place both snow and cloud mask
         if self.rm_snow_inside_cloud:
             self.pass1_5(self.pass1_path,
-                         self.all_cloud_path,
+                         self.cloud_pass1_path,
                          self.dilation_radius,
                          self.cloud_threshold)
 
-        # There is no need to update cloud mask as we do not use the cloud_refine_mask
+        # The computation of cloud refine is done below,
+        # because the inital cloud may be updated within pass1_5
+
+        # Refine cloud mask for snow detection
+        cond_cloud2 = "im3b1>" + str(self.rRed_darkcloud)
+
+        # this condition check if pass1_5 caused a cloud mask update
+        condition_donuts = "(im1b1!=im5b1)"
+
+        condition_shadow = "((im1b1==1 and " + cond_cloud2 + \
+            ") or im2b1==1 or im4b1==1 or " + condition_donuts + ")"
+
+        logging.info(condition_shadow)
+
+        bandMathFinalShadow = band_math(
+            [self.all_cloud_path,
+             op.join(self.path_tmp, "shadow_mask.tif"),
+             op.join(self.path_tmp, "red_nn.tif"),
+             op.join(self.path_tmp, "high_cloud_mask.tif"),
+             self.cloud_pass1_path],
+            self.cloud_refine_path + GDAL_OPT,
+            condition_shadow,
+            self.ram,
+            otb.ImagePixelType_uint8)
+        bandMathFinalShadow.ExecuteAndWriteOutput()
+
         logging.info("End of pass 1")
 
     def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85):
@@ -487,6 +501,8 @@ class snow_detector:
 
         snow_mask = get_raster_as_array(snow_mask_path)
         cloud_mask = get_raster_as_array(cloud_mask_path)
+
+        snow_mask_init = np.copy(snow_mask)
 
         discarded_snow_area = 0
 
@@ -528,6 +544,14 @@ class snow_detector:
 
         logging.info(str(nb_label) + ' labels neige apres correction')
 
+        # Update cloud mask with discared snow area
+        updated_cloud_mask = np.where((snow_mask == 0) & (snow_mask_init == 1), 1, cloud_mask)
+        dataset = gdal.Open(cloud_mask_path, GA_Update)
+        band = dataset.GetRasterBand(1)
+        band.WriteArray(updated_cloud_mask)
+        dataset = None
+
+        # Update snow mask
         dataset = gdal.Open(snow_mask_path, GA_Update)
         band = dataset.GetRasterBand(1)
         band.WriteArray(snow_mask)
@@ -560,7 +584,7 @@ class snow_detector:
         snow_line_app = compute_snow_line(
             self.dem,
             self.pass1_path,
-            self.all_cloud_path,
+            self.cloud_pass1_path,
             self.dz,
             self.fsnow_lim,
             self.fclear_lim,
@@ -680,7 +704,7 @@ class snow_detector:
         # Compute the complete snow mask
         app = compute_snow_mask(self.pass1_path,
                                 self.pass2_path,
-                                self.all_cloud_path,
+                                self.cloud_pass1_path,
                                 self.cloud_refine_path,
                                 self.snow_all_path,
                                 self.ram,
