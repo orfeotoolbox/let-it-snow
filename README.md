@@ -53,11 +53,6 @@ pixel_value & 00000101
      * 100: Snow
      * 205: Cloud including cloud shadow
      * 254: No data
-  * Type field:
-     * no-snow
-     * snow
-     * cloud
-     * no-data
 
 ## Data set example
 
