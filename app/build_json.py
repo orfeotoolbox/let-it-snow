@@ -175,7 +175,7 @@ def main():
     group_inputs = parser.add_argument_group('inputs', 'input files')
     group_inputs.add_argument("-dem", help="dem file path, to use for processing the input product")
     group_inputs.add_argument("-cloud_mask", help="cloud mask file path")
-    
+
     group_snow = parser.add_argument_group('snow', 'snow parameters')
     group_snow.add_argument("-dz", type=int)
     group_snow.add_argument("-ndsi_pass1", type=float)
@@ -223,7 +223,7 @@ def main():
         if args.generate_vector is not None:
             jsonData["vector"]["generate_vector"] = args.generate_vector
         if args.log is not None:
-            jsonData["general"]["log"] = args.log    
+            jsonData["general"]["log"] = args.log
         if args.ram:
             jsonData["general"]["ram"] = args.ram
         if args.nb_threads:
@@ -232,7 +232,7 @@ def main():
             jsonData["general"]["multi"] = args.multi
         if args.target_resolution:
             jsonData["general"]["target_resolution"] = args.target_resolution
-            
+
         # Override dem location
         if args.dem:
             jsonData["inputs"]["dem"] = os.path.abspath(args.dem)
@@ -274,7 +274,7 @@ def main():
             jsonData["cloud"]["red_backtocloud"] = args.red_backtocloud
         if args.strict_cloud_mask:
             jsonData["cloud"]["strict_cloud_mask"] = args.strict_cloud_mask
-            
+
         if not jsonData["inputs"].get("dem"):
             logging.error("No DEM found!")
             return 1

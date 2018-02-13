@@ -37,24 +37,28 @@ def call_subprocess(process_list):
     logging.info(out)
     sys.stderr.write(err)
 
-def str_to_datetime(date_string, format = "%Y%m%d"):
+def str_to_datetime(date_string, format="%Y%m%d"):
     """ Return the datetime corresponding to the input string
     """
     logging.debug(date_string)
     return datetime.strptime(date_string, format)
 
-def datetime_to_str(date, format = "%Y%m%d"):
+def datetime_to_str(date, format="%Y%m%d"):
     """ Return the datetime corresponding to the input string
     """
     logging.debug(date)
     return date.strftime(format)
 
 def write_list_to_file(filename, str_list):
+    """ Write in a file a list of string as separate lines
+    """
     output_file = open(filename, "w")
     output_file.write("\n".join(str_list))
     output_file.close()
 
 def read_list_from_file(filename):
+    """ Read file lines as a list of string removing end-of-line delimiters
+    """
     output_file = open(filename, "r")
     lines = output_file.readlines()
     output_file.close()
@@ -78,7 +82,8 @@ def polygonize(input_img, input_mask, output_vec, use_gina, min_area, dp_toler):
     elif use_gina and (gdal_trace_outline_path is None):
         logging.error("Cannot use gdal_trace_outline, executable not found on system!")
         logging.error("The vector file will not be generated.")
-        logging.error("You can either disable the use_gdal_trace_outline option or install the tools")
+        logging.error("You can either disable the use_gdal_trace_outline option" \
+                                    "or install the tools")
     else:
         logging.info("Use gdal_trace_outline to polygonize raster mask...")
 

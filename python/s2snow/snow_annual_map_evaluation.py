@@ -18,14 +18,20 @@ import os.path as op
 import shutil
 import logging
 import subprocess
-import multiprocessing
-from lxml import etree
-from xml.dom import minidom
-from datetime import timedelta
 
 from osgeo import gdal, ogr, osr
 import gdalconst
-from gdalconst import GA_ReadOnly
+
+# OTB Applications
+import otbApplication as otb
+
+# Import python decorators for the different needed OTB applications
+from s2snow.app_wrappers import band_math, super_impose, confusion_matrix
+from s2snow.utils import get_raster_as_array, apply_color_table
+from s2snow.utils import str_to_datetime, datetime_to_str
+from s2snow.utils import write_list_to_file, read_list_from_file
+from s2snow.snow_annual_map import snow_annual_map
+
 
 # Build gdal option to generate maks of 1 byte using otb extended filename
 # syntaxx
@@ -35,26 +41,16 @@ GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 # syntax
 GDAL_OPT_2B = "?&gdal:co:NBITS=2&gdal:co:COMPRESS=DEFLATE"
 
-# OTB Applications
-import otbApplication as otb
-
-# Import python decorators for the different needed OTB applications
-from s2snow.app_wrappers import band_math, get_app_output, super_impose, confusion_matrix
-
-from s2snow.snow_product_parser import load_snow_product
-from s2snow.utils import get_raster_as_array, apply_color_table
-from s2snow.utils import str_to_datetime, datetime_to_str
-from s2snow.utils import write_list_to_file, read_list_from_file
-from s2snow.snow_annual_map import snow_annual_map
-
 def get_raster_extent_as_poly(raster1):
+    """ Return the extent of the input raster as polygon
+    """
     dataset1 = gdal.Open(raster1, gdalconst.GA_ReadOnly)
     gt1 = dataset1.GetGeoTransform()
     srs1 = osr.SpatialReference()
     srs1.ImportFromWkt(dataset1.GetProjection())
-    sizeX1=dataset1.RasterXSize
-    sizeY1=dataset1.RasterYSize
-    dataset1=None
+    sizeX1 = dataset1.RasterXSize
+    sizeY1 = dataset1.RasterYSize
+    dataset1 = None
 
     bounds = [gt1[0], gt1[3], gt1[0] + (gt1[1] * sizeX1), gt1[3] + (gt1[5] * sizeY1)]
     logging.info(bounds)
@@ -73,6 +69,8 @@ def get_raster_extent_as_poly(raster1):
     return poly, srs1
 
 def write_poly_to_shapefile(poly, shapefile_name, srs=None):
+    """ Write a polygon geometry to shapefile
+    """
     driver = ogr.GetDriverByName('ESRI Shapefile')
 
     ds = driver.CreateDataSource(shapefile_name)
@@ -93,7 +91,10 @@ def write_poly_to_shapefile(poly, shapefile_name, srs=None):
     layer.CreateFeature(feat)
     ds = layer = feat = geom = None
 
-def get_raster_intersection(raster1,raster2):
+def get_raster_intersection(raster1, raster2):
+    """ Compute the intersection of 2 raters
+    Return the instersection polygon and the associated projection
+    """
     poly1, srs1 = get_raster_extent_as_poly(raster1)
     print "poly1", poly1
 
@@ -129,13 +130,16 @@ class snow_annual_map_evaluation(snow_annual_map):
         self.dem = params.get("dem")
 
         self.colorTable = gdal.ColorTable()
-        self.colorTable.SetColorEntry(0, (14,124,0,255))
-        self.colorTable.SetColorEntry(1, (206,30,30,255))
-        self.colorTable.SetColorEntry(2, (252,255,30,255))
-        self.colorTable.SetColorEntry(3, (30,30,233,255))
-        self.colorTable.SetColorEntry(4, (0,0,0,255))
+        self.colorTable.SetColorEntry(0, (14, 124, 0, 255))
+        self.colorTable.SetColorEntry(1, (206, 30, 30, 255))
+        self.colorTable.SetColorEntry(2, (252, 255, 30, 255))
+        self.colorTable.SetColorEntry(3, (30, 30, 233, 255))
+        self.colorTable.SetColorEntry(4, (0, 0, 0, 255))
 
     def run_evaluation(self):
+        """ Run the evaluation of gap filled timeserie
+        The evaluation compare the gap filled date to actual L8 snow products
+        """
         logging.info("Run snow_annual_map_evaluation")
 
         # Set maximum ITK threads
@@ -164,7 +168,8 @@ class snow_annual_map_evaluation(snow_annual_map):
         logging.debug(self.snowmask_list)
 
         # convert the snow masks into binary snow masks
-        expression = "im1b1=="+self.label_cloud+"?2:(im1b1=="+self.label_no_data+"?2:(im1b1==" + self.label_snow + ")?1:0)"
+        expression = "im1b1=="+self.label_cloud+"?2:(im1b1=="+self.label_no_data+"?2:" \
+                        + "(im1b1==" + self.label_snow + ")?1:0)"
         self.binary_snowmask_list = self.convert_mask_list(expression, "snow_eval")
         logging.debug("Binary snow mask list:")
         logging.debug(self.binary_snowmask_list)
@@ -172,10 +177,10 @@ class snow_annual_map_evaluation(snow_annual_map):
         # pair the matching products
         ts_dates = read_list_from_file(self.output_dates_filename)
         pair_dict = {}
-        for ts_index,ts_date in enumerate(ts_dates):
-            for l8_index,l8_date in enumerate(l8_input_dates):
+        for ts_index, ts_date in enumerate(ts_dates):
+            for l8_index, l8_date in enumerate(l8_input_dates):
                 if ts_date in l8_date:
-                    pair_dict[l8_date] = (ts_index,l8_index)
+                    pair_dict[l8_date] = (ts_index, l8_index)
         print pair_dict
 
         # project the snow masks onto the same foot print
@@ -197,7 +202,7 @@ class snow_annual_map_evaluation(snow_annual_map):
         # compare the two snow masks
         comparision_list = []
         for l8_date in pair_dict.keys():
-            s2_index,l8_index = pair_dict[l8_date]
+            s2_index, l8_index = pair_dict[l8_date]
 
             path_extracted = op.join(self.path_tmp, "gapfilled_s2_" + l8_date + ".tif")
             gdal.Translate(
@@ -225,12 +230,11 @@ class snow_annual_map_evaluation(snow_annual_map):
             shutil.copy2(img_out, self.path_out)
 
             out = op.join(self.path_tmp, "confusion_matrix_"+ l8_date + ".csv")
-            confusionMatrixApp = confusion_matrix(
-                                    path_extracted,
-                                    self.binary_snowmask_list_reprojected[l8_index],
-                                    out,
-                                    2,
-                                    self.ram)
+            confusionMatrixApp = confusion_matrix(path_extracted,
+                                                  self.binary_snowmask_list_reprojected[l8_index],
+                                                  out,
+                                                  2,
+                                                  self.ram)
             confusionMatrixApp.ExecuteAndWriteOutput()
             confusionMatrixApp = None
 
@@ -239,7 +243,7 @@ class snow_annual_map_evaluation(snow_annual_map):
         # @TODO gather stats
         montage = op.join(self.path_tmp, "montage_comparison_L8.png")
         command = ["montage"]
-        command.extend(["-label","%t"])
+        command.extend(["-label", "%t"])
         command.extend(["-title", os.path.basename(self.path_out) + "_comparison_L8"])
         command.extend(["-geometry", "10%x10%+2+2", "-pointsize", "40"])
         command.extend(comparision_list)
@@ -255,6 +259,9 @@ class snow_annual_map_evaluation(snow_annual_map):
         logging.info("End snow_annual_map_evaluation")
 
     def compare_modis(self):
+        """
+        Compare the annual map obtained with gap filling approach to the Modis annual map.
+        """
         modis_snowserie = str(self.params.get("modis_snow_map"))
         modis_datefile = self.params.get("modis_snow_map_dates")
 
@@ -263,7 +270,7 @@ class snow_annual_map_evaluation(snow_annual_map):
         modis_dates = read_list_from_file(modis_datefile)
         modis_start_index = None
         modis_stop_index = None
-        for i in range(0,len(modis_dates)):
+        for i in range(0, len(modis_dates)):
             tmp_date = str_to_datetime(modis_dates[i], "%Y,%m,%d")
             if tmp_date == self.date_start:
                 modis_start_index = i
@@ -271,7 +278,7 @@ class snow_annual_map_evaluation(snow_annual_map):
                 modis_stop_index = i
 
         # generate the summary map
-        band_index = range(modis_start_index+1,modis_stop_index+2)
+        band_index = range(modis_start_index+1, modis_stop_index+2)
         expression = "+".join(["(im1b" + str(i) + "==200?1:0)" for i in band_index])
 
         if not op.exists(self.modis_annual_snow_map):
@@ -285,14 +292,15 @@ class snow_annual_map_evaluation(snow_annual_map):
         shutil.copy2(self.modis_annual_snow_map, self.path_out)
 
         # Compute intersection of the raster footprint
-        intersection, srs = get_raster_intersection(self.annual_snow_map ,self.modis_annual_snow_map)
+        intersection, srs = get_raster_intersection(self.annual_snow_map,
+                                                    self.modis_annual_snow_map)
 
         # Export intersection as shapefile
         intersection_shapefile = op.join(self.path_tmp, "intersection.shp")
         write_poly_to_shapefile(intersection, intersection_shapefile, srs)
 
         # Crop to intersection S2 map
-        s2_cropped = self.annual_snow_map.replace(".tif","_cropped.tif")
+        s2_cropped = self.annual_snow_map.replace(".tif", "_cropped.tif")
         gdal.Warp(s2_cropped,
                   self.annual_snow_map,
                   format='GTiff',
@@ -303,7 +311,7 @@ class snow_annual_map_evaluation(snow_annual_map):
         shutil.copy2(s2_cropped, self.path_out)
 
         # Crop to intersection MODIS map
-        modis_cropped = self.modis_annual_snow_map.replace(".tif","_cropped.tif")
+        modis_cropped = self.modis_annual_snow_map.replace(".tif", "_cropped.tif")
         gdal.Warp(modis_cropped,
                   self.modis_annual_snow_map,
                   format='GTiff',
@@ -346,7 +354,8 @@ class snow_annual_map_evaluation(snow_annual_map):
 
         # The following approach use super impose to project MODIS onto S2 data
         #for interp_method in ["linear"]:
-            #modis_reprojected_snow_map = self.annual_snow_map.replace(".tif", "_reprojected_"+interp_method+".tif")
+            #modis_reprojected_snow_map = self.annual_snow_map.replace(".tif", \
+                                            #"_reprojected_"+interp_method+".tif")
             #super_impose_app = super_impose(self.annual_snow_map,
                                             #self.modis_annual_snow_map,
                                             #modis_reprojected_snow_map,
@@ -370,13 +379,14 @@ class snow_annual_map_evaluation(snow_annual_map):
 
 
 def compute_annual_stats(s2, dem_s2, modis, dem_modis, outputDir, suffix):
+    """ Compute and draw the stats corresponding to the modis comparison
+    """
     import matplotlib as mpl
     mpl.use('Agg')
     import matplotlib.pyplot as plt
     import numpy as np
-    import numpy.ma as ma
 
-    altitudes=[(0,500), (500,1000), (1000,1500), (1500,2000), (2000,10000)]
+    altitudes = [(0, 500), (500, 1000), (1000, 1500), (1500, 2000), (2000, 10000)]
 
     s2_array = get_raster_as_array(s2)
     dem_s2_array = get_raster_as_array(dem_s2)
@@ -397,7 +407,8 @@ def compute_annual_stats(s2, dem_s2, modis, dem_modis, outputDir, suffix):
 
         labels.append("["+str(alt_range[0])+"-"+str(alt_range[1])+"m[")
 
-        indexes_s2 = np.where(s2_mask & (alt_range[0] <= dem_s2_array) & (dem_s2_array < alt_range[1]))
+        indexes_s2 = np.where(s2_mask & (alt_range[0] <= dem_s2_array) \
+                              & (dem_s2_array < alt_range[1]))
         s2_data.append(s2_array[indexes_s2])
 
         logging.debug(s2_data[-1].min())
@@ -405,7 +416,8 @@ def compute_annual_stats(s2, dem_s2, modis, dem_modis, outputDir, suffix):
         logging.debug(s2_data[-1].mean())
         logging.debug(s2_data[-1].var())
 
-        indexes_modis = np.where(modis_mask & (alt_range[0] <= dem_modis_array) & (dem_modis_array < alt_range[1]))
+        indexes_modis = np.where(modis_mask & (alt_range[0] <= dem_modis_array) \
+                                 & (dem_modis_array < alt_range[1]))
         modis_data.append(modis_array[indexes_modis])
 
         logging.debug(modis_data[-1].min())
@@ -479,4 +491,3 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format=\
                         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     main()
-

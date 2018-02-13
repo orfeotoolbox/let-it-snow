@@ -164,8 +164,8 @@ def band_mathX(il, out, exp, ram=None, out_type=None):
     else:
         logging.error("Parameters il, out and exp are required")
 
-def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, reverse, offset, centeroffset, outhist, \
-                    ram=None):
+def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, \
+                      reverse, offset, centeroffset, outhist, ram=None):
     """ Create and configure the ComputeSnowLine application
         using otb.Registry.CreateApplication("ComputeSnowLine")
 
@@ -180,7 +180,7 @@ def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, rev
         logging.info(dz)
         logging.info(fsnowlim)
         logging.info(outhist)
-        
+
         snowLineApp = otb.Registry.CreateApplication("ComputeSnowLine")
         snowLineApp.SetParameterString("dem", img_dem)
         snowLineApp.SetParameterString("ins", img_snow)
@@ -193,14 +193,14 @@ def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, rev
         snowLineApp.SetParameterFloat("fclearlim", fclearlim)
         snowLineApp.SetParameterInt("offset", offset)
         snowLineApp.SetParameterInt("centeroffset", centeroffset)
-        
+
         if reverse:
             snowLineApp.SetParameterString("reverse", "true")
 
         if ram is not None:
             logging.info("ram = " + str(ram))
             snowLineApp.SetParameterString("ram", str(ram))
-        
+
         return snowLineApp
     else:
         logging.error("Parameters img_dem, img_snow, img_cloud and outhist are required")
@@ -217,24 +217,24 @@ def compute_nb_pixels(img, lower, upper, ram=None):
         logging.info(img)
         logging.info(lower)
         logging.info(upper)
-        
+
         computeNbPixelsApp = otb.Registry.CreateApplication("ComputeNbPixels")
         computeNbPixelsApp.SetParameterString("in", img)
 
         # Scalar parameter
         computeNbPixelsApp.SetParameterInt("lower", lower)
         computeNbPixelsApp.SetParameterInt("upper", upper)
-        
+
         if ram is not None:
             logging.info("ram = " + str(ram))
             computeNbPixelsApp.SetParameterString("ram", str(ram))
-        
+
         return computeNbPixelsApp
     else:
         logging.error("Parameters img is required")
 
-def super_impose(img_in, mask_in, img_out, interpolator = None,
-                fill_value=None, ram=None, out_type=None):
+def super_impose(img_in, mask_in, img_out, interpolator=None,
+                 fill_value=None, ram=None, out_type=None):
     """ Create and configure the otbSuperImpose application
         using otb.Registry.CreateApplication("Superimpose")
 
@@ -258,7 +258,7 @@ def super_impose(img_in, mask_in, img_out, interpolator = None,
         super_impose_app.SetParameterString("inm", mask_in)
         super_impose_app.SetParameterString("out", img_out)
         super_impose_app.SetParameterString("interpolator", interpolator)
-        
+
         if fill_value is not None:
             logging.info("fill_value = " + str(fill_value))
             super_impose_app.SetParameterFloat("fv", fill_value)
@@ -309,7 +309,7 @@ def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
     else:
         logging.error("Parameters img_in and foreground_value are required")
 
-        
+
 def confusion_matrix(img_in, ref_in, out, ref_no_data=None, ram=None):
     """ Create and configure the otbComputeConfusionMatrix application
         using otb.Registry.CreateApplication("ComputeConfusionMatrix")
@@ -345,6 +345,11 @@ def confusion_matrix(img_in, ref_in, out, ref_no_data=None, ram=None):
         logging.error("Parameters img_in, out and ref_in are required")
 
 def get_app_output(app, out_key, mode="RUNTIME"):
+    """ Custom function to return the output of an OTB application
+        depending on the mode, the function return either:
+        - to an object correcponding to the output in memory
+        - or a filename corresponding to the output written on the disk
+    """
     app_output = app.GetParameterString(out_key)
 
     if mode == "RUNTIME":

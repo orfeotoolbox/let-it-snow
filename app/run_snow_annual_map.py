@@ -4,7 +4,6 @@ import sys
 import os.path as op
 import json
 import logging
-from s2snow import snow_annual_map
 from s2snow import snow_annual_map_evaluation
 
 VERSION = "0.1.0"
@@ -12,7 +11,8 @@ VERSION = "0.1.0"
 
 def show_help():
     """Show help of the run_snow_annual_map script"""
-    print "This script is used to run the snow annual map module that compute snow coverage onto a given date range"
+    print "This script is used to run the snow annual map " \
+          + "module that compute snow coverage onto a given date range"
     print "Usage: python run_snow_annual_map.py param.json"
     print "python run_snow_annual_map.py version to show version"
     print "python run_snow_annual_map.py help to show help"
@@ -41,7 +41,8 @@ def main(argv):
         sys.stderr = open(op.join(pout, "stderr.log"), 'w')
 
     # Set logging level and format.
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, \
+        format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
     logging.info("Start run_snow_annual_map.py")
     logging.info("Input args = " + json_file)
 

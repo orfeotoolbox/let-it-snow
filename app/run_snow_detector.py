@@ -11,7 +11,8 @@ VERSION = "1.3.1"
 
 def show_help():
     """Show help of the run_snow_detector script"""
-    print "This script is used to run the snow detector module that compute snow mask using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
+    print "This script is used to run the snow detector module that compute snow mask" \
+          + " using OTB applications on Spot/LandSat/Sentinel-2 products from theia platform"
     print "Usage: python run_snow_detector.py param.json"
     print "python run_snow_detector.py version to show version"
     print "python run_snow_detector.py help to show help"
@@ -41,13 +42,14 @@ def main(argv):
         sys.stderr = open(op.join(pout, "stderr.log"), 'w')
 
     # Set logging level and format.
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, \
+        format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
     logging.info("Start run_snow_detector.py")
     logging.info("Input args = " + json_file)
 
     # Run the snow detector
-    sd = snow_detector.snow_detector(data)
-    sd.detect_snow(2)
+    snow_detector_app = snow_detector.snow_detector(data)
+    snow_detector_app.detect_snow(2)
     logging.info("End run_snow_detector.py")
 
 if __name__ == "__main__":

@@ -18,16 +18,13 @@ import os.path as op
 import shutil
 import logging
 import multiprocessing
-from lxml import etree
 from xml.dom import minidom
 from datetime import timedelta
 
+from lxml import etree
+
 import gdal
 from gdalconst import GA_ReadOnly
-
-# Build gdal option to generate maks of 1 byte using otb extended filename
-# syntaxx
-GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 
 # OTB Applications
 import otbApplication as otb
@@ -39,7 +36,13 @@ from s2snow.utils import str_to_datetime, datetime_to_str
 from s2snow.utils import write_list_to_file, read_list_from_file
 from s2snow.snow_product_parser import load_snow_product
 
+# Build gdal option to generate maks of 1 byte using otb extended filename
+# syntaxx
+GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
+
 def parse_xml(filepath):
+    """ Parse an xml file to return the zs value of a snow product
+    """
     logging.debug("Parsing " + filepath)
     xmldoc = minidom.parse(filepath)
     group = xmldoc.getElementsByTagName('Global_Index_List')[0]
@@ -55,8 +58,8 @@ def findFiles(folder, pattern):
                 matches.append(os.path.join(root, file))
     return matches
 
-def gap_filling(img_in, mask_in, img_out, input_dates_file = None,
-                output_dates_file = None, ram=None, out_type=None):
+def gap_filling(img_in, mask_in, img_out, input_dates_file=None,
+                output_dates_file=None, ram=None, out_type=None):
     """ Create and configure the ImageTimeSeriesGapFilling application
         using otb.Registry.CreateApplication("ImageTimeSeriesGapFilling")
 
@@ -112,8 +115,8 @@ class snow_annual_map():
         self.path_tmp = str(params.get("path_tmp"))
 
         self.path_out = op.join(str(params.get("path_out")),
-                self.tile_id + "_" + datetime_to_str(self.date_start) +
-                                        "-" + datetime_to_str(self.date_stop))
+                                self.tile_id + "_" + datetime_to_str(self.date_start)
+                                + "-" + datetime_to_str(self.date_stop))
 
         if not os.path.exists(self.path_out):
             os.mkdir(self.path_out)
@@ -160,11 +163,12 @@ class snow_annual_map():
             logging.info("L8 product list:")
             logging.info(l8_product_list)
 
-            s2_input_dates = [datetime_to_str(product.acquisition_date) for product in self.product_list]
+            s2_input_dates = [datetime_to_str(product.acquisition_date) \
+                              for product in self.product_list]
             s2_footprint_ref = self.product_list[0].get_snow_mask()
 
             # filter l8 products to keep only products that don't overlap an existing S2 date
-            final_l8_product_list=[]
+            final_l8_product_list = []
             for l8_product in l8_product_list:
                 if not datetime_to_str(l8_product.acquisition_date) in s2_input_dates:
                     final_l8_product_list.append(l8_product)
@@ -205,8 +209,8 @@ class snow_annual_map():
         else:
             tmp_date = self.date_start
             while tmp_date < self.date_stop:
-                    output_dates.append(datetime_to_str(tmp_date))
-                    tmp_date += timedelta(days=1)
+                output_dates.append(datetime_to_str(tmp_date))
+                tmp_date += timedelta(days=1)
             write_list_to_file(self.output_dates_filename, output_dates)
 
         shutil.copy2(self.input_dates_filename, self.path_out)
@@ -259,7 +263,7 @@ class snow_annual_map():
             app_gap_filling = None
 
         # generate the summary map
-        band_index = range(1,len(output_dates)+1)
+        band_index = range(1, len(output_dates)+1)
         expression = "+".join(["im1b" + str(i) for i in band_index])
 
         bandMathApp = band_math([img_in],
@@ -307,8 +311,12 @@ class snow_annual_map():
         binary_mask_list = []
         for product in self.product_list:
             mask_in = product.get_snow_mask()
-            binary_mask = op.join(self.path_tmp, product.product_name + "_" + type_name + "_binary.tif")
-            binary_mask = self.extract_binary_mask(mask_in, binary_mask, expression, mask_format)
+            binary_mask = op.join(self.path_tmp,
+                                  product.product_name + "_" + type_name + "_binary.tif")
+            binary_mask = self.extract_binary_mask(mask_in,
+                                                   binary_mask,
+                                                   expression,
+                                                   mask_format)
             binary_mask_list.append(binary_mask)
         return binary_mask_list
 

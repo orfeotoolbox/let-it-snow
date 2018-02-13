@@ -19,7 +19,6 @@
 import os
 import os.path as op
 import logging
-import multiprocessing
 from lxml import etree
 
 import gdal
@@ -32,7 +31,8 @@ import otbApplication as otb
 from s2snow.dem_builder import build_dem
 
 # Import python decorators for the different needed OTB applications
-from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask, band_math, compute_snow_line, compute_nb_pixels
+from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask
+from s2snow.app_wrappers import band_math, compute_snow_line
 
 # Import utilities for snow detection
 from s2snow.utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
@@ -61,8 +61,9 @@ class snow_detector:
         self.nodata = general.get("nodata", -10000)
         self.multi = general.get("multi", 1)  # Multiplier to handle S2 scaling
 
-        # Resolutions in meter for the snow product (if -1 the target resolution is equal to the max resolution of the input band)
-        self.target_resolution = general.get("target_resolution", -1)  
+        # Resolutions in meter for the snow product
+        # (if -1 the target resolution is equal to the max resolution of the input band)
+        self.target_resolution = general.get("target_resolution", -1)
 
         # Parse vector option
         vector_options = data["vector"]
@@ -134,9 +135,9 @@ class snow_detector:
             self.target_resolution = max(gb_resolution, rb_resolution, sb_resolution)
         else:
             logging.info("Snow product will be at the resolution of " + str(self.target_resolution) + " meters.")
-            
+
         # Change target resolution
-        if (rb_resolution != self.target_resolution):
+        if rb_resolution != self.target_resolution:
             logging.info("cubic resampling of red band to " + str(self.target_resolution) + " meters.")
             gdal.Warp(
                 rb_path_resampled,
@@ -147,7 +148,7 @@ class snow_detector:
         else:
             rb_path_resampled = rb_path_extracted
 
-        if (gb_resolution != self.target_resolution):
+        if gb_resolution != self.target_resolution:
             logging.info("cubic resampling of green band to " + str(self.target_resolution) + " meters.")
             gdal.Warp(
                 gb_path_resampled,
@@ -158,7 +159,7 @@ class snow_detector:
         else:
             gb_path_resampled = gb_path_extracted
 
-        if (sb_resolution != self.target_resolution):
+        if sb_resolution != self.target_resolution:
             logging.info("cubic resampling of swir band to " + str(self.target_resolution) + " meters.")
             gdal.Warp(
                 sb_path_resampled,
@@ -197,7 +198,7 @@ class snow_detector:
         self.fsnow_total_lim = snow.get("fsnow_total_lim")
         self.zs = -1  # default value when zs is not set
 
-        # Define the minimum amount of clear pixels altitude bin 
+        # Define the minimum amount of clear pixels altitude bin
         self.fclear_lim = snow.get("fclear_lim", 0.1)
 
         # Define label for output snow product
@@ -214,6 +215,7 @@ class snow_detector:
         self.all_cloud_path = op.join(self.path_tmp, "all_cloud_mask.tif")
         self.cloud_refine_path = op.join(self.path_tmp, "cloud_refine.tif")
         self.nodata_path = op.join(self.path_tmp, "nodata_mask.tif")
+        self.mask_backtocloud = op.join(self.path_tmp, "mask_backtocloud.tif")
 
         # Prepare product directory
         self.product_path = op.join(self.path_tmp, "LIS_PRODUCTS")
@@ -246,7 +248,7 @@ class snow_detector:
             self.ram)
         bandMath.ExecuteAndWriteOutput()
         bandMath = None
-        
+
         if nbPass >= 0:
             self.pass0()
         if nbPass >= 1:
@@ -370,7 +372,7 @@ class snow_detector:
             self.ram,
             otb.ImagePixelType_uint8)
         bandMathAllCloud.ExecuteAndWriteOutput()
-        bandMathAllCloud=None
+        bandMathAllCloud = None
 
         # Extract shadow masks
         # First extract shadow wich corresponds to shadow of clouds inside the
@@ -434,7 +436,6 @@ class snow_detector:
         bandMathFinalShadow.ExecuteAndWriteOutput()
 
         # Extract also a mask for condition back to cloud
-        self.mask_backtocloud = op.join(self.path_tmp, "mask_backtocloud.tif")
         cloud_mask_for_backtocloud = self.cloud_init
 
         condition_back_to_cloud = "(im1b1 > 0) and (im2b1 > " + str(self.rRed_backtocloud) + ")"
@@ -493,7 +494,7 @@ class snow_detector:
 
         # build the structuring element for dilation
         struct = np.zeros((2*radius+1, 2*radius+1))
-        y,x = np.ogrid[-radius:radius+1, -radius:radius+1]
+        y, x = np.ogrid[-radius:radius+1, -radius:radius+1]
         mask = x**2 + y**2 <= radius**2
         struct[mask] = 1
 
@@ -501,7 +502,7 @@ class snow_detector:
         for lab in range(1, nb_label+1):
             # Compute external contours
             patch_neige_dilat = nd.binary_dilation(np.where(snowlabels == lab, 1, 0), struct)
-            contour = np.where((snow_mask==0) & (patch_neige_dilat==1))
+            contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
 
             # Compute percent of surronding cloudy pixels
             cloud_contour = cloud_mask[contour]
@@ -520,7 +521,8 @@ class snow_detector:
                 discarded_snow_area += 1
                 snow_mask = np.where(snowlabels == lab, 0, snow_mask)
 
-        logging.info(str(discarded_snow_area) + ' labels entoures de nuages (sur ' + str(nb_label) + ' labels)')
+        logging.info(str(discarded_snow_area) + ' labels entoures de nuages (sur ' \
+                     + str(nb_label) + ' labels)')
 
         (snowlabels, nb_label) = nd.measurements.label(snow_mask)
 
@@ -528,8 +530,8 @@ class snow_detector:
 
         dataset = gdal.Open(snow_mask_path, GA_Update)
         band = dataset.GetRasterBand(1)
-        dataset.GetRasterBand(1).WriteArray(snow_mask)
-        dataset=None
+        band.WriteArray(snow_mask)
+        dataset = None
 
         logging.info("End of pass 1.5")
 
@@ -540,10 +542,10 @@ class snow_detector:
         # Pass 2: compute snow fraction (c++ app)
         # FIXME remove related OTB app
         # TODO remove related application
-        
+
         #nb_pixels_app = compute_nb_pixels(self.pass1_path, 0, 1)
         #nb_pixels_app.Execute()
-        
+
         #nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
         #logging.info("Number of snow pixels =" + str(nb_snow_pixels))
 
@@ -569,17 +571,18 @@ class snow_detector:
             self.ram)
 
         snow_line_app.Execute()
-        
+
         self.zs = snow_line_app.GetParameterInt("zs")
-        
+
         logging.info("computed ZS:" + str(self.zs))
 
         if snow_fraction > self.fsnow_total_lim:
             # Test zs value (-1 means that no zs elevation was found)
             if self.zs != -1:
                 # NDSI threshold again
-                condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ") and (" + ndsi_formula + "> " + str(
-                    self.ndsi_pass2) + ") and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
+                condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ")" \
+                                  + " and (" + ndsi_formula + "> " + str(self.ndsi_pass2) + ")" \
+                                  + " and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
 
                 bandMathPass2 = band_math([self.img,
                                            self.dem,
@@ -643,16 +646,16 @@ class snow_detector:
         ## Strict cloud mask checking
         logging.info("Strict cloud masking of snow pixels :")
         logging.info(self.strict_cloud_mask)
-        if self.strict_cloud_mask == True:
+        if self.strict_cloud_mask:
             logging.info("Only keep snow pixels which are not in the initial cloud mask in the final mask.")
             condition_snow = "(im2b1==1) and (im3b1==0)"
         else:
             condition_snow = "(im2b1==1)"
 
         logging.info("condition snow " + condition_snow)
-        
-        condition_final = condition_snow + "?"+str(self.label_snow)+":((im1b1==1) or (im3b1==1))" + \
-            "?"+str(self.label_cloud)+":0"
+
+        condition_final = condition_snow + "?" + str(self.label_snow) + \
+                          ":((im1b1==1) or (im3b1==1))?"+str(self.label_cloud)+":0"
 
         bandMathFinalCloud = band_math([self.cloud_refine_path,
                                         generic_snow_path,
