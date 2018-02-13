@@ -53,6 +53,34 @@
                     "id": "shadow_out_mask",
                     "title": "The Shadow_out_mask schema.",
                     "type": "integer"
+                },
+                "strict_cloud_mask": {
+                    "default": false,
+                    "description": "Option that prevent any snow detection within the initial cloud mask. (experimental)",
+                    "id": "strict_cloud_mask",
+                    "title": "The Strict_cloud_mask schema.",
+                    "type": "boolean"
+                },
+                "rm_snow_inside_cloud": {
+                    "default": false,
+                    "description": "Trigger the experimental function discarding snow area that are inside in cloud mask.",
+                    "id": "rm_snow_inside_cloud",
+                    "title": "The Rm_snow_inside_cloud schema.",
+                    "type": "boolean"
+                },
+                "rm_snow_inside_cloud_dilation_radius": {
+                    "default": 1,
+                    "description": "Size in pixel of the dilation radius around the snow area. (experimental)",
+                    "id": "rm_snow_inside_cloud_dilation_radius",
+                    "title": "The Rm_snow_inside_cloud_dilation_radius schema.",
+                    "type": "integer"
+                },
+                "rm_snow_inside_cloud_threshold": {
+                    "default": 0.85,
+                    "description": "Minimum fraction of cloudy pixel in the dilated area to discard the snow area. (experimental)",
+                    "id": "rm_snow_inside_cloud_threshold",
+                    "title": "The rm_snow_inside_cloud_threshold schema.",
+                    "type": "float"
                 }
             },
             "type": "object"
@@ -248,6 +276,13 @@
                     "description": "Minimum snow fraction in an elevation band to define zs.",
                     "id": "fsnow_lim",
                     "title": "The Fsnow_lim schema.",
+                    "type": "number"
+                },
+                "fclear_lim": {
+                    "default": 0.1,
+                    "description": "Minimum clear pixel fraction in an elevation band to define zs.",
+                    "id": "fclear_lim",
+                    "title": "The Fclear_lim schema.",
                     "type": "number"
                 },
                 "fsnow_total_lim": {
