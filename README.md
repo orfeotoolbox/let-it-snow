@@ -71,7 +71,7 @@ LIS processing chain uses CMake (http://www.cmake.org) for building from source.
 Following a summary of the required dependencies: 
 
 * GDAL >=2.0
-* OTB >= 6.0
+* OTB >= 6.2
 * Python interpreter >= 2.7
 * Python libs >= 2.7
 * Python packages:
