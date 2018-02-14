@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
-## [1.4] - 2018-02-13
+## [1.4] - 2018-02-14
 
 ### Added
 - Experimental pass1_5 function implementing the removal of snow areas inside initial cloud mask (doughnuts)
