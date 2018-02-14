@@ -107,7 +107,25 @@ The objective of this algorithm is to generate a snow cover extent product from 
 
 \subsection{Development}
 
-The algorithm prototype was developed by Simon Gascoin with insights from Olivier Hagolle in June 2015.  The snow detection function and a script to run this function with an example are given in appendices \ref{par:castest} and \ref{par:s2snow} as formatted documents that includes the original Matlab code, comments, and output. The LIS chain was designed to work on any high resolution multi-spectral images from satellite sensors that include at least a channel in the visible spectrum and a channel near 1.5 µm (typically referred to as mid-infrared or ``MIR''). This initial code was ported to Python 2.7 and C++ by Manuel Grizonnet in order to make it scalable to large images using Orfeo Toolbox and GDAL. The LIS code was enhanced by Tristan Klempka during his internship at CNES. LIS currently supports SPOT-4, SPOT-5, Landsat-8 and Sentinel-2 level 2A products. The LIS code, installation documentation and configuration file examples are available in the Cesbio's gitlab: \url{http://tully.ups-tlse.fr/grizonnet/let-it-snow}. 
+The algorithm prototype was developed by Simon Gascoin with insights from
+Olivier Hagolle in June 2015.  The snow detection function and a script to run
+this function with an example are given in appendices \ref{par:castest} and
+\ref{par:s2snow} as formatted documents that includes the original Matlab code,
+comments, and output. The LIS chain was designed to work on any high resolution
+multi-spectral images from satellite sensors that include at least a channel in
+the visible spectrum and a channel near 1.5 µm (typically referred to as
+mid-infrared or ``MIR''). This initial code was ported to Python 2.7 and C++ by
+Manuel Grizonnet in order to make it scalable to large images using Orfeo
+Toolbox and GDAL.
+
+LIS currently supports SPOT-4, SPOT-5, Landsat-8 and
+Sentinel-2 level 2A products.
+
+The LIS code, installation documentation and configuration file examples are
+available in the Cesbio's gitlab:
+\url{http://tully.ups-tlse.fr/grizonnet/let-it-snow}.
+
+The list of all contributors is available in the LIS source in the file README.md.
 
 \subsection{Limitations}
 
@@ -166,7 +184,7 @@ The main output is a raster image (*SEB.TIF) of the snow and cloud mask. It has 
  \item 254: no data
 \end{itemize}
 
-The same data are made available as a polygon shapefile of the cloud and snow cover extent (*SEB\_VEC*). Two fields of information are embedded in this file:
+The same data are made available as polygons (ESRI Shapefile format) of the cloud and snow cover extent (*SEB\_VEC*). Two fields of information are embedded in this file:
 \begin{itemize}
   \item DN:
   \begin{itemize}
@@ -200,9 +218,9 @@ The other output files are rather useful for the expert evaluation and troublesh
 
 \subsection{Pre-processing}
 
-In the case of Sentinel-2 the red and green bands are first resampled with the cubic method to a pixel size of 20~m by 20~m to match the resolution of the MIR band.
+In the case of Sentinel-2 the red and green bands are first resampled with the cubic method to a pixel size of 20~m by 20~m to match the resolution of the SWIR band.
 
-The DEM is also resampled to the resolution of the target product (30~m or 20~m, see Sect.~\ref{par:outputs}) using the cubic spline method that is implemented in the gdal library.
+The DEM is also resampled to the resolution of the target product (30~m or 20~m, see Sect.~\ref{par:outputs}) using the cubic spline method that is implemented in the GDAL library.
 
 \subsection{Snow detection}\label{par:snowdetec}
 
@@ -275,31 +293,33 @@ After passing the pass 1 and 2 snow tests, some pixels that were originally mark
     \node[below right] at (leg.north west) {Legend};
     \node [blockinput, below of=MUSCATE] (DEM) {DEM};
     \node [decision, below of=Level 2A product] (is cloud or shadow?) {Is cloud or shadow?};
-    \node [decision, right of=is cloud or shadow?] (darkcloud) {Is shadow or high or bright cloud? \textcolor{red}{$r_D$}};
-    \node [blockfinal, right of=darkcloud] (cloudfinal1) {Cloud (pass 1)};
+    \node [blockfinal, right of=is cloud or shadow?] (cloudfinal1) {Cloud (pass 1)};
     \node [decision, below of=is cloud or shadow?] (snowtest1) {Is snow? \textcolor{red}{$n_1$}, \textcolor{red}{$r_1$}};
     \node [blockfinal, left of=snowtest1] (pass1) {Snow\\(pass 1)};
     \node [decision, below of=snowtest1] (snowlim) {Enough snow?\\ \textcolor{red}{$f_t$}};
     \node [decision, below of=snowlim] (abovezs) {Is above snowline?};
+    \node [decision, right of=abovezs] (darkcloud) {Is shadow or high or bright cloud? \textcolor{red}{$r_D$}};
     \node [block, left of=abovezs] (zs) {Snowline elevation \textcolor{red}{$d_z$}, \textcolor{red}{$f_s$}};       
-    \node [decision, right of=abovezs] (snowtest2) {Is snow? \textcolor{red}{$n_2$}, \textcolor{red}{$r_2$}};
+    \node [decision, below of=darkcloud] (snowtest2) {Is snow? \textcolor{red}{$n_2$}, \textcolor{red}{$r_2$}};
     \node [blockfinal, right of=snowtest2] (pass2) {Snow\\(pass 2)};
     \node [decision, below of=snowtest2] (wascloud) {Was cloud?};
 	\node [blockfinal, right of=wascloud] (nosnow) {No snow};
-    \node [decision, below of=wascloud] (backtocloud) {Is dark? \textcolor{red}{$r_B$}};
-    \node [blockfinal, left of=backtocloud] (cloudfinal) {Cloud (pass 2)};
+    \node [decision, below of=wascloud] (backtocloud) {Is dark?
+      \textcolor{red}{$r_B$}};
+    \node [blockfinal, right of=darkcloud] (cloudfinal2) {Cloud (pass 2)};
+    \node [blockfinal, left of=backtocloud] (cloudfinal) {Cloud (final)};
 
     % Draw edges
     \path [line] (Level 2A product) -- (is cloud or shadow?);
     \path [line,dashed] (MUSCATE) -- (Level 2A product);
-    \path [line] (is cloud or shadow?) -- node[near start]{yes} (darkcloud);
+    \path [line] (is cloud or shadow?) -- node[near start]{yes} (cloudfinal1);
     \path [line] (is cloud or shadow?) -- node[near start]{no} (snowtest1);
-    \path [line] (darkcloud) -- node[near start]{yes}(cloudfinal1);
-    \path [line] (darkcloud) |- node[near start]{no}(snowtest1);
     \path [line] (snowtest1) -- node[near start]{yes} (pass1);
     \path [line] (snowtest1) -- node[near start]{yes} (snowlim);
     \path [line] (snowlim) -- node[near start]{yes} (abovezs);
-    \path [line] (abovezs) -- node[near start]{yes} (snowtest2);
+    \path [line] (abovezs) -- node[near start]{yes} (darkcloud);
+    \path [line] (darkcloud) -- node[near start]{yes}(cloudfinal2);
+    \path [line] (darkcloud) -- node[near start]{no}(snowtest2);
     \path [line] (snowtest2) -- node[near start]{yes} (pass2);
     \path [line] (snowtest2) -- node[near start]{no} (wascloud);
     \path [line,dashed] (pass1) -- (zs);
@@ -329,13 +349,14 @@ The table below gives the description of the main parameters of the algorithm:
 Parameter & Description & Name in the configuration file & Default value\\
 \hline
 \textcolor{red}{$r_f$} & Resize factor to produce the down-sampled red band & \texttt{rf} & 8 for L8 (12 for S2) \\
-\textcolor{red}{$r_D$} & Maximum value of the down-sampled red band reflectance to define a dark cloud pixel & \texttt{rRed\_darkcloud} & 0.650 \\
+\textcolor{red}{$r_D$} & Maximum value of the down-sampled red band reflectance to define a dark cloud pixel & \texttt{rRed\_darkcloud} & 0.300 \\
 \textcolor{red}{$n_1$} & Minimum value of the NDSI for the pass 1 snow test & \texttt{ndsi\_pass1} & 0.400\\
 \textcolor{red}{$n_2$} & Minimum value of the NDSI for the pass 2 snow test & \texttt{ndsi\_pass2} & 0.150\\
 \textcolor{red}{$r_1$} & Minimum value of the red band reflectance the pass 1 snow test  & \texttt{rRed\_pass1} & 0.200 \\
 \textcolor{red}{$r_1$} & Minimum value of the red band reflectance the pass 2 snow test  & \texttt{rRed\_pass2} & 0.040 \\
-\textcolor{red}{$d_z$} & Minimum snow fraction in an elevation band to define $z_s$ & \texttt{fsnow\_lim} & 0.100 \\
+\textcolor{red}{$d_z$} & Size of elevation band in the DEM used to define $z_s$ & \texttt{dz} & 0.100 \\
 \textcolor{red}{$f_t$} & Minimum snow fraction in an elevation band to define $z_s$ & \texttt{fsnow\_lim} & 0.100 \\
+\textcolor{red}{$fc_t$} & Minimum clear pixels fraction (snow and no-snow) in an elevation band to define $z_s$ & \texttt{fclear\_lim} & 0.100 \\
 \textcolor{red}{$f_s$} & Minimum snow fraction in the image to activate the pass 2 snow test & \texttt{fsnow\_total\_lim} & 0.001 \\
 \textcolor{red}{$r_B$} & Minimum value of the red band reflectance to return a non-snow pixel to the cloud mask & \texttt{rRed\_backtocloud} & 0.100 \\
 \hline
@@ -353,12 +374,14 @@ cases, there is a parameter 'multi' in the json configuration file which allows
 to scale reflectance parameters. For instance, for products with reflectance
 between 0 and 10000 you can use
 
+\newpage
+
 \subsubsection{JSON schema of configuration file}\label{par:jsonparam}
 
 The JSON Schema here describes the parameter file format and provide a clear, human-
 and machine-readable documentation of all the algorithm parameters. JSON schema
 was generated on \href{https://jsonschema.net} with the following options (with
-metada and relative id).
+metadata and relative id).
 
 \inputminted[tabsize=2, fontsize=\tiny]{js}{schema.json}
 
@@ -388,7 +411,7 @@ The implementation of the Sentinel-2 configuration was tested on the Sentinel-2A
  \centering
  \includegraphics[width=\textwidth]{./images/Sentinel2_testmontage.png}
  % Sentinel2_testmontage.png: 2014x811 pixel, 72dpi, 71.05x28.61 cm, bb=0 0 2014 811
- \caption{The LIS snow mask from the Sentinel-2A image of 06-July-2015 (Fig.~\ref{fig:S2snow}) is superposed to an aerial orthophoto taken in August 2013 and distributed by the Institut National Information Géographique Forestière.}
+ \caption{The LIS snow mask from the Sentinel-2A image of 06-July-2015 (Fig.~\ref{fig:S2snow}) is superposed to an aerial image taken in August 2013 and distributed by the Institut National Information Géographique Forestière.}
  \label{fig:S2snowzoom}
 \end{figure}
 

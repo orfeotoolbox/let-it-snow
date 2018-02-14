@@ -1,7 +1,7 @@
 # Let-it-snow
 ## Synopsis
 
-This code is a Python/OTB version of the snow cover extent detection algorithm for Sentinel-2 and Landsat-8 data.
+This code implements the snow cover extent detection algorithm LIS (Let It Snow) for Sentinel-2, Landsat-8 and SPOT4-Take5 data.
 
 The algorithm documentation with examples is available here:
 
@@ -53,11 +53,6 @@ pixel_value & 00000101
      * 100: Snow
      * 205: Cloud including cloud shadow
      * 254: No data
-  * Type field:
-     * no-snow
-     * snow
-     * cloud
-     * no-data
 
 ## Data set example
 
@@ -69,23 +64,35 @@ Code to generate the snow cover extent product on Theia platform.
 
 ## Installation
 
+LIS processing chain uses CMake (http://www.cmake.org) for building from source.
+
 ### Dependencies
 
-lis dependencies:
+Following a summary of the required dependencies: 
 
-GDAL >=2.0
-OTB >= 6.0
-Boost-Python
-Python interpreter >= 2.7
-Python libs >= 2.7
-Python packages:
-numpy
-lxml
-matplotlib
+* GDAL >=2.0
+* OTB >= 6.2
+* Python interpreter >= 2.7
+* Python libs >= 2.7
+* Python packages:
+* numpy
+* lxml
+* matplotlib
 
 GDAL itself depends on a number of other libraries provided by most major operating systems and also depends on the non standard GEOS and PROJ4 libraries. GDAl- Python bindings are also required
 
-Python package dependencies: sys, subprocess, glob, os, json, gdal
+Python package dependencies:
+
+* sys
+* subprocess
+* glob
+* os
+* json
+* gdal
+
+Optional dependencies:
+
+* gdal_trace_outline can be used alternatively to gdal_polygonize.py to generate the vector layer. It requires to install [dans-gdal-scripts utilities](https://github.com/gina-alaska/dans-gdal-scripts).
 
 ### Installing from the source distribution
 
@@ -147,7 +154,7 @@ Do not modify these folders.
 
 ## Contributors
 
-Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES)
+Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES), Germain Salgues (Magellium)
 
 ## License
 

@@ -47,20 +47,25 @@ public:
         SetParameterDescription( "inputmask", "Input mask to extract contours");
         MandatoryOn("inputmask");
 
-        AddParameter(ParameterType_Float, "foregroundvalue", "foregroundvalue");
+        AddParameter(ParameterType_Int, "foregroundvalue", "foregroundvalue");
         SetParameterDescription( "foregroundvalue", "value corresponding to the region to extract");
         MandatoryOn("foregroundvalue");
 
-        AddParameter(ParameterType_Float, "backgroundvalue", "backgroundvalue");
+        AddParameter(ParameterType_Int, "backgroundvalue", "backgroundvalue");
         SetParameterDescription( "backgroundvalue", "value corresponding to the mask background");
+        MandatoryOff("backgroundvalue");
+        SetDefaultParameterInt("backgroundvalue", 0);
 
         AddParameter(ParameterType_Empty, "fullyconnected", "cloud refine image");
         SetParameterDescription( "fullyconnected", "Input cloud refine image");
+        DisableParameter("fullyconnected");
 
         AddRAMParameter();
 
         AddParameter(ParameterType_OutputImage, "out",  "Output image");
         SetParameterDescription("out", "Output contour image");
+        // TODO Application can write uint8 by default
+        //SetDefaultOutputPixelType("out",ImagePixelType_uint8);
 
         SetDocExampleParameterValue("inputmask", "input_mask.tif");
         SetDocExampleParameterValue("foregroundvalue", "255");
@@ -85,11 +90,10 @@ public:
 
         m_ContourFilter = ContourFilterType::New();
         m_ContourFilter->SetInput(0, input_mask);
-        m_ContourFilter->SetForegroundValue(GetParameterFloat("foregroundvalue"));
+        m_ContourFilter->SetForegroundValue(GetParameterInt("foregroundvalue"));
         m_ContourFilter->SetBackgroundValue(0);
-        if(IsParameterEnabled("backgroundvalue")){
-            m_ContourFilter->SetBackgroundValue(GetParameterFloat("backgroundvalue"));
-        }
+        m_ContourFilter->SetBackgroundValue(GetParameterInt("backgroundvalue"));
+       
         m_ContourFilter->SetFullyConnected(IsParameterEnabled("fullyconnected"));
 
         // Set the output image

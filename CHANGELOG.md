@@ -1,7 +1,32 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
-## [Unreleased]
+## [1.4] - 2018-02-14
+
+### Added
+- Experimental pass1_5 function implementing the removal of snow areas inside initial cloud mask (doughnuts)
+- Experimental new application to run and evaluate an annual snow map computation from a timeserie of S2 and/or L8 snow products
+- Added fclear_lim parameter minimum percentage of clear pixels in an elevation band
+    (default value 0.1) used to compute the snow line.
+- Added option to disable vector generation
+- Added options to use and manage gdal_trace_outline instead of gdal_polygonize
+
+### Changed
+- Changed default value for parameter red_darkcloud to 300 to reduce cloud sensitivity
+- Changed all_cloud_mask.tif, it now include the thin clouds (in accordance with ATBD)
+- Fixed method compute_percent is fix when image is empty or filled with nodata
+- Fixed zs condition to trigger properly pass2 (in accordance with ATBD)
+- Changed zs computation in pass2 to considers the full image imprint (including nodata pixels)
+- Changed cloud mask refinement is not apply during pass1 to improve snow line accuracy during pass2
+- Updated build_json.py to handle boolean parameters
+- Updated build_json.py to handle new lis input parameters
+
+## [1.3.1] - 2017-11-23
+
+### Hotfix
+- Fix the intermediate data format (used 1 bit instead of type uint8)
+
+## [1.3] - 2017-11-02
 
 ### Added
 - Use gdal_trace_outline from the gina-alaska package instead of gdal_polygonize if available

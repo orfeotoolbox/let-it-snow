@@ -27,6 +27,10 @@ add_test(NAME s2_test_json_builder_test
   COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
   "${DATA_TEST}/S2"
   "${OUTPUT_TEST_S2}"
+# Test with an alternative target resolution
+  #-target_resolution 10
+  #-dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
+  #-cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
   )
 
 #Add Test with extract 1000*1000 of S2 (x=1400,y=2200 pixel coord at 20 meters)
@@ -116,8 +120,10 @@ add_test(NAME preprocessing_test
 #   )
 # set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
-ADD_EXECUTABLE(histo_utils_snowline_test histo_utils_snowline_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_snowline_test histo_utils)
+# C++ function compute_snowline is deprecated
+# FIXME add test with the application? 
+# ADD_EXECUTABLE(histo_utils_snowline_test histo_utils_snowline_test.cxx)
+# TARGET_LINK_LIBRARIES(histo_utils_snowline_test histo_utils)
 
 ADD_EXECUTABLE(histo_utils_snowline_internal_test histo_utils_snowline_internal_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test histo_utils)
@@ -125,18 +131,19 @@ TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test histo_utils)
 ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx)
 TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
 
-add_test(NAME histo_utils_snowline_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
-    "${DATA_TEST}/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif"
-    "${BASELINE}/pass1_highcloud.tif"
-    "${BASELINE}/cloud_refine_highcloud.tif"
-    100
-    0.1
-    0
-    -2
-    -50
-    2721
-    )
+# C++ function compute_snowline is deprecated
+# add_test(NAME histo_utils_snowline_test
+#   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
+#     "${DATA_TEST}/Take5/AOI_test_CESNeige/SRTM/Maroc/Maroc.tif"
+#     "${BASELINE}/pass1_highcloud.tif"
+#     "${BASELINE}/cloud_refine_highcloud.tif"
+#     100
+#     0.1
+#     0
+#     -2
+#     -50
+#     2721
+#     )
 
 add_test(NAME histo_utils_snowline_internal_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_internal_test
@@ -144,6 +151,7 @@ add_test(NAME histo_utils_snowline_internal_test
     100
     20
     0.1
+    0
     0
     -2
     -10
@@ -156,6 +164,7 @@ add_test(NAME histo_utils_snowline_reverse_internal_test
     100
     20
     0.99
+    0
     1
     0
     0
@@ -163,19 +172,19 @@ add_test(NAME histo_utils_snowline_reverse_internal_test
     90
     )
 
-
-add_test(NAME histo_utils_snowline_full_test
-  COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
-    "${BASELINE}/srtm_superimpose_highcloud.tif"
-    "${BASELINE}/pass1_full_highcloud.tif"
-    "${BASELINE}/cloud_refine_full_highcloud.tif"
-    100
-    0.1
-    0
-    -2
-    -50
-    2920
-    )
+# C++ function compute_snowline is deprecated
+# add_test(NAME histo_utils_snowline_full_test
+#   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
+#     "${BASELINE}/srtm_superimpose_highcloud.tif"
+#     "${BASELINE}/pass1_full_highcloud.tif"
+#     "${BASELINE}/cloud_refine_full_highcloud.tif"
+#     100
+#     0.1
+#     0
+#     -2
+#     -50
+#     2920
+#     )
 
 add_test(NAME histo_utils_snow_fraction_test
   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snow_fraction_test

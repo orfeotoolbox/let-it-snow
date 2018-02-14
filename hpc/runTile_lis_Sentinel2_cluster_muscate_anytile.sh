@@ -2,17 +2,17 @@
 #PBS -N TheiaNeige
 #PBS -j oe
 #PBS -l select=1:ncpus=1:mem=4000mb
-#PBS -l walltime=00:35:00
+#PBS -l walltime=00:58:00
 #PBS -J 1-100
 #PBS -m e
 # run LIS for one Sentinel-2 Level-2A tile (all available dates in the tile folder)
 # specify the path to the tile folder, the path the DEM and the template configuration file (.json)
-# First argument is the tile name (nnccc): qsub -v tile="31TGK" runTile_lis_Sentinel2_cluster_muscate_anytile.sh
+# First argument is the tile name (nnccc): qsub -v tile="31TGK",out_path="path/where/to/store/results" runTile_lis_Sentinel2_cluster_muscate_anytile.sh
 
-# FIXME: conflict on hal between environnement variable TMPDIR used also internally by openmpi 
+# FIXME: conflict on hal between environnement variable TMPDIR used also internally by openmpi
 # Store the directory in  PBS_TMP_DIR
 PBS_TMPDIR=$TMPDIR
-# Unset TMPDIR env variable which conflicts with openmpi   
+# Unset TMPDIR env variable which conflicts with openmpi
 unset TMPDIR
 
 # Tile to process
@@ -23,15 +23,21 @@ if [ -z $tile ]; then
 fi
 echo $tile
 
+if [ -z $out_path ]; then
+  echo "out_path is not set, exit"
+  exit
+fi
+echo $out_path
+
 # working directory
 tmp_output_dir=$PBS_TMPDIR/TheiaNeige_Muscate_T${tile}_out/
 tmp_input_dir=$PBS_TMPDIR/TheiaNeige_Muscate_T${tile}_in/
 
 # storage directory
-storage_output_dir=/work/OT/siaa/Theia/Neige/output_muscate_v2/
+storage_output_dir=$out_path
 
 # S2 L2A products input path
-pin="/work/OT/muscate/prod/muscate_prod/data_production/produit/"
+pin="/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2A"
 
 # DEM input path
 pdem="/work/OT/siaa/Theia/Neige/DEM/"
@@ -82,28 +88,19 @@ mkdir -p $pout
 
 echo "pout" $pout
 
-# write the config based on a template file
-config=$pout/$f.json
-cp /work/OT/siaa/Theia/hpc_scripts/lis_param_Sentinel2_template.json $config
-
-# modify only three parameters: image file, cloud file, dem file, output dir
-inputB11=$(find $img_input -name *FRE*B11.tif)
-inputB3=$(find $img_input -name *FRE*3.tif)
-inputB4=$(find $img_input -name *FRE*B4.tif)
-inputcloud=$(find $img_input -name *CLM_R2.tif)
-
-sed -i -e "s|inputB11|$inputB11|g" $config
-sed -i -e "s|inputB4|$inputB4|g" $config
-sed -i -e "s|inputB3|$inputB3|g" $config
-sed -i -e "s|inputcloud|$inputcloud|g" $config
-sed -i -e "s|inputdem|$inputdem|g" $config
-sed -i -e "s|outputdir|$pout|g" $config
-
 #Load LIS modules
 module load lis/develop
 
 #configure gdal_cachemax to speedup gdal polygonize and gdal rasterize (half of requested RAM)
 export GDAL_CACHEMAX=2048
+echo $GDAL_CACHEMAX
+
+# create config file
+date ; echo "START build_json.py $config"
+build_json.py -ram 2048 -dem $inputdem $img_input $pout
+config=${pout}/param_test.json
+echo $config
+date ; echo "END build_json.py"
 
 # run the snow detection
 date ; echo "START run_snow_detector.py $config"
