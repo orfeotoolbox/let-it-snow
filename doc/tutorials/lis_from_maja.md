@@ -68,7 +68,7 @@ In my case, the DTM directory structure is the following:
     └── S2__TEST_AUX_REFDE2_T38SLH_0001.HDR
 ```
 
-We're going to use the utilities script [build_json.py](../../app/build_json.py)
+We're going to use the utilities script [build_json.py](http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/develop/app/build_json.py)
 available in LIS to configure LIS and generates the parameter file (JSON
 format).
 
