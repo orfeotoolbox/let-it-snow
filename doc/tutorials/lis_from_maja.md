@@ -183,6 +183,54 @@ run_snow_detector.py output_dir_lis/param_test.json
 
 That's all!
 
+The LIS output have been generated in output_dir_lis. The directory structure
+looks like this:
+
+```
+├── all_cloud_mask.tif
+├── all_cloud_mask.tif.ovr
+├── cloud_pass1.tif
+├── cloud_refine.tif
+├── green_band_extracted.tif
+├── green_band_resampled.tif
+├── high_cloud_mask.tif
+├── LIS_PRODUCTS
+│   ├── LIS_COMPO.TIF
+│   ├── LIS_COMPO.TIF.ovr
+│   ├── LIS_HISTO.TXT
+│   ├── LIS_METADATA.XML
+│   ├── LIS_SEB.TIF
+│   ├── LIS_SEB.TIF.ovr
+│   ├── LIS_SEB_VEC.dbf
+│   ├── LIS_SEB_VEC.prj
+│   ├── LIS_SEB_VEC.shp
+│   ├── LIS_SEB_VEC.shx
+│   ├── LIS_SNOW_ALL.TIF
+│   └── LIS_SNOW_ALL.TIF.ovr
+├── lis.vrt
+├── lis.vrt.ovr
+├── mask_backtocloud.tif
+├── nodata_mask.tif
+├── param_test.json
+├── pass1.tif
+├── pass2.tif
+├── pass3.tif
+├── red_band_extracted.tif
+├── red_band_resampled.tif
+├── red_coarse.tif
+├── red_nn.tif
+├── red.tif
+├── shadow_in_mask.tif
+├── shadow_mask.tif
+├── shadow_out_mask.tif
+├── stderr.log
+├── stdout.log
+└── swir_band_extracted.tif
+
+```
+LIS products are available in LIS_PRODUCTS sub-directory.
+
+
 Below the output of the LIS processor. The image is an RGB color composition of
 the input Level 2A Sentinel2 product showing the outlines of the cloud
 (including cloud shadow) and snow masks drawn on the RGB composition of the L2A
