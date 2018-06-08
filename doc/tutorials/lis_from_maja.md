@@ -1,11 +1,11 @@
-# Run LIS from MAJA native format
+# Run LIS from MAJA product (native format)
 
 This tutorial demonstrates how to run the LIS algorithm (Let It Snow) to produce
 Snow surface products from the output of the MAJA processor (with MAJA native
 format).
 
-*WARNING: LIS develop branch was used to write the tutorial. Note that utility
- script in LIS version 1.4 are not fully compatible with MAJA native format.*
+**WARNING: LIS develop branch was used to write the tutorial. Note that utility
+ script in LIS version 1.4 are not fully compatible with MAJA native format.**
 
 ## Run MAJA
 
@@ -22,23 +22,23 @@ The delivered version of MAJA can ingest L1 products int the following formats
 - Landsat8_Level1_Data_Format_Control_Book_LSDS-809 Landsat 5-7: CNES internal
 - format described in PSC-IF-411-0081-CNES_E1R4
 
-MAJA is the processor used on [theia platform](http://www.theia-land.fr), to
+MAJA is the processor used on [theia platform](http://www.theia-land.fr) to
 produce Surface Reflectance products.
 
 For more information about how to download and run MAJA, checks the [MAJA
-Software website] (https://logiciels.cnes.fr/en/content/maja).
+software website] (https://logiciels.cnes.fr/en/content/maja).
 
-MAJA require DTM tile as input. This DTM is also required to run LIS.
+MAJA requires also DTM image as input. This DTM is also required to run LIS.
 
-We're process a tile near Mount Artos in Turkey:
+We're going to process a tile near Mount Artos in Turkey:
 
-Inline-style: ![alt text](images/artos-rgb.png "Mount Artos Sentinel-2A RGB
+Inline-style: ![alt text](images/artos-rgb.png "Mount Artos MAJA Sentinel-2A RGB
 composition")
 
 ## Generate LIS JSON parameters using build_json.py
 
-MAJA outputs consists in a directory with the surface reflectances and could
-mask provided as GeoTiff.
+MAJA outputs consists in a directory with the surface reflectances and masks
+provided as GeoTiff.
 
 In my case, I have a directory called:
 
@@ -46,7 +46,7 @@ In my case, I have a directory called:
 S2A_OPER_SSC_L2VALD_38SLH____20180311.DBL.DIR
 ```
 
-The DTM has been generated with the *prepare_mnt* tool available
+The DTM has been generated with the **prepare_mnt** tool available
 [here](http://tully.ups-tlse.fr/olivier/prepare_mnt).
 
 In my case, the DTM directory structure is the following:
@@ -68,11 +68,12 @@ In my case, the DTM directory structure is the following:
     └── S2__TEST_AUX_REFDE2_T38SLH_0001.HDR
 ```
 
-We're going to use the utilities script build_json.py available in LIS to
-configure LIS and generates the parameter file (JSON format).
+We're going to use the utilities script [build_json.py](../../app/build_json.py)
+available in LIS to configure LIS and generates the parameter file (JSON
+format).
 
 This script takes as input the directory which contains the surface reflectance
-images, the output directory where the JSON parameter will be stored.Sensors,
+images, the output directory where the JSON file will be stored.Sensors,
 filenames, band numbers, cloud mask encoding are automatically automatically
 retrieved from the directory name and structures.
 
@@ -86,7 +87,7 @@ In the case of the Mount Artos tile, the command is:
 ```
 build_json.py -dem S2__TEST_AUX_REFDE2_T38SLH_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R2.TIF  S2A_OPER_SSC_L2VALD_38SLH____20180311.DBL.DIR/ output_dir_lis/
 ```
-The output json file is called *param_test.json*. (Hopefully we will change to a
+The output json file is called **param_test.json**. (Hopefully we will change to a
 more comprehensive name in the future).
 
 Note that the generated JSON file will use default parameters of the LIS
@@ -173,12 +174,14 @@ cloud:
 ```
 ## Run LIS
 
-Then you can run the *run_snow_detector.py* script to generate Snow Surface
+Then you can run the **run_snow_detector.py** script to generate Snow Surface
 product:
 
 ```
 run_snow_detector.py output_dir_lis/param_test.json
 ```
+
+That's all!
 
 Below the output of the LIS processor. The image is an RGB color composition of
 the input Level 2A Sentinel2 product showing the outlines of the cloud
