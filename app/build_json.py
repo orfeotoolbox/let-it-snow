@@ -50,6 +50,22 @@ conf_template = {"general":{"pout":"",
 
 
 ### Mission Specific Parameters ###
+
+MAJA_parameters = {"multi":10,
+                 "green_band":".*FRE_R1.DBL.TIF$",
+                 "green_bandNumber":2,
+                 "red_band":".*FRE_R1.DBL.TIF$",
+                 "red_bandNumber":3,
+                 "swir_band":".*FRE_R2.DBL.TIF$",
+                 "swir_bandNumber":5,
+                 "cloud_mask":".*CLD_R2.DBL.TIF$",
+                 "dem":".*ALT_R2\.TIF$",
+                 "shadow_in_mask":4,
+                 "shadow_out_mask":8,
+                 "all_cloud_mask":1,
+                 "high_cloud_mask":128,
+                 "rf":12}
+
 S2_parameters = {"multi":10,
                  "green_band":".*FRE_B3.*\.tif$",
                  "green_bandNumber":1,
@@ -57,7 +73,7 @@ S2_parameters = {"multi":10,
                  "red_bandNumber":1,
                  "swir_band":".*FRE_B11.*\.tif$",
                  "swir_bandNumber":1,
-                 "cloud_mask":".*CLM_R2\.tif$",
+                 "cloud_mask":".*CLM_R2.*\.tif$",
                  "dem":".*ALT_R2\.TIF$",
                  "shadow_in_mask":32,
                  "shadow_out_mask":64,
@@ -97,7 +113,9 @@ L8_parameters = {"multi":1,
 
 mission_parameters = {"S2":S2_parameters,\
                       "LANDSAT8":L8_parameters,\
-                      "Take5":Take5_parameters}
+                      "Take5":Take5_parameters,\
+                      "MAJA":MAJA_parameters
+                     }
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -126,7 +144,6 @@ def read_product(inputPath, mission):
         conf_json = conf_template
 
         conf_json["general"]["multi"] = params["multi"]
-
         conf_json["inputs"]["green_band"]["path"] = findFiles(inputPath, params["green_band"])[0]
         conf_json["inputs"]["red_band"]["path"] = findFiles(inputPath, params["red_band"])[0]
         conf_json["inputs"]["swir_band"]["path"] = findFiles(inputPath, params["swir_band"])[0]
@@ -201,7 +218,15 @@ def main():
     inputPath = os.path.abspath(args.inputPath)
     outputPath = os.path.abspath(args.outputPath)
 
-    if ("S2" in inputPath) or ("SENTINEL2" in inputPath):
+    sentinel2Acronyms = ['S2', 'SENTINEL2', 'S2A', 'S2B']
+    
+    # Test if it is a MAJA output products (generated with MAJA processor version XX)
+    if '.DBL.DIR' in inputPath:
+        if any(s in inputPath for s in sentinel2Acronyms):
+            jsonData = read_product(inputPath, "MAJA")
+        else:
+            logging.error("Only MAJA Sentinel products are supported by build_json script for now.")
+    elif any(s in inputPath for s in sentinel2Acronyms):
         jsonData = read_product(inputPath, "S2")
     elif "Take5" in inputPath:
         jsonData = read_product(inputPath, "Take5")
