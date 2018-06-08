@@ -42,8 +42,8 @@ mask provided as GeoTiff.
 
 In my case, I have a directory called:
 
-``` S2A_OPER_SSC_L2VALD_38SLH____20180311.DBL.DIR
-
+```
+S2A_OPER_SSC_L2VALD_38SLH____20180311.DBL.DIR
 ```
 
 The DTM has been generated with the *prepare_mnt* tool available
@@ -51,19 +51,22 @@ The DTM has been generated with the *prepare_mnt* tool available
 
 In my case, the DTM directory structure is the following:
 
-``` .  └── S2__TEST_AUX_REFDE2_T38SLH_0001 ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001.DBL.DIR │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_ALC.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R1.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R2.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_ASC.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_ASP_R1.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_ASP_R2.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_MSK.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_SLC.TIF │   ├──
-S2__TEST_AUX_REFDE2_T38SLH_0001_SLP_R1.TIF │   └──
-S2__TEST_AUX_REFDE2_T38SLH_0001_SLP_R2.TIF └──
-S2__TEST_AUX_REFDE2_T38SLH_0001.HDR ```
+```
+.
+└── S2__TEST_AUX_REFDE2_T38SLH_0001
+    ├── S2__TEST_AUX_REFDE2_T38SLH_0001.DBL.DIR
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_ALC.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R1.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R2.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_ASC.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_ASP_R1.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_ASP_R2.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_MSK.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_SLC.TIF
+    │   ├── S2__TEST_AUX_REFDE2_T38SLH_0001_SLP_R1.TIF
+    │   └── S2__TEST_AUX_REFDE2_T38SLH_0001_SLP_R2.TIF
+    └── S2__TEST_AUX_REFDE2_T38SLH_0001.HDR
+```
 
 We're going to use the utilities script build_json.py available in LIS to
 configure LIS and generates the parameter file (JSON format).
@@ -80,11 +83,11 @@ In the case of MAJA native format, you can let and only provides:
 
 In the case of the Mount Artos tile, the command is:
 
-``` build_json.py -dem
-S2__TEST_AUX_REFDE2_T38SLH_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R2.TIF
-S2A_OPER_SSC_L2VALD_38SLH____20180311.DBL.DIR/ output_dir_lis/ ``` The output
-json file is called *param_test.json*. (Hopefully we will change to a more
-comprehensive name in the future).
+```
+build_json.py -dem S2__TEST_AUX_REFDE2_T38SLH_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T38SLH_0001_ALT_R2.TIF  S2A_OPER_SSC_L2VALD_38SLH____20180311.DBL.DIR/ output_dir_lis/
+```
+The output json file is called *param_test.json*. (Hopefully we will change to a
+more comprehensive name in the future).
 
 Note that the generated JSON file will use default parameters of the LIS
 processor. You can overload all parameters with build_json.py command line
@@ -92,54 +95,90 @@ parameters.
 
 Please find below the complete help page of the build_json.py
 
-``` build_json.py --help usage: build_json.py [-h] [-nodata NODATA] [-ram RAM]
-[-nb_threads NB_THREADS] [-generate_vector GENERATE_VECTOR] [-preprocessing
-PREPROCESSING] [-log LOG] [-multi MULTI] [-target_resolution TARGET_RESOLUTION]
-[-dem DEM] [-cloud_mask CLOUD_MASK] [-dz DZ] [-ndsi_pass1 NDSI_PASS1]
-[-red_pass1 RED_PASS1] [-ndsi_pass2 NDSI_PASS2] [-red_pass2 RED_PASS2]
-[-fsnow_lim FSNOW_LIM] [-fsnow_total_lim FSNOW_TOTAL_LIM] [-shadow_in_mask
-SHADOW_IN_MASK] [-shadow_out_mask SHADOW_OUT_MASK] [-all_cloud_mask
-ALL_CLOUD_MASK] [-high_cloud_mask HIGH_CLOUD_MASK] [-rf RF] [-red_darkcloud
-RED_DARKCLOUD] [-red_backtocloud RED_BACKTOCLOUD] [-strict_cloud_mask
-STRICT_CLOUD_MASK] inputPath outputPath
+```
+build_json.py --help
+usage: build_json.py [-h] [-nodata NODATA] [-ram RAM] [-nb_threads NB_THREADS]
+                     [-generate_vector GENERATE_VECTOR]
+                     [-preprocessing PREPROCESSING] [-log LOG] [-multi MULTI]
+                     [-target_resolution TARGET_RESOLUTION] [-dem DEM]
+                     [-cloud_mask CLOUD_MASK] [-dz DZ]
+                     [-ndsi_pass1 NDSI_PASS1] [-red_pass1 RED_PASS1]
+                     [-ndsi_pass2 NDSI_PASS2] [-red_pass2 RED_PASS2]
+                     [-fsnow_lim FSNOW_LIM] [-fsnow_total_lim FSNOW_TOTAL_LIM]
+                     [-shadow_in_mask SHADOW_IN_MASK]
+                     [-shadow_out_mask SHADOW_OUT_MASK]
+                     [-all_cloud_mask ALL_CLOUD_MASK]
+                     [-high_cloud_mask HIGH_CLOUD_MASK] [-rf RF]
+                     [-red_darkcloud RED_DARKCLOUD]
+                     [-red_backtocloud RED_BACKTOCLOUD]
+                     [-strict_cloud_mask STRICT_CLOUD_MASK]
+                     inputPath outputPath
 
-This script is used to generate the snow detector configuration json file.  This
-configuration requires at least the input product path and the output path in
-which will be generated snow product.
+This script is used to generate the snow detector configuration json file.
+This configuration requires at least the input product path and the output
+path in which will be generated snow product.
 
-positional arguments: inputPath input product path (supports S2/L8/Take5
-  products) outputPath output folder for the json configuration file, and also
-  the configured output path for the snow product
+positional arguments:
+  inputPath             input product path (supports S2/L8/Take5 products)
+  outputPath            output folder for the json configuration file, and
+                        also the configured output path for the snow product
 
-optional arguments: -h, --help show this help message and exit
+optional arguments:
+  -h, --help            show this help message and exit
 
-general: general parameters
+general:
+  general parameters
 
-  -nodata NODATA ram RAM nb_threads NB_THREADS generate_vector GENERATE_VECTOR
-  -true/false preprocessing PREPROCESSING true/false log LOG true/false multi
-  -MULTI target_resolution TARGET_RESOLUTION
+  -nodata NODATA
+  -ram RAM
+  -nb_threads NB_THREADS
+  -generate_vector GENERATE_VECTOR
+                        true/false
+  -preprocessing PREPROCESSING
+                        true/false
+  -log LOG              true/false
+  -multi MULTI
+  -target_resolution TARGET_RESOLUTION
 
-inputs: input files
+inputs:
+  input files
 
-  -dem DEM dem file path, to use for processing the input product cloud_mask
-  -CLOUD_MASK cloud mask file path
+  -dem DEM              dem file path, to use for processing the input product
+  -cloud_mask CLOUD_MASK
+                        cloud mask file path
 
-snow: snow parameters
+snow:
+  snow parameters
 
-  -dz DZ ndsi_pass1 NDSI_PASS1 red_pass1 RED_PASS1 ndsi_pass2 NDSI_PASS2
-  -red_pass2 RED_PASS2 fsnow_lim FSNOW_LIM fsnow_total_lim FSNOW_TOTAL_LIM
+  -dz DZ
+  -ndsi_pass1 NDSI_PASS1
+  -red_pass1 RED_PASS1
+  -ndsi_pass2 NDSI_PASS2
+  -red_pass2 RED_PASS2
+  -fsnow_lim FSNOW_LIM
+  -fsnow_total_lim FSNOW_TOTAL_LIM
 
-cloud: cloud parameters
+cloud:
+  cloud parameters
 
-  -shadow_in_mask SHADOW_IN_MASK shadow_out_mask SHADOW_OUT_MASK all_cloud_mask
-  -ALL_CLOUD_MASK high_cloud_mask HIGH_CLOUD_MASK rf RF red_darkcloud
-  -RED_DARKCLOUD red_backtocloud RED_BACKTOCLOUD strict_cloud_mask
-  -STRICT_CLOUD_MASK true/false ``` ## Run LIS
+  -shadow_in_mask SHADOW_IN_MASK
+  -shadow_out_mask SHADOW_OUT_MASK
+  -all_cloud_mask ALL_CLOUD_MASK
+  -high_cloud_mask HIGH_CLOUD_MASK
+  -rf RF
+  -red_darkcloud RED_DARKCLOUD
+  -red_backtocloud RED_BACKTOCLOUD
+  -strict_cloud_mask STRICT_CLOUD_MASK
+                        true/false
+```
+## Run LIS
 
 Then you can run the *run_snow_detector.py* script to generate Snow Surface
 product:
 
-``` run_snow_detector.py output_dir_lis/param_test.json ```
+```
+run_snow_detector.py output_dir_lis/param_test.json
+```
 
 Below the output of the LIS processor. The image is an RGB color composition of
 the input Level 2A Sentinel2 product showing the outlines of the cloud
