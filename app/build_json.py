@@ -68,6 +68,22 @@ MAJA_parameters = {"multi":10,
                  "high_cloud_mask":128,
                  "rf":12}
 
+SEN2COR_parameters = {"mode":"sen2cor",
+                 "multi":10,
+                 "green_band":".*_B03_10m.jp2$",
+                 "green_bandNumber":1,
+                 "red_band":".*_B04_10m.jp2$",
+                 "red_bandNumber":1,
+                 "swir_band":".*_B11_20m.jp2$",
+                 "swir_bandNumber":1,
+                 "cloud_mask":".*_SCL_20m.jp2$",
+                 "dem":"",
+                 "shadow_in_mask":3,
+                 "shadow_out_mask":3,
+                 "all_cloud_mask":8,
+                 "high_cloud_mask":10,
+                 "rf":12}
+
 S2_parameters = {"multi":10,
                  "green_band":".*FRE_B3.*\.tif$",
                  "green_bandNumber":1,
@@ -116,7 +132,8 @@ L8_parameters = {"multi":1,
 mission_parameters = {"S2":S2_parameters,\
                       "LANDSAT8":L8_parameters,\
                       "Take5":Take5_parameters,\
-                      "MAJA":MAJA_parameters
+                      "MAJA":MAJA_parameters,\
+                      "SEN2COR":SEN2COR_parameters
                      }
 
 def str2bool(v):
@@ -165,6 +182,12 @@ def read_product(inputPath, mission):
         conf_json["cloud"]["high_cloud_mask"] = params["high_cloud_mask"]
         conf_json["cloud"]["rf"] = params["rf"]
 
+        #Check if an optional mode is provided in the mission configuration
+        # Use in case of SEN2COR to handle differences between maja and sen2cor encoding
+        if params["mode"] is not None:
+            conf_json["general"]["mode"] = params["mode"]
+ 
+        
         return conf_json
     else:
         logging.error(inputPath + " doesn't exist.")
@@ -223,7 +246,10 @@ def main():
     sentinel2Acronyms = ['S2', 'SENTINEL2', 'S2A', 'S2B']
     
     # Test if it is a MAJA output products (generated with MAJA processor version XX)
-    if '.DBL.DIR' in inputPath:
+    if '.SAFE' in inputPath:
+        # L2A SEN2COR product
+        jsonData = read_product(inputPath, "SEN2COR")
+    elif '.DBL.DIR' in inputPath:
         if any(s in inputPath for s in sentinel2Acronyms):
             jsonData = read_product(inputPath, "MAJA")
         else:
@@ -244,7 +270,7 @@ def main():
         jsonData["general"]["pout"] = outputPath
 
         # Override parameters for group general
-        if args.nodata:
+        if args.nodata is not None:
             jsonData["general"]["nodata"] = args.nodata
         if args.preprocessing is not None:
             jsonData["general"]["preprocessing"] = args.preprocessing
