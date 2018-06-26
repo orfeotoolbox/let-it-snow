@@ -239,7 +239,12 @@ class snow_detector:
 
         # External preprocessing
         if self.do_preprocessing:
-            build_dem(self.vrt, self.img, self.dem)
+            # Declare a pout dem in the output directory
+            pout_resampled_dem = op.join(self.path_tmp, "dem_resampled.tif")
+            build_dem(self.dem, self.img, pout_resampled_dem)
+
+            # Change self.dem to use the resampled DEM (output of build_dem) in this case
+            self.dem = pout_resampled_dem
 
         # Initialize the mask
         noDataMaskExpr = "im1b1==" + str(self.nodata) + "?1:0"

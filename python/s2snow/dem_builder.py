@@ -46,8 +46,10 @@ def build_dem(psrtm, pimg, pout):
     logging.info("Extent: " + str(extent))
     te = "".join(str(extent[1] + extent[3]))  # xminymin xmaxymax
     te = ast.literal_eval(te)
-    te = ' '.join([str(x) for x in te])
+    # Not use when moving gdalwarp to subprocess call
+    # te = ' '.join([str(x) for x in te])
     logging.info(te)
+
 
     # get target resolution
     resolution = target_geotransform[1]  # or geotransform[5]
@@ -59,24 +61,37 @@ def build_dem(psrtm, pimg, pout):
     spatial_ref_projection = spatial_ref.ExportToProj4()
     logging.info(spatial_ref_projection)
 
+    # TODO Use GDAL Python API instead
     # gdalwarp call
-    subprocess.check_output(
-        "gdalwarp -overwrite -dstnodata -32768 -tr " +
-        str(resolution) +
-        " " +
-        str(resolution) +
-        " -r cubicspline -te " +
-        te +
-        " -t_srs '" +
-        spatial_ref_projection +
-        "' " +
-        psrtm +
-        " " +
-        pout,
-        stderr=subprocess.STDOUT,
-        shell=True)
+    try:
+        p=subprocess.check_output(
+        ["gdalwarp",
+         "-overwrite",
+         "-dstnodata",
+         str(-32768),
+         "-tr",
+         str(resolution),
+         str(resolution),
+         "-r",
+         "cubicspline",
+         "-te",
+         str(te[0]),
+         str(te[1]),
+         str(te[2]),
+         str(te[3]),
+         "-t_srs",
+         str(spatial_ref_projection),
+         str(psrtm),
+         str(pout)
+        ]
+         )
 
-
+    except subprocess.CalledProcessError as e:
+        print e.output
+        print 'Error running command: ' + str(e.cmd) + ' see above shell error'
+        print 'Return code: ' + str(e.returncode)
+        return e.returncode
+    
 def main(argv):
         # parse files path
     psrtm = argv[1]
