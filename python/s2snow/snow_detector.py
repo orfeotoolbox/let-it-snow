@@ -355,7 +355,7 @@ class snow_detector:
             height=ySize / self.rf)
 
         # Resample red band nn
-        # FIXME: use MACCS resampling filter contribute in OTB 5.6 here
+        # FIXME: use MAJA resampling filter contribute in OTB 5.6 here
         gdal.Warp(
             op.join(self.path_tmp, "red_nn.tif"),
             op.join(self.path_tmp, "red_coarse.tif"),
