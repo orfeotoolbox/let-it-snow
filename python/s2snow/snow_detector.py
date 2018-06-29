@@ -326,6 +326,122 @@ class snow_detector:
         et = etree.ElementTree(root)
         et.write(self.metadata_path, pretty_print=True)
 
+    def extract_all_clouds(self):
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("All clouds in sen2cor SCL layer corresponds to:")
+            logging.info("- label == 3 -> Cloud shadows")
+            logging.info("- label == 8 -> Cloud medium probability")
+            logging.info("- label == 9 -> Cloud high probability")
+            logging.info("- label == 10 -> Thin cirrus")
+            condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
+        else:
+            condition_all_clouds = "im1b1 > 0"
+
+        bandMathAllCloud = band_math(
+            [self.cloud_init],
+            self.all_cloud_path + GDAL_OPT,
+            "("+condition_all_clouds+" > 0)?1:0",
+            self.ram,
+            otb.ImagePixelType_uint8)
+        bandMathAllCloud.ExecuteAndWriteOutput()
+        bandMathAllCloud = None
+
+    def extract_cloud_shadows(self):
+        shadow_mask_path = op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT
+
+        # Extract shadow masks differently if sen2cor or MAJA
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("- label == 3 -> Cloud shadows")
+            bandMathShadow = band_math(
+                [self.cloud_init],
+                shadow_mask_path,
+                "(im1b1 == 3)",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathShadow.ExecuteAndWriteOutput()
+            bandMathShadow = None
+        else:
+            # First extract shadow wich corresponds to shadow of clouds inside the
+            # image
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                op.join(self.path_tmp, "shadow_in_mask.tif") + GDAL_OPT,
+                str(self.shadow_in_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None
+
+            # Then extract shadow mask of shadows from clouds outside the image
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                op.join(self.path_tmp, "shadow_out_mask.tif") + GDAL_OPT,
+                str(self.shadow_out_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None
+
+            # The output shadow mask corresponds to a OR logic between the 2 shadow
+            # masks
+            bandMathShadow = band_math(
+                [op.join(self.path_tmp, "shadow_in_mask.tif"),
+                 op.join(self.path_tmp, "shadow_out_mask.tif")],
+                shadow_mask_path,
+                "(im1b1 == 1) || (im2b1 == 1)",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathShadow.ExecuteAndWriteOutput()
+            bandMathShadow = None
+
+    def extract_high_clouds(self):
+        high_clouds_mask_path = op.join(self.path_tmp, "high_cloud_mask.tif") + GDAL_OPT
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("- label == 10 -> Thin cirrus")
+            bandMathHighClouds = band_math(
+                [self.cloud_init],
+                high_clouds_mask_path,
+                "(im1b1 == 10)",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathHighClouds.ExecuteAndWriteOutput()
+            bandMathHighClouds = None
+        else:
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                high_clouds_mask_path,
+                str(self.high_cloud_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None
+
+    def extract_backtocloud_mask(self):
+        cloud_mask_for_backtocloud = self.cloud_init
+
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("All clouds in sen2cor SCL layer corresponds to:")
+            logging.info("- label == 3 -> Cloud shadows")
+            logging.info("- label == 8 -> Cloud medium probability")
+            logging.info("- label == 9 -> Cloud high probability")
+            logging.info("- label == 10 -> Thin cirrus")
+            condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
+        else:
+            condition_all_clouds = "im1b1 > 0"
+            
+        condition_back_to_cloud = "("+condition_all_clouds+") and (im2b1 > " + str(self.rRed_backtocloud) + ")"
+        bandMathBackToCloud = band_math(
+            [cloud_mask_for_backtocloud, self.redBand_path],
+            self.mask_backtocloud + GDAL_OPT,
+            condition_back_to_cloud + "?1:0",
+            self.ram,
+            otb.ImagePixelType_uint8)
+        bandMathBackToCloud.ExecuteAndWriteOutput()
+        
     def pass0(self):
         # Pass -0 : generate custom cloud mask
         # Extract red band
@@ -371,71 +487,19 @@ class snow_detector:
         dataset.SetGeoTransform(geotransform)
         dataset = None
 
-        # Extract all masks
-        bandMathAllCloud = band_math(
-            [self.cloud_init],
-            self.all_cloud_path + GDAL_OPT,
-            "(im1b1 > 0)?1:0",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathAllCloud.ExecuteAndWriteOutput()
-        bandMathAllCloud = None
+        ## Extract layers related to the cloud mask
 
-        # Extract shadow masks
-        # First extract shadow wich corresponds to shadow of clouds inside the
-        # image
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
-            op.join(self.path_tmp, "shadow_in_mask.tif") + GDAL_OPT,
-            str(self.shadow_in_mask),
-            self.ram,
-            otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
+        # Extract all cloud masks
+        self.extract_all_clouds()
 
-        # Then extract shadow mask of shadows from clouds outside the image
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
-            op.join(self.path_tmp, "shadow_out_mask.tif") + GDAL_OPT,
-            str(self.shadow_out_mask),
-            self.ram,
-            otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
-
-        # The output shadow mask corresponds to a OR logic between the 2 shadow
-        # masks
-        bandMathShadow = band_math(
-            [op.join(self.path_tmp, "shadow_in_mask.tif"),
-             op.join(self.path_tmp, "shadow_out_mask.tif")],
-            op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT,
-            "(im1b1 == 1) || (im2b1 == 1)",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathShadow.ExecuteAndWriteOutput()
-        bandMathShadow = None
-
+        # Extract cloud shadows mask
+        self.extract_cloud_shadows()
+        
         # Extract high clouds
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
-            op.join(self.path_tmp, "high_cloud_mask.tif") + GDAL_OPT,
-            str(self.high_cloud_mask),
-            self.ram,
-            otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
+        self.extract_high_clouds()
 
         # Extract also a mask for condition back to cloud
-        cloud_mask_for_backtocloud = self.cloud_init
-
-        condition_back_to_cloud = "(im1b1 > 0) and (im2b1 > " + str(self.rRed_backtocloud) + ")"
-        bandMathBackToCloud = band_math(
-            [cloud_mask_for_backtocloud, self.redBand_path],
-            self.mask_backtocloud + GDAL_OPT,
-            condition_back_to_cloud + "?1:0",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathBackToCloud.ExecuteAndWriteOutput()
+        self.extract_backtocloud_mask()
 
     def pass1(self):
         logging.info("Start pass 1")
@@ -565,19 +629,6 @@ class snow_detector:
         logging.info("End of pass 1.5")
 
     def pass2(self):
-        ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
-            ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
-
-        # Pass 2: compute snow fraction (c++ app)
-        # FIXME remove related OTB app
-        # TODO remove related application
-
-        #nb_pixels_app = compute_nb_pixels(self.pass1_path, 0, 1)
-        #nb_pixels_app.Execute()
-
-        #nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
-        #logging.info("Number of snow pixels =" + str(nb_snow_pixels))
-
         # Compute snow fraction in the pass1 image (including nodata pixels)
         snow_fraction = compute_percent(self.pass1_path, 1)/100
         logging.info("snow fraction in pass1 image:" + str(snow_fraction))
@@ -609,6 +660,9 @@ class snow_detector:
             # Test zs value (-1 means that no zs elevation was found)
             if self.zs != -1:
                 # NDSI threshold again
+                ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
+                               ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
+                
                 condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ")" \
                                   + " and (" + ndsi_formula + "> " + str(self.ndsi_pass2) + ")" \
                                   + " and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
@@ -673,18 +727,19 @@ class snow_detector:
         # Final update of the snow  mask (include snow/nosnow/cloud)
 
         ## Strict cloud mask checking
-        logging.info("Strict cloud masking of snow pixels :")
-        logging.info(self.strict_cloud_mask)
         if self.strict_cloud_mask:
+            logging.info("Strict cloud masking of snow pixels.")
             logging.info("Only keep snow pixels which are not in the initial cloud mask in the final mask.")
+            if self.mode == 'sen2cor':
+                logging.info("With sen2cor, strict cloud masking corresponds to the default configuration.")
             condition_snow = "(im2b1==1) and (im3b1==0)"
         else:
             condition_snow = "(im2b1==1)"
 
-        logging.info("condition snow " + condition_snow)
-
         condition_final = condition_snow + "?" + str(self.label_snow) + \
                           ":((im1b1==1) or (im3b1==1))?"+str(self.label_cloud)+":0"
+
+        logging.info("Final condition for snow masking: " + condition_final)
 
         bandMathFinalCloud = band_math([self.cloud_refine_path,
                                         generic_snow_path,

@@ -184,7 +184,7 @@ def read_product(inputPath, mission):
 
         #Check if an optional mode is provided in the mission configuration
         # Use in case of SEN2COR to handle differences between maja and sen2cor encoding
-        if params["mode"] is not None:
+        if 'mode' in params:
             conf_json["general"]["mode"] = params["mode"]
  
         
@@ -248,17 +248,22 @@ def main():
     # Test if it is a MAJA output products (generated with MAJA processor version XX)
     if '.SAFE' in inputPath:
         # L2A SEN2COR product
+        logging.info("SEN2COR product detected.")
         jsonData = read_product(inputPath, "SEN2COR")
     elif '.DBL.DIR' in inputPath:
         if any(s in inputPath for s in sentinel2Acronyms):
+            logging.info("MAJA native product detected.")
             jsonData = read_product(inputPath, "MAJA")
         else:
-            logging.error("Only MAJA Sentinel products are supported by build_json script for now.")
+            logging.error("Only MAJA products from Sentinels are supported by build_json.py script for now.")
     elif any(s in inputPath for s in sentinel2Acronyms):
+        logging.info("THEIA Sentinel product detected.")
         jsonData = read_product(inputPath, "S2")
     elif "Take5" in inputPath:
+        logging.info("THEIA Sentinel product detected.")
         jsonData = read_product(inputPath, "Take5")
     elif "LANDSAT8" in inputPath:
+        logging.info("THEIA Sentinel product detected.")
         jsonData = read_product(inputPath, "LANDSAT8")
     else:
         logging.error("Unknown product type.")
