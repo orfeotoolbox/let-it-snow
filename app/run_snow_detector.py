@@ -7,7 +7,7 @@ import json
 import logging
 from s2snow import snow_detector
 
-VERSION = "1.4"
+VERSION = "1.5"
 
 
 def show_help():
