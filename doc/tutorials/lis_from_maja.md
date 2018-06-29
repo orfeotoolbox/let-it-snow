@@ -236,5 +236,5 @@ the input Level 2A Sentinel2 product showing the outlines of the cloud
 (including cloud shadow) and snow masks drawn on the RGB composition of the L2A
 image (bands SWIR/Red/Green):
 
-Inline-style: ![alt text](images/artos-lis-compo.png "Mount Artos Sentinel-2A
+![alt text](images/artos-lis-compo.png "Mount Artos Sentinel-2A
 Snow detection result")

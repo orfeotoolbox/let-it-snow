@@ -55,3 +55,6 @@ run_snow_detector.py output_dir_lis/param_test.json
 ```
 
 LIS products are available in LIS_PRODUCTS sub-directory.
+
+![alt text](images/artos-lis-compo-sen2cor.png "Mount Artos SEN2COR Sentinel-2A
+Snow detection result")
