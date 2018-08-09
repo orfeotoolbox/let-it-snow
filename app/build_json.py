@@ -129,11 +129,27 @@ L8_parameters = {"multi":1,
                  "high_cloud_mask":32,
                  "rf":8}
 
+LANDSAT8_LASRC_parameters = {"multi":1,
+                 "green_band":".*_sr_band3.tif$",
+                 "green_bandNumber":1,
+                 "red_band":".*_sr_band4.tif$",
+                 "red_bandNumber":1,
+                 "swir_band":".*_sr_band6.tif$",
+                 "swir_bandNumber":1,
+                 "cloud_mask":".*_pixel_qa.tif$",
+                 "dem":".*\.tif",
+                 "shadow_in_mask":8,
+                 "shadow_out_mask":8,
+                 "all_cloud_mask":32,
+                 "high_cloud_mask":256,
+                 "rf":8}
+
 mission_parameters = {"S2":S2_parameters,\
                       "LANDSAT8":L8_parameters,\
                       "Take5":Take5_parameters,\
                       "MAJA":MAJA_parameters,\
-                      "SEN2COR":SEN2COR_parameters
+                      "SEN2COR":SEN2COR_parameters,\
+                      "LANDSAT8_LASRC":LANDSAT8_LASRC_parameters
                      }
 
 def str2bool(v):
@@ -246,13 +262,15 @@ def main():
     sentinel2Acronyms = ['S2', 'SENTINEL2', 'S2A', 'S2B']
     
     # Test if it is a MAJA output products (generated with MAJA processor version XX)
+    # FIXME: This detection based on directory substring detection is very week and error prone
+    # FIXME: use a factory and detect by using xml metadata
     if '.SAFE' in inputPath:
         # L2A SEN2COR product
-        logging.info("SEN2COR product detected.")
+        logging.info("SEN2COR product detected (detect .SAFE in the input path...).")
         jsonData = read_product(inputPath, "SEN2COR")
     elif '.DBL.DIR' in inputPath:
         if any(s in inputPath for s in sentinel2Acronyms):
-            logging.info("MAJA native product detected.")
+            logging.info("MAJA native product detected (detect .DBL.DIR substring in input path...)")
             jsonData = read_product(inputPath, "MAJA")
         else:
             logging.error("Only MAJA products from Sentinels are supported by build_json.py script for now.")
@@ -263,13 +281,18 @@ def main():
         logging.info("THEIA Sentinel product detected.")
         jsonData = read_product(inputPath, "Take5")
     elif "LANDSAT8" in inputPath:
-        logging.info("THEIA Sentinel product detected.")
+        logging.info("THEIA LANDSAT8 product detected.")
         jsonData = read_product(inputPath, "LANDSAT8")
+    elif "LC08" in inputPath:
+        logging.info("LANDSAT8 LASRC) product detected (LC08_L1TP in input path...).")
+        jsonData = read_product(inputPath, "LANDSAT8_LASRC")
     else:
         logging.error("Unknown product type.")
+        sys.exit(0)
 
     if jsonData:
         if not os.path.exists(outputPath):
+            logging.info("Create directory " + outputPath + "...")
             os.makedirs(outputPath)
 
         jsonData["general"]["pout"] = outputPath
