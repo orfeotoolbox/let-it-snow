@@ -129,7 +129,8 @@ L8_parameters = {"multi":1,
                  "high_cloud_mask":32,
                  "rf":8}
 
-LANDSAT8_LASRC_parameters = {"multi":1,
+LANDSAT8_LASRC_parameters = {"mode":"lasrc",
+                 "multi":10,
                  "green_band":".*_sr_band3.tif$",
                  "green_bandNumber":1,
                  "red_band":".*_sr_band4.tif$",
@@ -140,8 +141,8 @@ LANDSAT8_LASRC_parameters = {"multi":1,
                  "dem":".*\.tif",
                  "shadow_in_mask":8,
                  "shadow_out_mask":8,
-                 "all_cloud_mask":32,
-                 "high_cloud_mask":256,
+                 "all_cloud_mask":224, # cloud with high confidence (32+(64+128)) 
+                 "high_cloud_mask":800, # cloud and high cloud with high confidence (32 + (512+256)) 
                  "rf":8}
 
 mission_parameters = {"S2":S2_parameters,\
