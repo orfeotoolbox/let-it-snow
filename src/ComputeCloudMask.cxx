@@ -18,7 +18,7 @@ public:
   typedef itk::SmartPointer<Self>       Pointer;
   typedef itk::SmartPointer<const Self> ConstPointer;
 
-  typedef otb::Image<unsigned char, 2>  InputImageType;
+  typedef otb::Image<unsigned short, 2>  InputImageType;
   typedef otb::Image<unsigned char, 2>  OutputImageType;
 
   typedef itk::UnaryCloudMaskImageFilter<InputImageType,OutputImageType> CloudMaskFilterType;
@@ -45,7 +45,7 @@ public:
     AddParameter(ParameterType_InputImage, "in", "Input image");
     SetParameterDescription( "in", "Input cloud image");
 
-    AddParameter(ParameterType_Float, "cloudmaskvalue", "Value of the cloud mask");
+    AddParameter(ParameterType_Int, "cloudmaskvalue", "Value of the cloud mask");
     SetParameterDescription("cloudmaskvalue", "Value of the input cloud mask to extract in the output mask");
     MandatoryOn("cloudmaskvalue");
 
@@ -75,7 +75,7 @@ public:
 
     m_CloudMaskFilter = CloudMaskFilterType::New();
     m_CloudMaskFilter->SetInput(0, inputCloudMask);
-    m_CloudMaskFilter->SetCloudMask(GetParameterFloat("cloudmaskvalue"));
+    m_CloudMaskFilter->SetCloudMask(GetParameterInt("cloudmaskvalue"));
 
     // Set the output image
     SetParameterOutputImage("out", m_CloudMaskFilter->GetOutput());

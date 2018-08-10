@@ -213,3 +213,26 @@ add_test(NAME cloud_removal_step3_test
 
 add_test(NAME cloud_removal_step4_test
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py)
+
+ADD_EXECUTABLE(itkUnaryCloudMaskImageFilterTest itkUnaryCloudMaskImageFilterTest.cxx)
+TARGET_LINK_LIBRARIES(itkUnaryCloudMaskImageFilterTest histo_utils)
+
+add_test(NAME TvitkUnaryCloudMaskImageFilterTest
+  COMMAND ${CMAKE_BINARY_DIR}/bin/itkUnaryCloudMaskImageFilterTest
+  192
+  192
+  1)
+
+add_test(NAME TvitkUnaryCloudMaskImageFilterTest2
+  COMMAND ${CMAKE_BINARY_DIR}/bin/itkUnaryCloudMaskImageFilterTest
+  64
+  192
+  1
+  )
+
+add_test(NAME TvitkUnaryCloudMaskImageFilterTest3
+  COMMAND ${CMAKE_BINARY_DIR}/bin/itkUnaryCloudMaskImageFilterTest
+  2
+  4
+  0
+  )
