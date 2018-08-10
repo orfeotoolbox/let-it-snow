@@ -33,7 +33,7 @@ retrieved from the directory name and structures.
 In the case of the Sentinel2 over Mount Artos tile, the command is:
 
 ```
-uild_json.py -dem  /media/grizonnetm/My\ Passport/DATA/S2/SEN2COR/ARTOS/DTM/srtm_45_05.tif -preprocessing true -nodata 0 /media/grizonnetm/My\ Passport/DATA/S2/SEN2COR/ARTOS/S2A_MSIL2A_20180311T075731_N0206_R035_T38SLH_20180311T101707.SAFE/ /media/grizonnetm/My\ Passport/DATA/S2/SEN2COR/ARTOS/LIS-TEST/
+build_json.py -dem  /media/grizonnetm/My\ Passport/DATA/S2/SEN2COR/ARTOS/DTM/srtm_45_05.tif -preprocessing true -nodata 0 /media/grizonnetm/My\ Passport/DATA/S2/SEN2COR/ARTOS/S2A_MSIL2A_20180311T075731_N0206_R035_T38SLH_20180311T101707.SAFE/ /media/grizonnetm/My\ Passport/DATA/S2/SEN2COR/ARTOS/LIS-TEST/
 ```
 The important parameter here is 'preprocessing' which should be set to 'true' to activate the DTM resampling. It is not necessary with MAJA native products as the 'prepare_mnt' processor already resample the DTM at the resolution and over the same geographic area as the Sentinel image.
 
