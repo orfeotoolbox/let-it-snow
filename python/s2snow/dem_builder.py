@@ -29,7 +29,7 @@ def get_extent(geotransform, cols, rows):
     return extent
 
 
-def build_dem(psrtm, pimg, pout):
+def build_dem(psrtm, pimg, pout, ram, nbThreads):
     # load datasets
     source_dataset = gdal.Open(psrtm, gdalconst.GA_Update)
     source_geotransform = source_dataset.GetGeoTransform()
@@ -63,12 +63,19 @@ def build_dem(psrtm, pimg, pout):
 
     # TODO Use GDAL Python API instead
     # gdalwarp call
+    # TODO use RAM and thread options from gdal here (from json parameters)
+    # FIXME: srcnodata is hard coded to -32768 only valid for SRTM
     try:
         p=subprocess.check_output(
         ["gdalwarp",
          "-overwrite",
-         "-dstnodata",
+         "-srcnodata",
          str(-32768),
+         "-dstnodata",
+         str(0),
+         "-wm",
+         str(ram),
+         #"-wo NUM_THREADS="+str(nbThreads),
          "-tr",
          str(resolution),
          str(resolution),
