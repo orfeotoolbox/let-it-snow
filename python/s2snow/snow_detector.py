@@ -241,7 +241,7 @@ class snow_detector:
         if self.do_preprocessing:
             # Declare a pout dem in the output directory
             pout_resampled_dem = op.join(self.path_tmp, "dem_resampled.tif")
-            build_dem(self.dem, self.img, pout_resampled_dem)
+            build_dem(self.dem, self.img, pout_resampled_dem, self.ram, self.nbThreads)
 
             # Change self.dem to use the resampled DEM (output of build_dem) in this case
             self.dem = pout_resampled_dem
@@ -327,25 +327,37 @@ class snow_detector:
         et.write(self.metadata_path, pretty_print=True)
 
     def extract_all_clouds(self):
-        if self.mode == 'sen2cor':
-            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
-            logging.info("All clouds in sen2cor SCL layer corresponds to:")
-            logging.info("- label == 3 -> Cloud shadows")
-            logging.info("- label == 8 -> Cloud medium probability")
-            logging.info("- label == 9 -> Cloud high probability")
-            logging.info("- label == 10 -> Thin cirrus")
-            condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
+        if self.mode == 'lasrc':
+            # Extract shadow wich corresponds to  all cloud shadows in larsc product
+            logging.info("lasrc mode -> extract all clouds from LASRC product using ComputeCloudMask application...")
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                self.all_cloud_path + GDAL_OPT,
+                str(self.all_cloud_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None 
         else:
-            condition_all_clouds = "im1b1 > 0"
+            if self.mode == 'sen2cor':
+                logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+                logging.info("All clouds in sen2cor SCL layer corresponds to:")
+                logging.info("- label == 3 -> Cloud shadows")
+                logging.info("- label == 8 -> Cloud medium probability")
+                logging.info("- label == 9 -> Cloud high probability")
+                logging.info("- label == 10 -> Thin cirrus")
+                condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
+            else:
+                condition_all_clouds = "im1b1 > 0"
 
-        bandMathAllCloud = band_math(
-            [self.cloud_init],
-            self.all_cloud_path + GDAL_OPT,
-            "("+condition_all_clouds+" > 0)?1:0",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathAllCloud.ExecuteAndWriteOutput()
-        bandMathAllCloud = None
+                bandMathAllCloud = band_math(
+                    [self.cloud_init],
+                    self.all_cloud_path + GDAL_OPT,
+                    "("+condition_all_clouds+" > 0)?1:0",
+                    self.ram,
+                    otb.ImagePixelType_uint8)
+                bandMathAllCloud.ExecuteAndWriteOutput()
+                bandMathAllCloud = None
 
     def extract_cloud_shadows(self):
         shadow_mask_path = op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT
