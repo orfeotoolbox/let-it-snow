@@ -103,6 +103,22 @@ class snow_detector:
         self.dem = str(inputs.get("dem"))
         self.cloud_init = str(inputs.get("cloud_mask"))
 
+        ## Get div mask if available
+        self.slope_mask_path = None
+        if inputs.get("div_mask") and inputs.get("div_slope_thres"):
+            self.div_mask = str(inputs.get("div_mask"))
+            self.div_slope_thres = inputs.get("div_slope_thres")
+            self.slope_mask_path = op.join(self.path_tmp, "bad_slope_correction_mask.tif")
+
+            # Extract the bad slope correction flag
+            bandMathSlopeFlag = band_math([self.div_mask],
+                                    self.slope_mask_path,
+                                    "im1b1>="+str(self.div_slope_thres)+"?1:0",
+                                    self.ram,
+                                    otb.ImagePixelType_uint8)
+            bandMathSlopeFlag.ExecuteAndWriteOutput()
+            bandMathSlopeFlag = None
+
         # bands paths
         gb_path_extracted = extract_band(inputs, "green_band", self.path_tmp, self.nodata)
         rb_path_extracted = extract_band(inputs, "red_band", self.path_tmp, self.nodata)
@@ -778,7 +794,9 @@ class snow_detector:
                                 self.pass2_path,
                                 self.cloud_pass1_path,
                                 self.cloud_refine_path,
+                                self.all_cloud_path,
                                 self.snow_all_path,
+                                self.slope_mask_path,
                                 self.ram,
                                 otb.ImagePixelType_uint8)
         app.ExecuteAndWriteOutput()

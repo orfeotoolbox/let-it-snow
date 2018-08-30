@@ -93,6 +93,8 @@ S2_parameters = {"multi":10,
                  "swir_bandNumber":1,
                  "cloud_mask":".*CLM_R2.*\.tif$",
                  "dem":".*ALT_R2\.TIF$",
+                 "div_mask":".*MG2_R2.*\.tif$",
+                 "div_slope_thres":64,
                  "shadow_in_mask":32,
                  "shadow_out_mask":64,
                  "all_cloud_mask":1,
@@ -107,6 +109,8 @@ Take5_parameters = {"multi":1,
                     "swir_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
                     "swir_bandNumber":4,
                     "cloud_mask":".*NUA.*\.TIF$",
+                    "div_mask":".*DIV.*\.TIF$",
+                    "div_slope_thres":8,
                     "dem":".*\.tif",
                     "shadow_in_mask":64,
                     "shadow_out_mask":128,
@@ -122,6 +126,8 @@ L8_parameters = {"multi":1,
                  "swir_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
                  "swir_bandNumber":6,
                  "cloud_mask":".*NUA.*\.TIF$",
+                 "div_mask":".*DIV.*\.TIF$",
+                 "div_slope_thres":8,
                  "dem":".*\.tif",
                  "shadow_in_mask":64,
                  "shadow_out_mask":128,
@@ -192,6 +198,15 @@ def read_product(inputPath, mission):
             conf_json["inputs"]["dem"] = result[0]
         else:
             logging.warning("No DEM found within product!")
+
+        #  Check optional div mask parameters to access slope correction flags
+        if "div_mask" in params and "div_slope_thres" in params:
+            div_mask_tmp = findFiles(inputPath, params["div_mask"])
+            if div_mask_tmp:
+                conf_json["inputs"]["div_mask"] = div_mask_tmp[0]
+                conf_json["inputs"]["div_slope_thres"] = params["div_slope_thres"]
+            else:
+                logging.warning("div_mask was not found, the slope correction flag will be ignored")
 
         conf_json["cloud"]["shadow_in_mask"] = params["shadow_in_mask"]
         conf_json["cloud"]["shadow_out_mask"] = params["shadow_out_mask"]
@@ -279,7 +294,7 @@ def main():
         logging.info("THEIA Sentinel product detected.")
         jsonData = read_product(inputPath, "S2")
     elif "Take5" in inputPath:
-        logging.info("THEIA Sentinel product detected.")
+        logging.info("THEIA Take5 product detected.")
         jsonData = read_product(inputPath, "Take5")
     elif "LANDSAT8" in inputPath:
         logging.info("THEIA LANDSAT8 product detected.")

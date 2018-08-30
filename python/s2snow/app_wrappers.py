@@ -89,8 +89,8 @@ def compute_cloud_mask(img_in, img_out, cloudmaskvalue, \
         logging.error("Parameters img_in, img_out \
                        and cloudmaskvalue are required")
 
-def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, \
-                      ram=None, out_type=None):
+def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, initial_clouds, \
+                      out, slope_flag=None, ram=None, out_type=None):
     """ Create and configure the Compute Cloud Snow application
         using otb.Registry.CreateApplication("ComputeSnowMask")
 
@@ -99,7 +99,9 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, \
     pass2 -- the input pass2 image
     cloud_pass1 -- the input cloud pass1 image
     cloud_refine -- the input cloud refine image
+    initial_clouds -- the inital all cloud image
     out -- the output image
+    slope_flag -- the status of the slope
     ram -- the ram limitation (not mandatory)
     out_type -- the output image pixel type  (not mandatory)
     """
@@ -109,6 +111,7 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, \
         logging.info("pass2 = " + pass2)
         logging.info("cloud_pass1 = " + cloud_pass1)
         logging.info("cloud_refine = " + cloud_refine)
+        logging.info("initial_clouds = " + initial_clouds)
         logging.info("out = " + out)
 
         snowMaskApp = otb.Registry.CreateApplication("ComputeSnowMask")
@@ -116,7 +119,11 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, \
         snowMaskApp.SetParameterString("pass2", pass2)
         snowMaskApp.SetParameterString("cloudpass1", cloud_pass1)
         snowMaskApp.SetParameterString("cloudrefine", cloud_refine)
+        snowMaskApp.SetParameterString("initialallcloud", initial_clouds)
         snowMaskApp.SetParameterString("out", out)
+        if slope_flag is not None:
+            logging.info("slope_flag = " + slope_flag)
+            snowMaskApp.SetParameterString("slopeflag", slope_flag)
         if ram is not None:
             logging.info("ram = " + str(ram))
             snowMaskApp.SetParameterString("ram", str(ram))
@@ -126,7 +133,7 @@ def compute_snow_mask(pass1, pass2, cloud_pass1, cloud_refine, out, \
         return snowMaskApp
     else:
         logging.error("Parameters pass1, pass2, cloud_pass1, \
-                       cloud_refine and out are required")
+                       cloud_refine, initial_clouds and out are required")
 
 def band_mathX(il, out, exp, ram=None, out_type=None):
     """ Create and configure the band math application

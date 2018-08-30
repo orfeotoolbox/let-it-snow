@@ -37,6 +37,8 @@ NB: To build DEM data download the SRTM files corresponding to the study area an
   * 2nd bit: Snow mask after pass2
   * 3rd bit: Clouds detected at pass0
   * 4th bit: Clouds refined  at pass0
+  * 5th bit: Clouds initial (all_cloud)
+  * 6th bit: Slope flag (optional 1: bad slope correction)
 
 For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do:
 ```python
