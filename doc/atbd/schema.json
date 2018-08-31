@@ -201,6 +201,18 @@
                     "title": "The Dem schema.",
                     "type": "string"
                 },
+                "div_mask": {
+                    "description": "Input other mask image for slope correction flag (optional in MASK directory for Theia product *DIV*.TIF).",
+                    "id": "div_mask",
+                    "title": "The div_mask schema.",
+                    "type": "string"
+                },
+                "div_slope_thres": {
+                    "description": "Input threshold of div_mask image to determine the flag for slope correction (optional for Theia product).",
+                    "id": "div_slope_thres",
+                    "title": "The Div_slope_thres schema.",
+                    "type": "int"
+                },
                 "green_band": {
                     "id": "green_band",
                     "properties": {
