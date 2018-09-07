@@ -624,7 +624,7 @@ class snow_detector:
             current_mask_area = np.count_nonzero(current_mask)
             logging.debug("Current area size = " + str(current_mask_area))
             if current_mask_area > min_area_size:
-                logging.idebugnfo("Processing snow area of size = " + str(current_mask_area))
+                logging.debug("Processing snow area of size = " + str(current_mask_area))
                 patch_neige_dilat = nd.binary_dilation(current_mask, struct)
                 logging.debug("Contour processing start")
                 contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
