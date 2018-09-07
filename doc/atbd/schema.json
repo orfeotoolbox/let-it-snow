@@ -81,6 +81,13 @@
                     "id": "rm_snow_inside_cloud_threshold",
                     "title": "The rm_snow_inside_cloud_threshold schema.",
                     "type": "float"
+                },
+                "rm_snow_inside_cloud_min_area": {
+                    "default": 25000,
+                    "description": "Minimum area (in pixels) for snow areas to execute the cold cloud removal. (experimental)",
+                    "id": "rm_snow_inside_cloud_min_area",
+                    "title": "The rm_snow_inside_cloud_min_area schema.",
+                    "type": "int"
                 }
             },
             "type": "object"

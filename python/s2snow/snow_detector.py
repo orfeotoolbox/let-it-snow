@@ -94,6 +94,7 @@ class snow_detector:
         self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", False)
         self.dilation_radius = cloud.get("rm_snow_inside_cloud_dilation_radius", 5)
         self.cloud_threshold = cloud.get("rm_snow_inside_cloud_threshold", 0.85)
+        self.cloud_min_area_size = cloud.get("rm_snow_inside_cloud_min_area", 25000)
 
         # Parse input parameters
         inputs = data["inputs"]
@@ -561,7 +562,8 @@ class snow_detector:
             self.pass1_5(self.pass1_path,
                          self.cloud_pass1_path,
                          self.dilation_radius,
-                         self.cloud_threshold)
+                         self.cloud_threshold,
+                         self.cloud_min_area_size)
 
         # The computation of cloud refine is done below,
         # because the inital cloud may be updated within pass1_5
@@ -591,7 +593,7 @@ class snow_detector:
 
         logging.info("End of pass 1")
 
-    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85):
+    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85, min_area_size=25000):
         logging.info("Start pass 1.5")
         import numpy as np
         import scipy.ndimage as nd
@@ -614,25 +616,29 @@ class snow_detector:
         # For each snow area
         for lab in range(1, nb_label+1):
             # Compute external contours
-            patch_neige_dilat = nd.binary_dilation(np.where(snowlabels == lab, 1, 0), struct)
-            contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
+            current_mask = np.where(snowlabels == lab, 1, 0)
+            current_mask_area = np.count_nonzero()
+            if current_mask_area > min_area_size:
+                logging.info("Processing snow area of size = " + current_mask_area)
+                patch_neige_dilat = nd.binary_dilation(current_mask, struct)
+                contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
 
-            # Compute percent of surronding cloudy pixels
-            cloud_contour = cloud_mask[contour]
-            # print cloud_contour
+                # Compute percent of surronding cloudy pixels
+                cloud_contour = cloud_mask[contour]
+                # print cloud_contour
 
-            result = np.bincount(cloud_contour)
-            #logging.info(result)
-            cloud_percent = 0
-            if len(result) > 1:
-                cloud_percent = float(result[1]) / (result[0] + result[1])
-                logging.info(result)
-                logging.info(", " + str(cloud_percent*100) + "% of surrounding cloud")
+                result = np.bincount(cloud_contour)
+                #logging.info(result)
+                cloud_percent = 0
+                if len(result) > 1:
+                    cloud_percent = float(result[1]) / (result[0] + result[1])
+                    logging.info(result)
+                    logging.info(", " + str(cloud_percent*100) + "% of surrounding cloud")
 
-            # Discard snow area where cloud_percent > threshold
-            if cloud_percent > cloud_threshold:
-                discarded_snow_area += 1
-                snow_mask = np.where(snowlabels == lab, 0, snow_mask)
+                # Discard snow area where cloud_percent > threshold
+                if cloud_percent > cloud_threshold:
+                    discarded_snow_area += 1
+                    snow_mask = np.where(snowlabels == lab, 0, snow_mask)
 
         logging.info(str(discarded_snow_area) + ' labels entoures de nuages (sur ' \
                      + str(nb_label) + ' labels)')

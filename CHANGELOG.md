@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to LIS will be documented in this file.
 
+## [1.5] - UNRELEASED
+
+### Added
+- The expert mask now includes a 5th bit for the clouds that were present in the product/original cloud mask
+- The expert mask now includes an optional 6th bit propagating the slope correction flag from the product mask when available
+- The cold cloud removal (pass 1.5) now use an area threshold to process only significant snow areas within clouds and reduce time.
+
 ## [1.4] - 2018-02-14
 
 ### Added

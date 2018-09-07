@@ -48,7 +48,8 @@ conf_template = {"general":{"pout":"",
                           "strict_cloud_mask":False,
                           "rm_snow_inside_cloud":False,
                           "rm_snow_inside_cloud_dilation_radius":1,
-                          "rm_snow_inside_cloud_threshold":0.85}}
+                          "rm_snow_inside_cloud_threshold":0.85,
+                          "rm_snow_inside_cloud_min_area":5000}}
 
 
 ### Mission Specific Parameters ###
