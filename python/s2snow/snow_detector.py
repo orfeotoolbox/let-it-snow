@@ -606,6 +606,7 @@ class snow_detector:
         discarded_snow_area = 0
 
         (snowlabels, nb_label) = nd.measurements.label(snow_mask)
+        logging.info("There is " + str(nb_label) + " snow areas")
 
         # build the structuring element for dilation
         struct = np.zeros((2*radius+1, 2*radius+1))
@@ -613,22 +614,28 @@ class snow_detector:
         mask = x**2 + y**2 <= radius**2
         struct[mask] = 1
 
+        logging.debug("Start loop on snow areas")
+
         # For each snow area
         for lab in range(1, nb_label+1):
             # Compute external contours
+            logging.debug("Processing area " + str(lab))
             current_mask = np.where(snowlabels == lab, 1, 0)
-            current_mask_area = np.count_nonzero()
+            current_mask_area = np.count_nonzero(current_mask)
+            logging.debug("Current area size = " + str(current_mask_area))
             if current_mask_area > min_area_size:
-                logging.info("Processing snow area of size = " + current_mask_area)
+                logging.idebugnfo("Processing snow area of size = " + str(current_mask_area))
                 patch_neige_dilat = nd.binary_dilation(current_mask, struct)
+                logging.debug("Contour processing start")
                 contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
 
                 # Compute percent of surronding cloudy pixels
                 cloud_contour = cloud_mask[contour]
                 # print cloud_contour
+                logging.debug("Contour processing done.")
 
                 result = np.bincount(cloud_contour)
-                #logging.info(result)
+                logging.debug(result)
                 cloud_percent = 0
                 if len(result) > 1:
                     cloud_percent = float(result[1]) / (result[0] + result[1])
@@ -637,8 +644,11 @@ class snow_detector:
 
                 # Discard snow area where cloud_percent > threshold
                 if cloud_percent > cloud_threshold:
+                    logging.info("Updating snow mask...")
                     discarded_snow_area += 1
                     snow_mask = np.where(snowlabels == lab, 0, snow_mask)
+                    logging.info("Updating snow mask...Done")
+                    logging.info("End of processing area " + str(lab))
 
         logging.info(str(discarded_snow_area) + ' labels entoures de nuages (sur ' \
                      + str(nb_label) + ' labels)')
