@@ -5,7 +5,7 @@ This code implements the snow cover extent detection algorithm LIS (Let It Snow)
 
 The algorithm documentation with examples is available here:
 
-* [![Algorithm theoretical basis documentation](https://zenodo.org/badge/DOI/10.5281/zenodo.1414452.svg)](https://doi.org/10.5281/zenodo.1414452)
+* [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1414452.svg)](https://doi.org/10.5281/zenodo.1414452)
 
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
