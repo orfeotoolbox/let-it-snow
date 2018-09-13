@@ -1,13 +1,28 @@
 # Change Log
-All notable changes to LIS will be documented in this file.
+All notable changes to Let It Snow (LIS) will be documented in this file.
 
-## [1.5] - UNRELEASED
+## [Unreleased]
 
 ### Added
+- Add a mode to build_json.py script to configure and run LIS on Level 2A MAJA native products
+- Add a tutorial to describe how to run LIS on MAJA native products
+- Add a mode to build_json.py script to configure and run LIS on SEN2COR Level 2A products
+- Add a tutorial to describe how to run LIS on SEN2COR products
+- Add a mode to build_json.py script to configure and run LIS on U.S. Landsat Analysis Ready Data (ARD) Level 2A products
+- Add a tutorial to describe how to run LIS on Landsat ARD products	
 - The expert mask now includes a 5th bit for the clouds that were present in the product/original cloud mask
 - The expert mask now includes an optional 6th bit propagating the slope correction flag from the product mask when available
 - The cold cloud removal (pass 1.5) now use an area threshold to process only significant snow areas within clouds and reduce time.
-
+- Link ATBD and LIS Data for test validation to their Zenodo DOI in README.md
+	
+### Fixed
+- Fix all python scripts headers to avoid to mix python versions	
+- Fix preprocessing json option which was broken which allows to resample input DTM
+- Fix typos in README.md documentation
+- Change nodata management (read -32768 from input and write 0 in the
+	output) in DTM resampling to avoid error in snow line estimation
+	on area without DTM information 
+	
 ## [1.4] - 2018-02-14
 
 ### Added
@@ -30,7 +45,7 @@ All notable changes to LIS will be documented in this file.
 
 ## [1.3.1] - 2017-11-23
 
-### Hotfix
+### Fixed
 - Fix the intermediate data format (used 1 bit instead of type uint8)
 
 ## [1.3] - 2017-11-02
