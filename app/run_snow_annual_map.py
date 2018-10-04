@@ -38,8 +38,8 @@ def main(argv):
     log = data.get("log", True)
 
     if log:
-        sys.stdout = open(op.join(pout, "stdout.log"), 'w')
-        sys.stderr = open(op.join(pout, "stderr.log"), 'w')
+        sys.stdout = open(data.get('log_stdout', op.join(pout, "stdout.log")), 'w')
+        sys.stderr = open(data.get('log_stderr', op.join(pout, "stderr.log")), 'w')
 
     # Set logging level and format.
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, \

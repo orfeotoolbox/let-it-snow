@@ -113,9 +113,9 @@ class snow_annual_map():
         self.output_dates_filename = params.get("output_dates_filename", None)
         self.mode = params.get("mode", "RUNTIME")
 
-        self.input_dir = str(params.get("input_dir"))
-        self.path_tmp = str(params.get("path_tmp"))
-
+        self.input_dir = str(op.join(params.get("input_dir"), self.tile_id))
+        self.path_tmp = str(params.get("path_tmp", os.environ.get('TMPDIR')))
+        
         self.path_out = op.join(str(params.get("path_out")),
                                 self.tile_id + "_" + datetime_to_str(self.date_start)
                                 + "-" + datetime_to_str(self.date_stop))
@@ -126,7 +126,7 @@ class snow_annual_map():
         self.ram = params.get("ram", 512)
         self.nbThreads = params.get("nbThreads", None)
 
-        self.use_l8_for_densification = params.get("use_l8_for_densification", True)
+        self.use_l8_for_densification = params.get("use_l8_for_densification", False)
         if self.use_l8_for_densification:
             self.l8_tile_id = params.get("l8_tile_id")
             self.l8_input_dir = str(params.get("l8_input_dir"))
@@ -145,6 +145,7 @@ class snow_annual_map():
         self.multitemp_cloud_vrt = op.join(self.path_tmp, "multitemp_cloud_mask.vrt")
         self.gapfilled_timeserie = op.join(self.path_tmp, "gap_filled_snow_mask.tif")
         self.annual_snow_map = op.join(self.path_tmp, "gap_filled_snow_mask_annual_snow.tif")
+        self.cloud_occurence_img = op.join(self.path_tmp, "annual_cloud_occurence.tif")
 
     def run(self):
         logging.info("Run snow_annual_map")
@@ -157,6 +158,10 @@ class snow_annual_map():
         self.product_list = self.find_products(self.input_dir, self.tile_id)
         logging.debug("Product list:")
         logging.debug(self.product_list)
+
+        if not self.product_list:
+            logging.error("Empty product list!")
+            return
 
         # @TODO clean the loading of the L8 products to densify the timeserie
         if self.use_l8_for_densification:
@@ -242,6 +247,21 @@ class snow_annual_map():
                       self.binary_cloudmask_list,
                       separate=True)
 
+        # generate the summary map
+        band_index = range(1, len(self.binary_cloudmask_list)+1)
+        expression = "+".join(["im1b" + str(i) for i in band_index])
+
+        bandMathApp = band_math([self.multitemp_cloud_vrt],
+                                self.cloud_occurence_img,
+                                expression,
+                                self.ram,
+                                otb.ImagePixelType_uint16)
+        bandMathApp.ExecuteAndWriteOutput()
+        bandMathApp = None
+
+        logging.info("Copying outputs from tmp to output folder")
+        shutil.copy2(self.cloud_occurence_img, self.path_out)
+
         # build snow mask vrt
         logging.info("Building multitemp snow mask vrt")
         logging.info("snow vrt: " + self.multitemp_snow_vrt)
@@ -258,11 +278,15 @@ class snow_annual_map():
                                       self.ram,
                                       otb.ImagePixelType_uint8)
 
-        img_in = get_app_output(app_gap_filling, "out", self.mode)
+        # @TODO the mode is for now forced to DEBUG in order to generate img on disk
+        #img_in = get_app_output(app_gap_filling, "out", self.mode)
+        #if self.mode == "DEBUG":
+            #shutil.copy2(self.gapfilled_timeserie, self.path_out)
+            #app_gap_filling = None
 
-        if self.mode == "DEBUG":
-            shutil.copy2(self.gapfilled_timeserie, self.path_out)
-            app_gap_filling = None
+        img_in = get_app_output(app_gap_filling, "out", "DEBUG")
+        shutil.copy2(self.gapfilled_timeserie, self.path_out)
+        app_gap_filling = None
 
         # generate the summary map
         band_index = range(1, len(output_dates)+1)
@@ -282,7 +306,10 @@ class snow_annual_map():
         logging.info("End snow_annual_map")
 
         if self.mode == "DEBUG":
-            shutil.copytree(self.path_tmp, op.join(self.path_out, "tmpdir"))
+            dest_debug_dir = op.join(self.path_out, "tmpdir")
+            if op.exists(dest_debug_dir):
+                shutil.rmtree(shutil)
+            shutil.copytree(self.path_tmp, dest_debug_dir)
 
 
     def find_products(self, input_dir, tile_id):
@@ -337,14 +364,16 @@ class snow_annual_map():
 ###############################################################
 def main():
     params = {"tile_id":"T31TCH",
-              "date_start":"01/09/2015",
-              "date_stop":"31/08/2016",
+              "date_start":"01/09/2017",
+              "date_stop":"31/08/2018",
+              "date_margin":15,
               "mode":"DEBUG",
-              "input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH",
+              "input_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5/T31TCH",
               "path_tmp":os.environ['TMPDIR'],
-              "path_out":"/home/qt/salguesg/scratch/workdir",
+              "path_out":"/home/qt/salguesg/scratch/multitemp_workdir/test",
               "ram":2048,
-              "nbThreads":5}
+              "nbThreads":5,
+              "use_l8_for_densification":False}
 
     # params["input_dir"] = "/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH"
     # params["input_dir"] = "/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW"
