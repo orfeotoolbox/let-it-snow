@@ -358,6 +358,8 @@ def get_app_output(app, out_key, mode="RUNTIME"):
         - or a filename corresponding to the output written on the disk
     """
     app_output = app.GetParameterString(out_key)
+    if "?" in app_output:
+        app_output = app_output.split("?")[0]
 
     if mode == "RUNTIME":
         app.Execute()

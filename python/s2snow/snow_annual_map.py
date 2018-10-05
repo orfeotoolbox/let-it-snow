@@ -113,12 +113,15 @@ class snow_annual_map():
         self.output_dates_filename = params.get("output_dates_filename", None)
         self.mode = params.get("mode", "RUNTIME")
 
+        self.processing_id = str(self.tile_id + "_" + \
+                             datetime_to_str(self.date_start) + "_" + \
+                             datetime_to_str(self.date_stop))
+
         self.input_dir = str(op.join(params.get("input_dir"), self.tile_id))
-        self.path_tmp = str(params.get("path_tmp", os.environ.get('TMPDIR')))
         
-        self.path_out = op.join(str(params.get("path_out")),
-                                self.tile_id + "_" + datetime_to_str(self.date_start)
-                                + "-" + datetime_to_str(self.date_stop))
+        #self.path_tmp = str(params.get("path_tmp", os.environ.get('TMPDIR')))
+        self.path_tmp = str(os.environ.get('TMPDIR'))
+        self.path_out = op.join(str(params.get("path_out")), self.processing_id)
 
         if not os.path.exists(self.path_out):
             os.mkdir(self.path_out)
@@ -143,9 +146,9 @@ class snow_annual_map():
             self.output_dates_filename = op.join(self.path_tmp, "output_dates.txt")
         self.multitemp_snow_vrt = op.join(self.path_tmp, "multitemp_snow_mask.vrt")
         self.multitemp_cloud_vrt = op.join(self.path_tmp, "multitemp_cloud_mask.vrt")
-        self.gapfilled_timeserie = op.join(self.path_tmp, "gap_filled_snow_mask.tif")
-        self.annual_snow_map = op.join(self.path_tmp, "gap_filled_snow_mask_annual_snow.tif")
-        self.cloud_occurence_img = op.join(self.path_tmp, "annual_cloud_occurence.tif")
+        self.gapfilled_timeserie = op.join(self.path_tmp, "DAILY_SNOW_MASKS_" + self.processing_id + ".tif")
+        self.annual_snow_map = op.join(self.path_tmp, "SNOW_OCCURENCE_" + self.processing_id + ".tif")
+        self.cloud_occurence_img = op.join(self.path_tmp, "CLOUD_OCCURENCE_" + self.processing_id +".tif")
 
     def run(self):
         logging.info("Run snow_annual_map")
@@ -215,7 +218,7 @@ class snow_annual_map():
             output_dates = read_list_from_file(self.output_dates_filename)
         else:
             tmp_date = self.date_start
-            while tmp_date < self.date_stop:
+            while tmp_date <= self.date_stop:
                 output_dates.append(datetime_to_str(tmp_date))
                 tmp_date += timedelta(days=1)
             write_list_to_file(self.output_dates_filename, output_dates)
@@ -303,7 +306,7 @@ class snow_annual_map():
         logging.info("Copying outputs from tmp to output folder")
         shutil.copy2(self.annual_snow_map, self.path_out)
 
-        logging.info("End snow_annual_map")
+        logging.info("End of snow_annual_map")
 
         if self.mode == "DEBUG":
             dest_debug_dir = op.join(self.path_out, "tmpdir")
