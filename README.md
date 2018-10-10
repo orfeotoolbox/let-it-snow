@@ -5,7 +5,7 @@ This code implements the snow cover extent detection algorithm LIS (Let It Snow)
 
 The algorithm documentation with examples is available here:
 
-* [Algorithm theoretical basis documentation](http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
+* [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1414452.svg)](https://doi.org/10.5281/zenodo.1414452)
 
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
@@ -13,7 +13,7 @@ To read more about the "Centre d'Expertise Scientifique surface enneigée" (in F
 
 The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theia Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and a Digital Terrain Model (DTM) like SRTM for instance reprojected at the same resolution as the input image.
 
-##Usage
+## Usage
 
 Run the python script run_snow_detector.py with a json configuration file as unique argument:
 
@@ -146,7 +146,9 @@ let-it-snow is now installed.
 
 Enable tests with BUILD_TESTING cmake option. Use ctest command to run tests. Do not forget to clean your output test directory when you run a new set of tests.
 
-Data (input and baseline) to run validation tests are available on [Zenodo](http://doi.org/10.5281/zenodo.166511).
+Data (input and baseline) to run validation tests are available on Zenodo:
+
+* [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.166511.svg)](https://doi.org/10.5281/zenodo.166511)
 
 Download LIS-Data and extract the folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files.
 Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated.
