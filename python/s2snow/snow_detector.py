@@ -614,17 +614,21 @@ class snow_detector:
         mask = x**2 + y**2 <= radius**2
         struct[mask] = 1
 
+        (labels, label_counts)= np.unique(snowlabels, return_counts=True)
+        labels_area = dict(zip(labels, label_counts))
+        logging.debug(labels_area)
+
         logging.debug("Start loop on snow areas")
 
         # For each snow area
         for lab in range(1, nb_label+1):
             # Compute external contours
             logging.debug("Processing area " + str(lab))
-            current_mask = np.where(snowlabels == lab, 1, 0)
-            current_mask_area = np.count_nonzero(current_mask)
+            current_mask_area = labels_area[lab]
             logging.debug("Current area size = " + str(current_mask_area))
             if current_mask_area > min_area_size:
                 logging.debug("Processing snow area of size = " + str(current_mask_area))
+                current_mask = np.where(snowlabels == lab, 1, 0)
                 patch_neige_dilat = nd.binary_dilation(current_mask, struct)
                 logging.debug("Contour processing start")
                 contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
