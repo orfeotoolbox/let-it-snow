@@ -7,6 +7,10 @@ The algorithm documentation with examples is available here:
 
 * [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1414452.svg)](https://doi.org/10.5281/zenodo.1414452)
 
+Access to Theia Snow data collection:
+
+* [![DOI:10.24400/329360/f7q52mnk](https://zenodo.org/badge/DOI/10.24400/329360/f7q52mnk.svg)](http://doi.org/10.24400/329360/f7q52mnk)
+
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
 * [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3.pdf#page=10)
