@@ -85,6 +85,23 @@ SEN2COR_parameters = {"mode":"sen2cor",
                  "high_cloud_mask":10,
                  "rf":12}
 
+Take5_parameters = {"multi":1,
+                    "green_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
+                    "green_bandNumber":1,
+                    "red_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
+                    "red_bandNumber":2,
+                    "swir_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
+                    "swir_bandNumber":4,
+                    "cloud_mask":".*NUA.*\.TIF$",
+                    "div_mask":".*DIV.*\.TIF$",
+                    "div_slope_thres":8,
+                    "dem":".*\.tif",
+                    "shadow_in_mask":64,
+                    "shadow_out_mask":128,
+                    "all_cloud_mask":1,
+                    "high_cloud_mask":32,
+                    "rf":8}
+
 S2_parameters = {"multi":10,
                  "green_band":".*FRE_B3.*\.tif$",
                  "green_bandNumber":1,
@@ -102,22 +119,22 @@ S2_parameters = {"multi":10,
                  "high_cloud_mask":128,
                  "rf":12}
 
-Take5_parameters = {"multi":1,
-                    "green_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
-                    "green_bandNumber":1,
-                    "red_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
-                    "red_bandNumber":2,
-                    "swir_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
-                    "swir_bandNumber":4,
-                    "cloud_mask":".*NUA.*\.TIF$",
-                    "div_mask":".*DIV.*\.TIF$",
-                    "div_slope_thres":8,
-                    "dem":".*\.tif",
-                    "shadow_in_mask":64,
-                    "shadow_out_mask":128,
-                    "all_cloud_mask":1,
-                    "high_cloud_mask":32,
-                    "rf":8}
+L8_parameters_new_format = {"multi":1,
+                 "green_band":".*FRE_B3.*\.tif$",
+                 "green_bandNumber":1,
+                 "red_band":".*FRE_B4.*\.tif$",
+                 "red_bandNumber":1,
+                 "swir_band":".*FRE_B6.*\.tif$",
+                 "swir_bandNumber":1,
+                 "cloud_mask":".*CLM_XS.*\.tif$",
+                 "dem":".*ALT_R2\.TIF$",
+                 "div_mask":".*MG2_XS.*\.tif$",
+                 "div_slope_thres":64,
+                 "shadow_in_mask":32,
+                 "shadow_out_mask":64,
+                 "all_cloud_mask":1,
+                 "high_cloud_mask":128,
+                 "rf":8}
 
 L8_parameters = {"multi":1,
                  "green_band":".*ORTHO_SURF_CORR_PENTE.*\.TIF$",
@@ -154,6 +171,7 @@ LANDSAT8_LASRC_parameters = {"mode":"lasrc",
 
 mission_parameters = {"S2":S2_parameters,\
                       "LANDSAT8":L8_parameters,\
+                      "LANDSAT8_new_format":L8_parameters_new_format,\
                       "Take5":Take5_parameters,\
                       "MAJA":MAJA_parameters,\
                       "SEN2COR":SEN2COR_parameters,\
@@ -297,6 +315,9 @@ def main():
     elif "Take5" in inputPath:
         logging.info("THEIA Take5 product detected.")
         jsonData = read_product(inputPath, "Take5")
+    elif "LANDSAT8-OLITIRS-XS" in inputPath:
+        logging.info("THEIA LANDSAT8 product detected. (new version)")
+        jsonData = read_product(inputPath, "LANDSAT8_new_format")
     elif "LANDSAT8" in inputPath:
         logging.info("THEIA LANDSAT8 product detected.")
         jsonData = read_product(inputPath, "LANDSAT8")
