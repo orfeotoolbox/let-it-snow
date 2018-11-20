@@ -7,6 +7,7 @@ import sys
 import json
 import logging
 import argparse
+import zipfile
 
 ### Configuration Template ###
 conf_template = {"general":{"pout":"",
@@ -190,10 +191,16 @@ def findFiles(folder, pattern):
     """ Search recursively into a folder to find a patern match
     """
     matches = []
-    for root, dirs, files in os.walk(folder):
-        for file in files:
-            if re.match(pattern, file):
-                matches.append(os.path.join(root, file))
+    if folder.lower().endswith('.zip'):
+        zfile = zipfile.ZipFile(folder)
+        for filename in zfile.namelist():
+            if re.match(pattern, filename):
+                matches.append("/vsizip/"+os.path.join(folder, filename))
+    else:
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+                if re.match(pattern, file):
+                    matches.append(os.path.join(root, file))
     return matches
 
 def read_product(inputPath, mission):
