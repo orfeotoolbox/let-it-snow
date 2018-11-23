@@ -123,7 +123,7 @@ class snow_annual_map_evaluation(snow_annual_map):
         snow_annual_map.__init__(self, params)
 
         self.l8_tile_id = params.get("l8_tile_id")
-        self.l8_input_dir = str(params.get("l8_input_dir"))
+        self.l8_input_dir = str(op.join(params.get("l8_input_dir"), self.l8_tile_id))
 
         # Build useful paths
         self.l8_dates_filename = op.join(self.path_tmp, "l8_inputs_dates.txt")
@@ -149,7 +149,7 @@ class snow_annual_map_evaluation(snow_annual_map):
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # search matching L8 snow product
-        self.product_list = self.find_products(self.l8_input_dir, self.l8_tile_id)
+        self.product_list = self.find_products(self.l8_input_dir, self.l8_tile_id, "LANDSAT8")
         logging.debug("Product list:")
         logging.debug(self.product_list)
 

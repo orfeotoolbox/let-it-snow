@@ -132,7 +132,17 @@ class snow_annual_map():
         self.use_l8_for_densification = params.get("use_l8_for_densification", False)
         if self.use_l8_for_densification:
             self.l8_tile_id = params.get("l8_tile_id")
-            self.l8_input_dir = str(params.get("l8_input_dir"))
+            self.l8_input_dir = str(op.join(params.get("l8_input_dir"), self.l8_tile_id))
+            if not os.path.exists(self.l8_input_dir) or not self.l8_tile_id:
+                logging.error("Cannot use L8 densification with "
+                              + str(self.l8_tile_id)
+                              + ", "
+                              + self.l8_input_dir)
+            else:
+                logging.info("Using L8 densification with "
+                              + str(self.l8_tile_id)
+                              + ", "
+                              + self.l8_input_dir)
 
         # Define label for output snow product
         self.label_no_snow = "0"
@@ -158,7 +168,7 @@ class snow_annual_map():
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # search matching snow product
-        self.product_list = self.find_products(self.input_dir, self.tile_id)
+        self.product_list = self.find_products(self.input_dir, self.tile_id, "SENTINEL2")
         logging.debug("Product list:")
         logging.debug(self.product_list)
 
@@ -169,7 +179,7 @@ class snow_annual_map():
         # @TODO clean the loading of the L8 products to densify the timeserie
         if self.use_l8_for_densification:
             # search matching L8 snow product
-            l8_product_list = self.find_products(self.l8_input_dir, self.l8_tile_id)
+            l8_product_list = self.find_products(self.l8_input_dir, self.l8_tile_id, "LANDSAT8")
             logging.info("L8 product list:")
             logging.info(l8_product_list)
 
@@ -315,7 +325,7 @@ class snow_annual_map():
             shutil.copytree(self.path_tmp, dest_debug_dir)
 
 
-    def find_products(self, input_dir, tile_id):
+    def find_products(self, input_dir, tile_id, product_type=None):
         logging.info("Retrieving products in " + input_dir)
         product_files = os.listdir(input_dir)
         product_list = []
@@ -329,7 +339,9 @@ class snow_annual_map():
                 if tile_id in product.tile_id and \
                    search_start_date <= product.acquisition_date and \
                    search_stop_date >= product.acquisition_date:
-                    product_list.append(product)
+                    if (product_type is not None) and (product_type in product.platform):
+                        product_list.append(product)
+                        logging.info("Keeping: " + str(product))
             except Exception:
                 logging.error("Unable to load product :" + product_path)
         return product_list

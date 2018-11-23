@@ -614,6 +614,7 @@ class snow_detector:
         mask = x**2 + y**2 <= radius**2
         struct[mask] = 1
 
+        # compute individual snow area size
         (labels, label_counts)= np.unique(snowlabels, return_counts=True)
         labels_area = dict(zip(labels, label_counts))
         logging.debug(labels_area)
