@@ -122,13 +122,13 @@ class snow_annual_map_evaluation(snow_annual_map):
         # inherit from snow_annual_map all the methods and variables
         snow_annual_map.__init__(self, params)
 
-        self.l8_tile_id = params.get("l8_tile_id")
-        self.l8_input_dir = str(op.join(params.get("l8_input_dir"), self.l8_tile_id))
+        # the products in comparison list should have been use for computation of the snow_annual_map
+        self.comparison_path_list = params.get("comparison_products_list", [])
 
         # Build useful paths
-        self.l8_dates_filename = op.join(self.path_tmp, "l8_inputs_dates.txt")
-        self.l8_multitemp_snow_vrt = op.join(self.path_tmp, "l8_multitemp_snow_mask.vrt")
-        self.l8_multitemp_cloud_vrt = op.join(self.path_tmp, "l8_multitemp_cloud_mask.vrt")
+        self.comparison_dates_filename = op.join(self.path_tmp, "comparison_inputs_dates.txt")
+        self.comparison_multitemp_snow_vrt = op.join(self.path_tmp, "comparison_multitemp_snow_mask.vrt")
+        self.comparison_multitemp_cloud_vrt = op.join(self.path_tmp, "comparison_multitemp_cloud_mask.vrt")
         self.dem = params.get("dem")
 
         self.colorTable = gdal.ColorTable()
@@ -140,7 +140,7 @@ class snow_annual_map_evaluation(snow_annual_map):
 
     def run_evaluation(self):
         """ Run the evaluation of gap filled timeserie
-        The evaluation compare the gap filled date to actual L8 snow products
+        The evaluation compare the gap filled date to actual comparison snow products
         """
         logging.info("Run snow_annual_map_evaluation")
 
@@ -148,8 +148,8 @@ class snow_annual_map_evaluation(snow_annual_map):
         if self.nbThreads:
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
-        # search matching L8 snow product
-        self.product_list = self.find_products(self.l8_input_dir, self.l8_tile_id, "LANDSAT8")
+        # search matching comparison snow product
+        self.product_list = self.load_products(self.comparison_path_list, None, None)
         logging.debug("Product list:")
         logging.debug(self.product_list)
 
@@ -158,15 +158,15 @@ class snow_annual_map_evaluation(snow_annual_map):
         logging.debug("Sorted product list:")
         logging.debug(self.product_list)
 
-        # create the l8 products dates file
-        l8_input_dates = []
+        # create the comparison products dates file
+        comparison_input_dates = []
         for product in self.product_list:
-            l8_input_dates.append(datetime_to_str(product.acquisition_date))
-        write_list_to_file(self.l8_dates_filename, l8_input_dates)
+            comparison_input_dates.append(datetime_to_str(product.acquisition_date))
+        write_list_to_file(self.comparison_dates_filename, comparison_input_dates)
 
         # load required product
         self.snowmask_list = self.get_snow_masks()
-        logging.debug("L8 snow mask list:")
+        logging.debug("Comparison snow mask list:")
         logging.debug(self.snowmask_list)
 
         # convert the snow masks into binary snow masks
@@ -180,9 +180,9 @@ class snow_annual_map_evaluation(snow_annual_map):
         ts_dates = read_list_from_file(self.output_dates_filename)
         pair_dict = {}
         for ts_index, ts_date in enumerate(ts_dates):
-            for l8_index, l8_date in enumerate(l8_input_dates):
-                if ts_date in l8_date:
-                    pair_dict[l8_date] = (ts_index, l8_index)
+            for comparison_index, comparison_date in enumerate(comparison_input_dates):
+                if ts_date in comparison_date:
+                    pair_dict[comparison_date] = (ts_index, comparison_index)
         print pair_dict
 
         # project the snow masks onto the same foot print
@@ -203,10 +203,10 @@ class snow_annual_map_evaluation(snow_annual_map):
 
         # compare the two snow masks
         comparision_list = []
-        for l8_date in pair_dict.keys():
-            s2_index, l8_index = pair_dict[l8_date]
+        for comparison_date in pair_dict.keys():
+            s2_index, comparison_index = pair_dict[comparison_date]
 
-            path_extracted = op.join(self.path_tmp, "gapfilled_s2_" + l8_date + ".tif")
+            path_extracted = op.join(self.path_tmp, "gapfilled_s2_" + comparison_date + ".tif")
             gdal.Translate(
                 path_extracted,
                 self.gapfilled_timeserie,
@@ -216,9 +216,9 @@ class snow_annual_map_evaluation(snow_annual_map):
                 bandList=[s2_index+1])
 
             expression = "im2b1==2?254:(2*im2b1+im1b1)"
-            img_out = op.join(self.path_tmp, "comparision_" + l8_date + ".tif")
+            img_out = op.join(self.path_tmp, "comparision_" + comparison_date + ".tif")
             bandMathApp = band_math([path_extracted,
-                                     self.binary_snowmask_list_reprojected[l8_index]],
+                                     self.binary_snowmask_list_reprojected[comparison_index]],
                                     img_out,
                                     expression,
                                     self.ram,
@@ -231,9 +231,9 @@ class snow_annual_map_evaluation(snow_annual_map):
             apply_color_table(img_out, self.colorTable)
             shutil.copy2(img_out, self.path_out)
 
-            out = op.join(self.path_tmp, "confusion_matrix_"+ l8_date + ".csv")
+            out = op.join(self.path_tmp, "confusion_matrix_"+ comparison_date + ".csv")
             confusionMatrixApp = confusion_matrix(path_extracted,
-                                                  self.binary_snowmask_list_reprojected[l8_index],
+                                                  self.binary_snowmask_list_reprojected[comparison_index],
                                                   out,
                                                   2,
                                                   self.ram)
@@ -243,10 +243,10 @@ class snow_annual_map_evaluation(snow_annual_map):
             shutil.copy2(out, self.path_out)
 
         # @TODO gather stats
-        montage = op.join(self.path_tmp, "montage_comparison_L8.png")
+        montage = op.join(self.path_tmp, "montage_comparison.png")
         command = ["montage"]
         command.extend(["-label", "%t"])
-        command.extend(["-title", os.path.basename(self.path_out) + "_comparison_L8"])
+        command.extend(["-title", os.path.basename(self.path_out) + "_comparison"])
         command.extend(["-geometry", "10%x10%+2+2", "-pointsize", "40"])
         command.extend(comparision_list)
         command.extend([montage])
@@ -458,30 +458,12 @@ def main():
               "path_out":"/home/qt/salguesg/scratch/workdir",
               "ram":4096,
               "nbThreads":8,
-              "l8_tile_id":"D0005H0001",
-              "l8_input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/Landsat-8/D0005H0001",
-              "run_l8_evaluation":True,
+              "run_comparison_evaluation":True,
+              "comparison_products_list":[],
               "run_modis_comparison":True,
               "modis_snow_map":"/home/qt/salguesg/scratch/workdir/MODIS/Pirineos_gapfilled.tif",
               "modis_snow_map_dates":"/home/qt/salguesg/scratch/workdir/MODIS/Pirineos_gapfilled_dates.csv",
               "dem":"/work/OT/siaa/Theia/Neige/DEM/S2__TEST_AUX_REFDE2_T31TCH_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T31TCH_0001_ALT_R2.TIF"}
-
-    #params = {"tile_id":"T32TLS",
-              #"date_start":"01/09/2015",
-              #"date_stop":"31/08/2016",
-              #"mode":"DEBUG",
-              #"input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T32TLS",
-              #"path_tmp":os.environ['TMPDIR'],
-              #"path_out":"/home/qt/salguesg/scratch/workdir",
-              #"ram":4096,
-              #"nbThreads":8,
-              #"run_l8_evaluation":True,
-              #"run_modis_comparison":True,
-              #"l8_tile_id":"D0010H0005",
-              #"l8_input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/Landsat-8/N2A_France-MetropoleD0010H0005",
-              #"modis_snow_map":"/home/qt/salguesg/scratch/workdir/MODIS/Alpes_gapfilled.tif",
-              #"modis_snow_map_dates":"/home/qt/salguesg/scratch/workdir/MODIS/Alpes_gapfilled_dates.csv",
-              #"dem":"/work/OT/siaa/Theia/Neige/DEM/S2__TEST_AUX_REFDE2_T32TLS_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T32TLS_0001_ALT_R2.TIF"}
 
     snow_annual_map_evaluation_app = snow_annual_map_evaluation(params)
     snow_annual_map_evaluation_app.run()
