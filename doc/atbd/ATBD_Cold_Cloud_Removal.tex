@@ -1,0 +1,142 @@
+% Created 2018-12-06
+\documentclass[a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+ \usepackage{lmodern}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\hypersetup{
+colorlinks=true,
+linkcolor=blue,
+pdfauthor=Germain Salgues,
+pdftitle=Algorithm theoretical basis documentation for the cold cloud removal in
+the snow cover product (Let-it-snow)}
+
+\tolerance=1000
+\usepackage{amsfonts,bm}
+\usepackage{color}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[margin=2.5cm,a4paper]{geometry}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother
+
+\renewcommand{\maketitle}{}
+\date{\today}
+% \title{ATBD CES surface enneigée}
+% \hypersetup{
+%   pdfkeywords={},
+%   pdfsubject={},
+%   pdfcreator={Emacs 24.3.1 (Org mode 8.2.4)}}
+\begin{document}
+
+\maketitle
+\pagestyle{fancy}
+% \providecommand{\alert}[1]{\textbf{#1}}
+% \setlist[itemize,1]{label=$\diamond$}
+% \setlist[itemize,2]{label=$\ast$}
+% \setlist[itemize,3]{label=$\star$}
+% \setlist[itemize,4]{label=$\bullet$}
+% \setlist[itemize,5]{label=$\circ$}
+% \setlist[itemize,6]{label=$-$}
+% \setlist[itemize,7]{label=$\cdot$}
+% \setlist[itemize,8]{label=$\cdot$}
+% \setlist[itemize,9]{label=$\cdot$}
+% \renewlist{itemize}{itemize}{9}
+\lhead[]{\includegraphics[width=0.1\textwidth]{./images/logo_cesbio.png}}
+\rhead[]{\thepage}
+% \cfoot{\textcolor{PineGreen}{copyright?}}
+
+\begin{titlepage}
+\includegraphics[width=0.3\textwidth]{./images/logo_cesbio.png}
+\hspace{5cm}
+\includegraphics[width=0.3\textwidth]{./images/Theia_en.png}
+
+\vspace{3cm}
+
+
+
+\textcolor{PineGreen}{ \huge \bfseries Theia Land Data Centre\\ }
+% \vspace{0.5cm}
+\rule{\linewidth}{0.5mm}
+\begin{center}
+{ \huge \bfseries Algorithm theoretical basis documentation for the cold cloud removal in
+the snow cover product (Let-it-snow)\\}
+\rule{\linewidth}{0.5mm}
+{ \large \bfseries Simon Gascoin (CNRS/CESBIO), Manuel Grizonnet (CNES), Germain Salgues (Magellium) \\ }
+{ \large \bfseries V1.0 (Updated for LIS 1.5) - \today \\ }
+
+% \vspace{3cm}
+% \includegraphics[width=1\textwidth]{./Images/Theia_en.png}
+
+
+\end{center}
+\end{titlepage}
+
+
+\section{Description}\label{par:desc}
+
+This document describes the algorithm of this intermediate processing related to
+the special case where high cold clouds are detected as snow area during the
+first pass of the snow detection algorithm. The assumption is that only the
+central area of the high cold cloud is flagged as snow because of their lower
+temperature. In consequences, these miss detected areas will always be
+surrounded by clouds.
+
+The following algorithm aims at detecting snow areas that are totally or
+partially surrounded by clouds and correcting them.
+
+Please note that in few cases snow area surrounded by clouds may not be a miss
+classification. For example, some mountain summits may actually be snow covered
+while lower clouds surround them.
+
+
+\section{Algorithm}\label{par:algo}
+
+\begin{algorithm}
+\caption{Cold Cloud removal}\label{cold_cloud}
+\begin{algorithmic}[1]
+\Procedure{pass1.5(snow\_polygons)}{}
+\If {\textit{rm\_snow\_inside\_cloud} is True}
+\State \For{\textbf{each} $snow\_polygon$ in $snow\_polygons$}
+\State \If {$area(snow\_polygon) > rm\_snow\_inside\_cloud\_min\_area$}
+\State \State $dilatation(snow\_polygon,rm\_snow\_inside\_cloud\_dilation\_radius)$
+\State \State \Comment{A dilation of rm\_snow\_inside\_cloud\_dilation\_radius pixels is
+  applied onto the current snow area.}
+\State \State \Comment{The crown surrounding the current snow area is obtained by the subtraction of the newly dilated snow area and the initial snow area.}
+\State \State \Comment{The crown pixel are compared to the cloud mask obtain during the
+first pass, to obtain the percentage of cloud pixels surrounding the current
+snow area ($cloud\_percent$).}
+\State \State \If {$cloud\_percent > rm\_snow\_inside\_cloud\_threshold$}
+\State \State \State $snow\_polygon = 0$ \Comment{The snow mask is updated to remove}
+the current snow area
+\State \State \State $cloud\_mask=1$ \Comment{The cloud mask is updated to add the current snow area as a new cloud area}
+\State \State \EndIf
+\State \EndIf
+\State \EndFor
+\State \Comment{The updated masks (both snow and cloud) are then used as inputs
+  for the next snow detection stet (pass 2).} 
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}
