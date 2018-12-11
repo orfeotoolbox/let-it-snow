@@ -128,7 +128,6 @@ def merge_masks_at_same_date(mask_snow_list, mask_cloud_list, merged_snow_mask, 
                                 self.ram,
                                 otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
-        return
 
 class snow_annual_map():
     def __init__(self, params):
@@ -187,7 +186,6 @@ class snow_annual_map():
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # search matching snow product
-        
         self.product_list = self.load_products(self.input_path_list, self.tile_id, None)
         logging.debug("Product list:")
         logging.debug(self.product_list)
@@ -214,27 +212,32 @@ class snow_annual_map():
                     final_densification_product_list.append(densifier_product)
             logging.info(final_densification_product_list)
 
-            # reproject the densification products on S2 tile before going further
-            for densifier_product in final_densification_product_list:
-                original_mask = densifier_product.get_snow_mask()
-                reprojected_mask = op.join(self.path_tmp,
-                                           densifier_product.product_name + "_reprojected.tif")
-                if not os.path.exists(reprojected_mask):
-                    super_impose_app = super_impose(s2_footprint_ref,
-                                                    original_mask,
-                                                    reprojected_mask,
-                                                    "nn",
-                                                    int(self.label_no_data),
-                                                    self.ram,
-                                                    otb.ImagePixelType_uint8)
-                    super_impose_app.ExecuteAndWriteOutput()
-                    super_impose_app = None
-                densifier_product.snow_mask = reprojected_mask
-                logging.debug(densifier_product.snow_mask)
+            
+            if len(final_densification_product_list) > 0:
 
-            logging.info("First densifying mask: " + final_densification_product_list[0].snow_mask)
-            logging.info("Last densifying mask: " + final_densification_product_list[-1].snow_mask)
-            self.product_list.extend(final_densification_product_list)
+                # reproject the densification products on S2 tile before going further
+                for densifier_product in final_densification_product_list:
+                    original_mask = densifier_product.get_snow_mask()
+                    reprojected_mask = op.join(self.path_tmp,
+                                               densifier_product.product_name + "_reprojected.tif")
+                    if not os.path.exists(reprojected_mask):
+                        super_impose_app = super_impose(s2_footprint_ref,
+                                                        original_mask,
+                                                        reprojected_mask,
+                                                        "nn",
+                                                        int(self.label_no_data),
+                                                        self.ram,
+                                                        otb.ImagePixelType_uint8)
+                        super_impose_app.ExecuteAndWriteOutput()
+                        super_impose_app = None
+                    densifier_product.snow_mask = reprojected_mask
+                    logging.debug(densifier_product.snow_mask)
+
+                logging.info("First densifying mask: " + final_densification_product_list[0].snow_mask)
+                logging.info("Last densifying mask: " + final_densification_product_list[-1].snow_mask)
+                self.product_list.extend(final_densification_product_list)
+            else:
+                logging.warning("No Densifying candidate product found!")
 
         # re-order products according acquisition date
         self.product_list.sort(key=lambda x: x.acquisition_date)
@@ -369,27 +372,6 @@ class snow_annual_map():
             except Exception:
                 logging.error("Unable to load product :" + product_path)
         return product_list
-
-    #def find_products(self, input_dir, tile_id, product_type=None):
-        #logging.info("Retrieving products in " + input_dir)
-        #product_files = os.listdir(input_dir)
-        #product_list = []
-        #search_start_date = self.date_start - self.date_margin
-        #search_stop_date = self.date_stop + self.date_margin
-        #for product_name in product_files:
-            #product_path = op.join(input_dir, product_name)
-            #try:
-                #product = load_snow_product(product_path)
-                #logging.info(str(product))
-                #if tile_id in product.tile_id and \
-                   #search_start_date <= product.acquisition_date and \
-                   #search_stop_date >= product.acquisition_date:
-                    #if (product_type is not None) and (product_type in product.platform):
-                        #product_list.append(product)
-                        #logging.info("Keeping: " + str(product))
-            #except Exception:
-                #logging.error("Unable to load product :" + product_path)
-        #return product_list
 
 
     def get_snow_masks(self):
