@@ -149,25 +149,24 @@ class snow_annual_map_evaluation(snow_annual_map):
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # search matching comparison snow product
-        self.product_list = self.load_products(self.comparison_path_list, None, None)
-        logging.debug("Product list:")
-        logging.debug(self.product_list)
-
-        # re-order products according acquisition date
-        self.product_list.sort(key=lambda x: x.acquisition_date)
-        logging.debug("Sorted product list:")
-        logging.debug(self.product_list)
+        self.product_dict = self.load_products(self.comparison_path_list, None, None)
+        logging.debug("Product dict:")
+        logging.debug(self.product_dict)
 
         # create the comparison products dates file
-        comparison_input_dates = []
-        for product in self.product_list:
-            comparison_input_dates.append(datetime_to_str(product.acquisition_date))
+        comparison_input_dates = list(sorted(self.product_dict.keys()))
         write_list_to_file(self.comparison_dates_filename, comparison_input_dates)
 
         # load required product
-        self.snowmask_list = self.get_snow_masks()
-        logging.debug("Comparison snow mask list:")
-        logging.debug(self.snowmask_list)
+        self.resulting_snow_mask_dict={}
+        for key in self.product_dict.keys():
+            if len(self.product_dict[key]) > 1:
+                comparison_tag = key + "_comparison"
+                merged_mask = op.join(self.path_tmp, comparison_tag + "_merged_snow_product.tif")
+                merge_masks_at_same_date(self.product_dict[key], merged_mask, self.label_snow, self.ram)
+                self.resulting_snow_mask_dict[comparison_tag] = merged_mask
+            else:
+                self.resulting_snow_mask_dict[comparison_tag] = self.product_dict[key][0].get_snow_mask()
 
         # convert the snow masks into binary snow masks
         expression = "im1b1=="+self.label_cloud+"?2:(im1b1=="+self.label_no_data+"?2:" \
@@ -453,11 +452,15 @@ def main():
               "date_stop":"31/08/2016",
               "date_margin":15,
               "mode":"DEBUG",
-              "input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH",
-              "path_tmp":os.environ['TMPDIR'],
+              "input_products_list":[],
+              "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
+              "path_tmp":os.environ.get('TMPDIR'),
               "path_out":"/home/qt/salguesg/scratch/workdir",
               "ram":4096,
               "nbThreads":8,
+              "use_densification":False,
+              "densification_products_list":[],
+              "data_availability_check":False,
               "run_comparison_evaluation":True,
               "comparison_products_list":[],
               "run_modis_comparison":True,

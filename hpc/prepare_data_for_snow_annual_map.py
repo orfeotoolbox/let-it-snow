@@ -21,6 +21,7 @@ import sys
 import os.path as op
 import json
 import csv
+import copy
 import logging
 import subprocess
 from datetime import datetime, timedelta
@@ -53,7 +54,7 @@ def call_subprocess(process_list):
 class prepare_data_for_snow_annual_map():
     def __init__(self, params):
         logging.info("Init snow_multitemp")
-        self.raw_params = params
+        self.raw_params = copy.deepcopy(params)
 
         self.tile_id = params.get("tile_id")
         self.date_start = str_to_datetime(params.get("date_start"), "%d/%m/%Y")
@@ -61,13 +62,13 @@ class prepare_data_for_snow_annual_map():
         self.date_margin = timedelta(days=params.get("date_margin", 0))
         self.output_dates_filename = params.get("output_dates_filename", None)
         self.mode = params.get("mode", "RUNTIME")
-        self.mission_tags = ["LANDSAT"]#["SENTINEL2"]
+        self.mission_tags = ["SENTINEL2"]#["LANDSAT"]#
 
         self.snow_products_dir = str(params.get("snow_products_dir"))
         self.path_tmp = str(params.get("path_tmp", os.environ.get('TMPDIR')))
 
-        self.input_products_list=params.get("input_products_list",[])
-
+        self.input_products_list=params.get("input_products_list",[]).copy()
+        logging.info(self.input_products_list)
         self.processing_id = self.tile_id + "_" + \
                              datetime_to_str(self.date_start) + "_" + \
                              datetime_to_str(self.date_stop)
@@ -76,7 +77,8 @@ class prepare_data_for_snow_annual_map():
         self.use_densification = params.get("use_densification", False)
         if self.use_densification:
             self.mission_tags.append("LANDSAT")
-            self.densification_products_list=params.get("densification_products_list",[])
+            self.densification_products_list=params.get("densification_products_list",[]).copy()
+            logging.info(self.densification_products_list)
 
         if not os.path.exists(self.path_out):
             os.mkdir(self.path_out)
@@ -133,15 +135,18 @@ class prepare_data_for_snow_annual_map():
                     df.loc[product_id, 'snow_product'] = expected_snow_product_path
                     logging.info(expected_snow_product_path)
 
+                    # the snow product is already available
                     if op.exists(expected_snow_product_path):
                         logging.info(product_id + " is available as snow product")
                         snow_product_available += 1
                         df.loc[product_id, 'snow_product_available'] = True
                         snow_products_list.append(expected_snow_product_path)
+                    # the L2A product is available in the datalake but request a snow detection
                     elif df.loc[product_id, 'available']:
                         logging.info(product_id + " requires to generate the snow product")
                         snow_processing_requested += 1
                         FileOut.write(df.loc[product_id, 'datalake']+"\n")
+                    # the product must be requested into the datalake before snow detection
                     else:
                         logging.info(product_id + " requires to be requested to datalake.")
                         datalake_update_requested += 1
@@ -153,21 +158,23 @@ class prepare_data_for_snow_annual_map():
 
                 self.snow_products_availability = float(snow_product_available/nb_products)
                 logging.info("Percent of available snow product : " + str(100*self.snow_products_availability) + "%")
-                
+
                 self.datalake_products_availability = float(datalake_product_available/nb_products)
                 logging.info("Percent of available datalake product : " + str(100*self.datalake_products_availability) + "%")
-                
+
                 # datalake update if not all the products are available
                 if datalake_update_requested > 0:
                     logging.info("Requesting an update of the datalake because of " + str(datalake_update_requested) + " unavailable products...")
-                    amalthee_theia.fill_datalake()
+                    # this will request all products of the request
+                    # @TODO request only the products for which the snow products are not available
+                    #amalthee_theia.fill_datalake()
                     logging.info("End of requesting datalake.")
-            if mission_tag == "LANDSAT":#"SENTINEL2":
+            if mission_tag == "SENTINEL2":#"LANDSAT":#
                 self.input_products_list.extend(snow_products_list)
             else:
                 self.densification_products_list.extend(snow_products_list)
 
-        # request processing for remaining products
+        # request snow detection processing for listed products
         FileOut.close()
         if snow_processing_requested != 0:
             self.process_snow_products(filename_i, snow_processing_requested)
@@ -181,6 +188,8 @@ class prepare_data_for_snow_annual_map():
             logging.error("No products available to compute snow annual map!!")
 
     def build_json(self):
+        # the json is created only is more than 99.9% of the snow products are ready
+        # @TODO this param should not be hard coded
         if self.snow_products_availability > 0.999:
             snow_annual_map_param_json = os.path.join(self.path_out, "param.json")
             logging.info("Snow annual map can be computed from: " + snow_annual_map_param_json)
@@ -210,7 +219,7 @@ class prepare_data_for_snow_annual_map():
             command.insert(2, "1-"+str(array_size+1))
         print(" ".join(command))
         try:
-            call_subprocess(command)
+            #call_subprocess(command)
             logging.info("Order was submitted the snow annual map will soon be available.")
         except:
             logging.warning("Order was submitted the snow annual map will soon be available, but missinterpreted return code")
@@ -236,12 +245,14 @@ def main():
               "mode":"DEBUG",
               "input_products_list":[],
               "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
-              "path_tmp":"",
+              # path_tmp is an actual parameter but must only be uncomment with a correct path
+              # else the processing use $TMPDIR by default
+              #"path_tmp":"",
               #"path_out":"/home/qt/salguesg/scratch/multitemp_workdir/tmp_test",
-              "path_out":"/work/OT/siaa/Theia/Neige/Snow_Annual_Maps_L8_Only",
+              "path_out":"/work/OT/siaa/Theia/Neige/Snow_Annual_Maps_L8_Densification_with_merging",
               "ram":8192,
               "nbThreads":6,
-              "use_densification":False,
+              "use_densification":True,
               "densification_products_list":[],
               "data_availability_check":False}
 
@@ -260,7 +271,6 @@ def main():
                 config_file = prepare_data_for_snow_annual_map_app.build_json()
                 if config_file is not None:
                     prepare_data_for_snow_annual_map_app.process_snow_annual_map(config_file)
-                #return
 
 if __name__== "__main__":
     # Set logging level and format.
