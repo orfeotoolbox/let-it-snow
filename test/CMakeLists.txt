@@ -198,6 +198,7 @@ add_test(NAME compute_snow_mask_test
     "${BASELINE}/pass2_highcloud.tif"
     "${BASELINE}/cloud_pass1_highcloud.tif"
     "${BASELINE}/cloud_refine_highcloud.tif"
+    "${BASELINE}/cloud_refine_highcloud.tif"
     "${OUTPUT_TEST}/snow_all_test.tif"
      )
 
