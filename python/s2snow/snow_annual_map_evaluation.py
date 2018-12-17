@@ -160,8 +160,8 @@ class snow_annual_map_evaluation(snow_annual_map):
         # load required product
         self.resulting_snow_mask_dict={}
         for key in self.product_dict.keys():
+            comparison_tag = key + "_comparison"
             if len(self.product_dict[key]) > 1:
-                comparison_tag = key + "_comparison"
                 merged_mask = op.join(self.path_tmp, comparison_tag + "_merged_snow_product.tif")
                 merge_masks_at_same_date(self.product_dict[key], merged_mask, self.label_snow, self.ram)
                 self.resulting_snow_mask_dict[comparison_tag] = merged_mask

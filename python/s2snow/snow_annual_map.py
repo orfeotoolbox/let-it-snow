@@ -346,7 +346,7 @@ class snow_annual_map():
         if self.mode == "DEBUG":
             dest_debug_dir = op.join(self.path_out, "tmpdir")
             if op.exists(dest_debug_dir):
-                shutil.rmtree(shutil)
+                shutil.rmtree(dest_debug_dir)
             shutil.copytree(self.path_tmp, dest_debug_dir)
 
     def load_products(self, snow_products_list, tile_id=None, product_type=None):
