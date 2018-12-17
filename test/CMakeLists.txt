@@ -103,6 +103,21 @@ add_test(NAME preprocessing_test
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
   )
 
+set(OUTPUT_TEST_S2_SMALL_ZIP ${OUTPUT_TEST}/s2-small_zip)
+add_test(NAME s2-small_zip_test_json_builder_test
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
+  -dem "${DATA_TEST}/S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF"
+  "${DATA_TEST}/S2-SMALL.zip"
+  "${OUTPUT_TEST_S2_SMALL_ZIP}"
+  )
+
+set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
+set(CURRENT_TEST_OUTPUT ${OUTPUT_TEST}/${test_name})
+add_test(NAME s2-small_zip_test
+  COMMAND ${PYTHON_EXECUTABLE}
+  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
+  )
+
 # add_test(NAME compare_preprocessing_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
 #   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
