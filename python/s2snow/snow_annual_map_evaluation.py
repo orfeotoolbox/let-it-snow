@@ -453,7 +453,6 @@ def main():
               "date_margin":15,
               "mode":"DEBUG",
               "input_products_list":[],
-              "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
               "path_tmp":os.environ.get('TMPDIR'),
               "path_out":"/home/qt/salguesg/scratch/workdir",
               "ram":4096,

@@ -111,12 +111,25 @@ add_test(NAME s2-small_zip_test_json_builder_test
   "${OUTPUT_TEST_S2_SMALL_ZIP}"
   )
 
-set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
-set(CURRENT_TEST_OUTPUT ${OUTPUT_TEST}/${test_name})
 add_test(NAME s2-small_zip_test
   COMMAND ${PYTHON_EXECUTABLE}
   ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
   )
+  set_tests_properties(s2-small_zip_test PROPERTIES DEPENDS s2-small_zip_test_json_builder_test)
+
+add_test(NAME snow_annual_map_test
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/snow_annual_map_test.py
+    "${DATA_TEST}/SNOW_PRODUCTS"
+    "${OUTPUT_TEST}/snow_annual_map_test"
+    "${OUTPUT_TEST}/snow_annual_map_test/tmp"
+     )
+
+add_test(NAME snow_annual_map_compare_test
+    COMMAND gdalcompare.py
+    "${BASELINE}/snow_annual_map_test/SNOW_OCCURENCE_T31TCH_20180101_20180131.tif"
+    "${OUTPUT_TEST}/snow_annual_map_test/T31TCH_20180101_20180131/SNOW_OCCURENCE_T31TCH_20180101_20180131.tif"
+    )
+  set_tests_properties(snow_annual_map_compare_test PROPERTIES DEPENDS snow_annual_map_test)
 
 # add_test(NAME compare_preprocessing_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
