@@ -37,9 +37,9 @@ def main(argv):
                 op.join(data_path,"SENTINEL2A_20180131-105416-437_L2A_T31TCH_D_V1-4")
             ],
             "log": True,
-            "log_stdout": op.join(data_path,"stdout.log"),
+            "log_stdout": op.join(out_path,"stdout.log"),
             "date_start": "01/01/2018",
-            "log_stderr": op.join(data_path,"stderr.log"),
+            "log_stderr": op.join(out_path,"stderr.log"),
             "path_tmp": tmp_path,
             "ram": 1024,
             "use_densification": True,
