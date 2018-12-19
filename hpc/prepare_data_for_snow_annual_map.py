@@ -93,16 +93,20 @@ class prepare_data_for_snow_annual_map():
         logging.info('Process tile:' + self.tile_id +'.')
         logging.info(' for period ' + str(self.date_start) + ' to ' + str(self.date_stop))
 
+        # compute the range of required snow products
         search_start_date = self.date_start - self.date_margin
         search_stop_date = self.date_stop + self.date_margin
 
+        # open a file to store the list of L2A products for which we need to generate the snow products
         filename_i = os.path.abspath(self.processing_id +"_pending_for_snow_processing.txt")
         FileOut = open(os.path.join(".", filename_i),"w")
 
         resulting_df = None
         snow_processing_requested = 0
 
+        # loop on the different type of products to require
         for mission_tag in self.mission_tags:
+            # use amalthee to request the products from Theia catalogues
             parameters = {"processingLevel": "LEVEL2A", "location":str(self.tile_id)}
             amalthee_theia = Amalthee('theia')
             amalthee_theia.search(mission_tag,
@@ -116,6 +120,7 @@ class prepare_data_for_snow_annual_map():
 
             snow_products_list=[]
             if nb_products:
+                # get the dataframe containing the requested products and append extra needed fields.
                 df = amalthee_theia.products
                 df['snow_product'] = ""
                 df['snow_product_available'] = False
@@ -123,6 +128,7 @@ class prepare_data_for_snow_annual_map():
                 datalake_product_available = 0
                 datalake_update_requested = 0
 
+                # loop on each products from the dataframe
                 for product_id in df.index:
                     logging.info('Processing ' + product_id)
 
@@ -169,8 +175,10 @@ class prepare_data_for_snow_annual_map():
                     # @TODO request only the products for which the snow products are not available
                     #amalthee_theia.fill_datalake()
                     logging.info("End of requesting datalake.")
+            # we only append a single type of products to the main input list
             if mission_tag == "SENTINEL2":#"LANDSAT":#
                 self.input_products_list.extend(snow_products_list)
+            # the other types are use for densification purpose only
             else:
                 self.densification_products_list.extend(snow_products_list)
 
@@ -244,16 +252,18 @@ def main():
               "date_margin":15,
               "mode":"DEBUG",
               "input_products_list":[],
-              "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
               # path_tmp is an actual parameter but must only be uncomment with a correct path
               # else the processing use $TMPDIR by default
               #"path_tmp":"",
               #"path_out":"/home/qt/salguesg/scratch/multitemp_workdir/tmp_test",
-              "path_out":"/work/OT/siaa/Theia/Neige/Snow_Annual_Maps_L8_Densification_with_merging",
+              "path_out":"/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/L8_only",
               "ram":8192,
               "nbThreads":6,
-              "use_densification":True,
+              "use_densification":False,
+              "log":True,
               "densification_products_list":[],
+              # the following parameters are only use in this script, and doesn't affect snow_annual_map processing
+              "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
               "data_availability_check":False}
 
     with open('selectNeigeSyntheseMultitemp.csv', 'r') as csvfile:
