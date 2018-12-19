@@ -111,14 +111,11 @@ mkdir -p $pout
 echo "pout" $pout
 
 #Load LIS modules
-#module load lis/develop
-source /home/qt/salguesg/load_lis.sh
+module load lis/1.5
 
 #configure gdal_cachemax to speedup gdal polygonize and gdal rasterize (half of requested RAM)
 export GDAL_CACHEMAX=2048
 echo $GDAL_CACHEMAX
-export PATH=/home/qt/salguesg/local/bin:/home/qt/salguesg/local/bin:$PATH
-echo $PATH
 
 #check if L8 products to use the correct DEM
 if [[ $product_zip == *LANDSAT8* ]];
