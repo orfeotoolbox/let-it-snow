@@ -1,33 +1,38 @@
 # Snow Annual Map
 
-This file describe the snow annual map generation algorithm.
+This file describes the snow annual map generation algorithm.
 
 
 ## Objectives:
 
-The main objective was to create a product providing the synthesis of the snow cover on an annual basis over mountain regions. This product relies on LIS snow products computed over different L2A optical products such as S2 or L8, and uses a multi-temporal approach.
+The main objectives of the snow annual map algorithm is to create a product providing the synthesis of the snow cover on an annual basis over mountain regions. This product relies on LIS snow products computed over different L2A optical products such as S2 or L8, and uses a multi-temporal approach.
 
 The approach is validated with Modis and Landsat 8 products.
 
 
 **General approach:**
 
-- First a timeserie is created from LIS snow products corresponding to the desired time range. (a snow season goes from 01/09 of one year to 31/08 of the next one) 
-- Then, the timeserie is interpolated using the [otbImageTimeSeriesGapFilling](https://gitlab.orfeo-toolbox.org/jinglada/temporalgapfilling) application to obtain sampling on a daily basis.
-- Finally, the daily timeserie is sum-up to obtain a single image in grayscale, representing the number of snow days. 
+- First a time series is created from Let It Snow (LIS) snow cover products corresponding to the desired time range (a snow season goes from 01/09 of one year to 31/08 of the next one) 
+- Then, the time series is interpolated using the [otbImageTimeSeriesGapFilling](https://gitlab.orfeo-toolbox.org/jinglada/temporalgapfilling) application to obtain sampling on a daily basis.
+- Finally, the daily time-series are combined (temporal sommation) to obtain a mono-band image, representing the number of snow days. 
 
 ## Detailed approach
 ### Data Collection
 
-The snow products are collected for one type of sensor only and must be at the same resolution *tile\_id*, *date\_start*, *date\_stop*.
+The snow products are collected for one type of sensor only and must be at the same resolution. The request is configured according three main parameters:
+- *tile\_id*, the tile id corresponding to Theia product format (ex: "T31TCH")
+- *date\_start*, the target start date for the begining of the snow map time range (ex: "01/09/2017")
+- *date\_stop*, the target stop date for the begining of the snow map time range (ex: "31/08/2018")
 
-Moreover the snow products are collected with a margin of +-15 days outside the requested time range to avoid any extrapolation. (parameter *date\_margin*)
+Moreover the snow products are collected by default with a margin of +/-15 days outside the requested time range to avoid any extrapolation. This margin can be set with *date\_margin* parameter.
 
-The collected products are stored in *input\_products\_list*.
+The products corresponding to the selection criteria are stored in *input\_products\_list*.
+
+Note: A snow season is defined from the 1st of september to the 31th of August.
 
 ### Densification
 
-Additional heterogeneous (different sensor, resolution) snow products can be provided trought the densification options(*use_densification* and *densification\_products\_list*) to increase the timeserie sampling.
+Additional heterogeneous (different sensor, resolution) snow products can be provided trought the densification options(*use_densification* and *densification\_products\_list*) to increase the time series sampling.
 
 These additional products are resample at the same resolution and same footprint than the main snow products. For that operation, we are currently using the [otbSuperimpose](https://www.orfeo-toolbox.org/CookBook/Applications/app_Superimpose.html) application with a Nearest Neighbor interpolator. The choice of the interpolator type is constrained by the snow mask pixel coding convention:
 
@@ -53,11 +58,11 @@ It is performed in [snow\_annual\_map.py](https://gitlab.orfeo-toolbox.org/remot
       we expect to have first the main input products
       and then the densification products
 
-The resulting snow mask follows the same pixel encoding than the original snow products. 
+The resulting snow mask follows the same pixel encoding convention than the original snow products. 
 
-### Data convertion and Timeserie creation
+### Data conversion and time series creation
 
-The snow products pixel coding convention being not supported by the timeserie interpolation application, each snow masks is converted into two different masks:
+The snow products pixel coding convention being not supported by the time series interpolation application, each snow mask is converted into two different masks:
 
 1. a binary snow mask:
 	- 0, No-snow
@@ -66,22 +71,22 @@ The snow products pixel coding convention being not supported by the timeserie i
 	- 0, valid, clear observation
 	- 1, not valid, no observation due to cloud/nodata
 
-At this point each binary mask is append into a vrt file to match the format of timeserie supported by the interpolation application:
+At this point each binary mask is append into a vrt file to match the format of time series supported by the interpolation application:
 
         "input_dates.txt"
         "multitemp_snow_mask.vrt"
         "multitemp_cloud_mask.vrt"
 
-Inside the two vrt, the bands are indexed according the observation dates contained in "input_dates.txt".
+Inside the two [vrt](https://www.gdal.org/gdal_vrttut.html) files, bands are indexed according the observation dates contained in "input_dates.txt".
 
-### Timeserie interpolation
+### Time series interpolation
 
-The timeserie interpolation is then performed using the the [otbImageTimeSeriesGapFilling](https://gitlab.orfeo-toolbox.org/jinglada/temporalgapfilling) application with a linear interpolator option.
-The ouput interpolated timeserie is sampled on a daily basis between the initial *date\_start* and *date\_stop* parameters. The sampled dates are available in the text file "output\_dates.txt", and the bands are sorted in the output image accordingly.
+The time series interpolation is then performed using the the [otbImageTimeSeriesGapFilling](https://gitlab.orfeo-toolbox.org/jinglada/temporalgapfilling) application with a linear interpolator option.
+The ouput interpolated time series is sampled on a daily basis between the initial *date\_start* and *date\_stop* parameters. The sampled dates are available in the text file "output\_dates.txt", and the bands are sorted in the output image accordingly.
 
 ### Results
 
-Finally, each daily snow masks of the interpolated timeserie is summed into a single band using the [otbBandMath](https://www.orfeo-toolbox.org/CookBook/Applications/app_BandMath.html) aplication. The resulting snow annual map pixels are encoded in uint16 between [0-365].
+Finally, each daily snow mask of the interpolated time series is summed into a single band using the [otbBandMath](https://www.orfeo-toolbox.org/CookBook/Applications/app_BandMath.html) aplication. The resulting snow annual map pixels are encoded with 16 bits unsigned integers between [0-365].
 
 Here is an example of a typical snow annual map generated by the processing.
 
@@ -94,10 +99,10 @@ The approach was validated against reference data by two methods at different st
 1. Quality of the snow mask daily interpolation, compared to actual L8 snow products:
 1. Quality of the annual snow map, compared to MODIS snow annual map obtained from daily observation
 
-### L8 comparision
-For each L8 snow products available within the timeserie coverage, we generate a comparision map between the interpolated mask and the actual L8 snow mask.
+### L8 comparaison
+For each L8 snow products available within the time series coverage, we generate a comparaison map between the interpolated mask and the actual L8 snow mask.
 
-![alt-text](images/L8_interpolation_comparision.png)
+![alt-text](images/L8_interpolation_comparaison.png)
 
 The pixels are coded as follows:
 
@@ -106,36 +111,36 @@ The pixels are coded as follows:
 - Red: No-snow L8, Snow interp (False-Positive)
 - Yelow: Snow L8, No-snow interp (False-Negative)
 
-We also generate a confusion matrix to quantify the observation made from the comparision map.
+We also generate a confusion matrix to quantify the observation made from the comparaison map.
 
 The overall quality of the interpolation is satisfying as long as the gaps between two consecutive observations is not higher than 15 days, especially when snow changes occurs at pixel level. 
 
 Caveats:
-The quality of the interpolation is highly dependent on the sampling of the observations contributing to the timeserie.
-In concequences, missing observation related clouds or nodata may cause interpolation artefacts by increasing the time gap between two consecutives actual observations.
-The quality of the interpolation is also dependent on the quality the snow product used in the timeserie, any wrong snow detection will be indifferently be interpolated and will propagate the error.
 
-### Modis comparision
+- The quality of the interpolation is highly dependent on the sampling of the observations contributing to the time series. In concequences, missing observation related clouds or nodata may cause interpolation artefacts by increasing the time gap between two consecutives actual observations.
+- The quality of the interpolation is also dependent on the quality the snow product used in the time series, any wrong snow detection will be indifferently be interpolated and will propagate the error.
 
-For the Modis comparision, we compare the Modis snow annual map obtained from a gapfilled Modis timeserie with the Sentinel 2 snow annual map. The two annual maps are repported below:
+### Modis comparaison
 
-***S2:*** ![alt-text](images/s2_annual_map_pyrineos.png "S2 annual map")
-***Modis:*** ![alt-text](images/modis_annual_map_pyrineos.png "Modis annual map")
+For the Modis comparaison, we compare the Modis snow annual map obtained from a gapfilled Modis time series with the Sentinel 2 snow annual map. The two annual maps are repported below:
 
-For each maps, we compute the statistics based on altitudes slices. A graphic comparing the population of number of snow days is available below. The results show two main differences:
+***S2:*** ![alt-text](images/s2_annual_map.png "S2 annual map")
+***Modis:*** ![alt-text](images/modis_annual_map.png "Modis annual map")
 
-- For lower altitude slices (<1500m), S2 map shows some under detection of the snow. This can be explained by the lower s2 revisit which miss short snow periods that occurs at these altitudes.
-- For higher altitude slices (>2000m), S2 map shows some over detection of the snow. This can be explained by the higher s2 resolution which better detect small snow areas present on the mountain summits. This areas are then widely interpolated causing this sligth over detection.
+For each maps, we compute the statistics based on elevation band. A graphic comparing the population of number of snow days is available below. The results show two main differences:
+
+- For lower elevation bands (<1500m), S2 map shows some under detection of the snow. This can be explained by the lower s2 revisit which miss short snow periods that occurs at these altitudes.
+- For higher elevation bands (>2000m), S2 map shows some over detection of the snow. This can be explained by the higher s2 resolution which better detect small snow areas present on the mountain summits. This areas are then widely interpolated causing this sligth over detection.
 
 Notes: this results are slightly outdated as they considers only years 2015-2016, for which S2 has mainly S2A products causing a revist quite twice lower than with S2B products. The 5 days revisit of S2A and S2B, should now improved this results that need to be recomputed.
 
-***Graph comparision:*** ![alt-text](images/graph_comparison.png "S2 vs Modis annual map")
+***Graph comparaison:*** ![alt-text](images/graph_comparison.png "S2 vs Modis annual map")
 
-## Application launcher
+## Running the Snow Annual Map application
 
 The snow annual map processing can be launch as follows:
 
-    run_snow_annual_map.py param.json
+    python run_snow_annual_map.py param.json
 
 Where 'param.json' is a configuration file containing the supported parameters according the json schema describes by [snow_annual\_map\_schema.json](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/doc/snow_annual_map_schema.json)
 
@@ -149,15 +154,15 @@ Here is a product tag example: **T31TCH\_20170901\_20180831**
 Product content description:
 
 
-1. Raster: **DAILY\_SNOW\_MASKS\_<*tag*>.tif**, the snow timeserie file interpolated on a daily basis (1 image with one band per day). Each band are coded as follows (the interpolation removing any clouds or nodata):
+- Raster: **DAILY\_SNOW\_MASKS\_<*tag*>.tif**, the snow time series file interpolated on a daily basis (1 image with one band per day). Each band are coded as follows (the interpolation removing any clouds or nodata):
 	- 0: No-snow
 	- 1: Snow
 
 - Raster: **SNOW\_OCCURENCE\_<*tag*>.tif**, the snow annual map image, pixel values within [0-365] corresponding the number of snow days.
 
-- Raster: **CLOUD\_OCCURENCE\_<*tag*>.tif**, the cloud/nodata annual map image, pixel values within [0-number of observation days] corresponding the number of cloud/nodata days among the day of observation in the non-interpolated timeserie
+- Raster: **CLOUD\_OCCURENCE\_<*tag*>.tif**, the cloud/nodata annual map image, pixel values within [0-number of observation days] corresponding the number of cloud/nodata days among the day of observation in the non-interpolated time series
 
-- Text file: **input_dates.txt**, the list of observation dates in the non-interpolated timeserie
+- Text file: **input_dates.txt**, the list of observation dates in the non-interpolated time series
 - Text file: **output_dates.txt**, the list of interpolated dates
 
 - JSON file: **params.json**, the configuration files used for the products generation (optional)
@@ -166,12 +171,12 @@ Product content description:
 
 - LOG file: **stderr.log**, the log file for the error output generated during processing (optional)
 
-Note: In case of densification, the nodata value is set automatically to 0 causing some transparency of the snow map background in the tif viewer applications. 
+Note: In case of densification, the nodata value is set automatically to 0 causing some transparency of the snow map background when displayed. 
 
-## Production
+## Snow persistence maps production
 
 The current snow annual map production covers Pyrenees and Alps for three snow seasons (2015-2016, 2016-2017, 2017-2018), using S2 and L8 snow products [distibuted by Theia](https://theia.cnes.fr/atdistrib/rocket/#/search?collection=Snow). When the snow products were not available trough the webportal, the snow products were generated from the L2A products using LIS snow detector.
-A blog ticket showing the results of the production covering Pyrenees and Alps for the snow seasons 2016-2017 and 2017-2018 is available, and it also provides comparision between the snow annual cover and the ski stations implentation.
+A blog ticket showing the results of the production covering Pyrenees and Alps for the snow seasons 2016-2017 and 2017-2018 is available, and it also provides comparaison between the snow annual cover and the ski stations implentation.
 
 Link to the ticket blog:  [http://www.cesbio.ups-tlse.fr/multitemp/?p=14620](http://www.cesbio.ups-tlse.fr/multitemp/?p=14620).
 
