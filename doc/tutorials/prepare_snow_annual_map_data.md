@@ -26,7 +26,7 @@ The script prepare_snow_annual_map_data.py must be located along the following s
 ## Configuration parameters
 
 The scripts prepare_snow_annual_map_data.py does not take additional argument in itself. To edit the configuration, 
-the script must be modified manually with any text editor. The section of the script to modified is reported below.
+the script must be modified manually with any text editor. The section of the script to modify is reported below.
 
 ```
 def main():
@@ -50,7 +50,7 @@ def main():
               "data_availability_check":False}
 ```
 
-These parameters are describe in [snow_annual_map_schema.json](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/doc/snow_annual_map_schema.json)
+These parameters are described in [snow_annual_map_schema.json](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/doc/snow_annual_map_schema.json)
 and correspond to the parameters of the json file to provide to the application run_snow_annual_map.py.
 
 However, the two last parameters are specific to prepare_snow_annual_map_data.py:
@@ -62,14 +62,14 @@ The only external configuration parameters is the following file:
 
 ## Execution
 
-The script can now simply be launched by the following command.
+The script can now simply be launched by the following command:
 
 ```
 python prepare_snow_annual_map_data.py
 ```
 
 The generated log allows to monitor the status of the data requires before snow annual map processing.
-In the case where all the required snow products are not already available in the **"snow_products_dir"** (which is more than likely!), the script will call two different type of asynchronous sub-process:
+In the case where all the required snow products are not already available in the **"snow_products_dir"** (which is more than likely!), the script will call two different types of asynchronous sub-processes:
 
  - the first one is a request for the generation of the missing snow products under **"snow_products_dir"**, when the L2A products are available.
  - the second one is triggered when some L2A products are not available, the sub-process in then in charge for the downloading of the products in to the datalake (see Amalthee documentation for command amalthee_theia.fill_datalake())
