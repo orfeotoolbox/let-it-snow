@@ -1,14 +1,6 @@
 # Change Log
 All notable changes to Let It Snow (LIS) will be documented in this file.
 
-## [Unreleased]
-
-### Added
-- 
-
-### Fixed
-- 
-
 ## [1.5] - 2019-01-11
 
 ### Added
