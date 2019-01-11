@@ -9,7 +9,7 @@ All notable changes to Let It Snow (LIS) will be documented in this file.
 ### Fixed
 - 
 
-## [1.5] - 2018-12-20
+## [1.5] - 2019-01-11
 
 ### Added
 - The snow annual map module is now operational, the associated files are:

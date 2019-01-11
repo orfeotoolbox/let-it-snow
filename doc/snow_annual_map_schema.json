@@ -83,7 +83,7 @@
             "type": "integer"
         },
         "nb_threads": {
-            "default": 6,
+            "default": 1,
             "description": "Maximum number of threads use by the program.",
             "id": "nb_threads",
             "title": "The Nb_threads schema.",

@@ -108,7 +108,7 @@ echo "zip_input_product" $zip_input_product
 # create working output directory
 pout=$tmp_output_dir/$product_folder/
 mkdir -p $pout
-echo "pout" $pout
+echo "The output folder within working directory is " $pout
 
 #Load LIS modules
 module load lis/1.5
