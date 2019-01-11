@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import logging
@@ -10,7 +11,8 @@ def main(argv):
                             argv[2],
                             argv[3],
                             argv[4],
-                            argv[5])
+                            argv[5],
+			    argv[6])
     if app is None:
         sys.exit(1)
     else:

@@ -2,8 +2,6 @@ PROJECT(lis)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-include_directories(src)
-
 # Find necessary packages
 
 find_package(GDAL REQUIRED)
@@ -14,17 +12,12 @@ if(NOT GDAL_FOUND)
 endif()
 
 if (GDAL_CONFIG) 
-  ## extract gdal version 
+  # extract gdal version 
   exec_program(${GDAL_CONFIG}
     ARGS --version
     OUTPUT_VARIABLE GDAL_VERSION )
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" GDAL_VERSION_MAJOR "${GDAL_VERSION}")
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\2" GDAL_VERSION_MINOR "${GDAL_VERSION}")
-  
-  #MESSAGE("DBG GDAL_VERSION ${GDAL_VERSION}")
-  #MESSAGE("DBG GDAL_VERSION_MAJOR ${GDAL_VERSION_MAJOR}")
-  #MESSAGE("DBG GDAL_VERSION_MINOR ${GDAL_VERSION_MINOR}")
-  
   # check for gdal version
   if (GDAL_VERSION_MAJOR LESS 2)
     message (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.1 or higher.")
@@ -41,7 +34,7 @@ find_package( PythonLibs 2.7 REQUIRED)
 include_directories( ${PYTHON_INCLUDE_DIRS} )
  
 # Link to the Orfeo ToolBox
-# LIS required OTB 6.0 which provides patch regarding management of 1 byte tiff image)
+# LIS required OTB 6.0
 SET(OTB_MIN_VERSION "6.0.0")
 
 find_package(OTB ${OTB_MIN_VERSION} REQUIRED)
@@ -72,6 +65,8 @@ if(NOT lis_INSTALL_INCLUDE_DIR)
 endif(NOT lis_INSTALL_INCLUDE_DIR)
 
 set(BUILD_SHARED_LIBS ON)
+
+include_directories(src)
 
 add_subdirectory(src)
 add_subdirectory(python)

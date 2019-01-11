@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import os.path as op
 from os.path import basename, dirname
@@ -54,7 +57,13 @@ class snow_product:
             self.tile_id = name_splitted[3]
             self.flag = name_splitted[4]
             self.product_version = name_splitted[5]
-        elif "LANDSAT8" in self.platform:
+        elif "LANDSAT8-OLITIRS-XS" == self.platform:
+            self.acquisition_date = str_to_datetime(name_splitted[1], MUSCATE_DATETIME_FORMAT)
+            self.product_level = name_splitted[2]
+            self.tile_id = name_splitted[3]
+            self.flag = name_splitted[4]
+            self.product_version = name_splitted[5]
+        elif "LANDSAT8" in self.platform and "N2A" in self.product_name:
             self.acquisition_date = str_to_datetime(name_splitted[3], "%Y%m%d")
             self.product_level = name_splitted[4]
             self.tile_id = name_splitted[5]

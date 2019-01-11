@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import os.path as op
@@ -37,8 +38,8 @@ def main(argv):
     log = data.get("log", True)
 
     if log:
-        sys.stdout = open(op.join(pout, "stdout.log"), 'w')
-        sys.stderr = open(op.join(pout, "stderr.log"), 'w')
+        sys.stdout = open(data.get('log_stdout', op.join(pout, "stdout.log")), 'w')
+        sys.stderr = open(data.get('log_stderr', op.join(pout, "stderr.log")), 'w')
 
     # Set logging level and format.
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, \
@@ -50,7 +51,7 @@ def main(argv):
     snow_annual_map_evaluation_app = snow_annual_map_evaluation.snow_annual_map_evaluation(data)
     snow_annual_map_evaluation_app.run()
 
-    if data.get("run_l8_evaluation", False):
+    if data.get("run_comparison_evaluation", False):
         snow_annual_map_evaluation_app.run_evaluation()
 
     if data.get("run_modis_comparison", False):

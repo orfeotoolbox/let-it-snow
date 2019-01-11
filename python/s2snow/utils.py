@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# coding=utf8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
 import os.path as op
@@ -197,17 +197,16 @@ def extract_band(inputs, band, path_tmp, noData):
 
     dataset = gdal.Open(path, GA_ReadOnly)
     path_extracted = op.join(path_tmp, band+"_extracted.tif")
-    if dataset.RasterCount > 1:
-        logging.info("extracting "+band)
-        gdal.Translate(
+
+    logging.info("extracting "+band)
+    gdal.Translate(
             path_extracted,
             path,
             format='GTiff',
             outputType=gdal.GDT_Int16,
             noData=noData,
             bandList=[band_no])
-    else:
-        copyfile(path, path_extracted)
+ 
     return path_extracted
 
 

@@ -1,5 +1,39 @@
 # Change Log
-All notable changes to LIS will be documented in this file.
+All notable changes to Let It Snow (LIS) will be documented in this file.
+
+## [1.5] - 2019-01-11
+
+### Added
+- The snow annual map module is now operational, the associated files are:
+    - app/run_snow_annual_map.py, the main application
+    - python/s2snow/snow_annual_map.py, the core of the annual map processing
+    - python/s2snow/snow_annual_map_evaluation.py, provide the possibility to compare with other snow products and modis snow annual map
+    - python/s2snow/snow_product_parser.py, class to handle the supported type of snow products
+    - doc/snow_annual_map_schema.json, parameters descriptions
+    - hpc/prepare_data_for_snow_annual_map.py, preprocessing script on CNES HPC, 
+    - doc/tutorials/prepare_snow_annual_map_data.md, tutorial
+- Provided new data pack for tests "Data-LIS-1.5"
+- Add tests for snow annual map computation
+- The version of the s2snow module is now stored in file python/s2snow/version.py
+- Add support and tests for zipped products in build_json.py and run_snow_detector.py,
+- Add a mode to build_json.py script to configure and run LIS on Level 2A MAJA native products
+- Add a tutorial to describe how to run LIS on MAJA native products
+- Add a mode to build_json.py script to configure and run LIS on SEN2COR Level 2A products
+- Add a tutorial to describe how to run LIS on SEN2COR products
+- Add a mode to build_json.py script to configure and run LIS on U.S. Landsat Analysis Ready Data (ARD) Level 2A products
+- Add a tutorial to describe how to run LIS on Landsat ARD products	
+- The expert mask now includes a 5th bit for the clouds that were present in the product/original cloud mask
+- The expert mask now includes an optional 6th bit propagating the slope correction flag from the product mask when available
+- The cold cloud removal (pass 1.5) now use an area threshold to process only significant snow areas within clouds and reduce time.
+- Link ATBD and LIS Data for test validation to their Zenodo DOI in README.md
+
+### Fixed
+- Fix all python scripts headers to avoid to mix python versions
+- Fix preprocessing json option which was broken which allows to resample input DTM
+- Fix typos in README.md documentation
+- Change nodata management (read -32768 from input and write 0 in the
+    output) in DTM resampling to avoid error in snow line estimation
+    on area without DTM information 
 
 ## [1.4] - 2018-02-14
 
@@ -23,7 +57,7 @@ All notable changes to LIS will be documented in this file.
 
 ## [1.3.1] - 2017-11-23
 
-### Hotfix
+### Fixed
 - Fix the intermediate data format (used 1 bit instead of type uint8)
 
 ## [1.3] - 2017-11-02

@@ -59,6 +59,14 @@ public:
     SetParameterDescription( "cloudrefine", "Input cloud refine image");
     MandatoryOn("cloudrefine");
 
+    AddParameter(ParameterType_InputImage, "slopeflag", "slope flag image");
+    SetParameterDescription( "slopeflag", "Input slope flag image");
+    MandatoryOff("slopeflag");
+
+    AddParameter(ParameterType_InputImage, "initialallcloud", "initial all cloud image");
+    SetParameterDescription( "initialallcloud", "Input initial all cloud image");
+    MandatoryOn("initialallcloud");
+
     AddRAMParameter();
 
     AddParameter(ParameterType_OutputImage, "out",  "Output image");
@@ -68,6 +76,8 @@ public:
     SetDocExampleParameterValue("pass2", "pass2.tif");
     SetDocExampleParameterValue("cloudpass1", "cloud_pass1.tif");
     SetDocExampleParameterValue("cloudrefine", "cloud_refine.tif");
+    SetDocExampleParameterValue("slopeflag", "slope_flag.tif");
+    SetDocExampleParameterValue("initialallcloud", "all_clouds.tif");
     SetDocExampleParameterValue("out", "output_mask.tif");
   }
 
@@ -87,12 +97,19 @@ public:
     InputImageType::Pointer img_pass2 = GetParameterImage<InputImageType>("pass2");
     InputImageType::Pointer img_cloud_pass1 = GetParameterImage<InputImageType>("cloudpass1");
     InputImageType::Pointer img_cloud_refine = GetParameterImage<InputImageType>("cloudrefine");
+    InputImageType::Pointer img_all_cloud = GetParameterImage<InputImageType>("initialallcloud");
 
     m_SnowMaskFilter = SnowMaskFilterType::New();
     m_SnowMaskFilter->SetInput(0, img_pass1);
     m_SnowMaskFilter->SetInput(1, img_pass2);
     m_SnowMaskFilter->SetInput(2, img_cloud_pass1);
     m_SnowMaskFilter->SetInput(3, img_cloud_refine);
+    m_SnowMaskFilter->SetInput(4, img_all_cloud);
+
+    if(IsParameterEnabled("slopeflag")){
+        InputImageType::Pointer img_slope_flag = GetParameterImage<InputImageType>("slopeflag");
+        m_SnowMaskFilter->SetInput(5, img_slope_flag);
+    }
 
     // Set the output image
     SetParameterOutputImage("out", m_SnowMaskFilter->GetOutput());

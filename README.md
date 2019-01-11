@@ -5,15 +5,19 @@ This code implements the snow cover extent detection algorithm LIS (Let It Snow)
 
 The algorithm documentation with examples is available here:
 
-* [Algorithm theoretical basis documentation](http://tully.ups-tlse.fr/grizonnet/let-it-snow/blob/master/doc/tex/ATBD_CES-Neige.pdf)
+* [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1414452.svg)](https://doi.org/10.5281/zenodo.1414452)
+
+Access to Theia Snow data collection:
+
+* [![DOI:10.24400/329360/f7q52mnk](https://zenodo.org/badge/DOI/10.24400/329360/f7q52mnk.svg)](http://doi.org/10.24400/329360/f7q52mnk)
 
 To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
 
 * [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3.pdf#page=10)
 
-The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theai Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and the SRTM digital elevation model reprojected at the same resolution as the input image.
+The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theia Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and a Digital Terrain Model (DTM) like SRTM for instance reprojected at the same resolution as the input image.
 
-##Usage
+## Usage
 
 Run the python script run_snow_detector.py with a json configuration file as unique argument:
 
@@ -24,7 +28,7 @@ The snow detection is performed in the Python script [run_snow_detector.py](app/
 
 All the parameters of the algorithm, paths to input and output data are stored in the json file. See the provided example [param_test_s2_template.json](tes/param_test_s2_template.json) file for an example.
 
-Moreover The JSON schema is available in the [Algorithm theoritical basis documentation](doc/tex/ATBD_CES-Neige.tex) and gives more information about the roles of these parameters.
+Moreover The JSON schema is available in the [Algorithm Theoretical Basis Documentation](doc/atbd/ATBD_CES-Neige.tex) and gives more information about the roles of these parameters.
 
 NB: To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path.
 
@@ -37,6 +41,8 @@ NB: To build DEM data download the SRTM files corresponding to the study area an
   * 2nd bit: Snow mask after pass2
   * 3rd bit: Clouds detected at pass0
   * 4th bit: Clouds refined  at pass0
+  * 5th bit: Clouds initial (all_cloud)
+  * 6th bit: Slope flag (optional 1: bad slope correction)
 
 For example if you want to get the snow from pass1 and clouds detected from pass1 you need to do:
 ```python
@@ -47,7 +53,7 @@ pixel_value & 00000101
   * 100: Snow
   * 205: Cloud including cloud shadow
   * 254: No data
-* SEB_VEC: Vector image of the snow mask and cloud mask. Two fields of information are embbeded in this product. DN (for Data Neige) and type.
+* SEB_VEC: Vector image of the snow mask and cloud mask. Two fields of information are embedded in this product. DN (for Data Neige) and type.
   * DN field :
      * 0: No-snow
      * 100: Snow
@@ -79,7 +85,7 @@ Following a summary of the required dependencies:
 * lxml
 * matplotlib
 
-GDAL itself depends on a number of other libraries provided by most major operating systems and also depends on the non standard GEOS and PROJ4 libraries. GDAl- Python bindings are also required
+GDAL itself depends on a number of other libraries provided by most major operating systems and also depends on the non standard GEOS and Proj libraries. GDAL- Python bindings are also required
 
 Python package dependencies:
 
@@ -100,7 +106,7 @@ Optional dependencies:
 
 In your build directory, use cmake to configure your build.
 ```bash
-cmake -C config.cmake source/lis/
+cmake -C config.cmake source_lis_path
 ```
 In your config.cmake you need to set :
 ```bash
@@ -129,7 +135,7 @@ chmod -R 755 ${install_dir}
 ```
 
 The files will be installed by default into /usr/local and add to the python default modules.
-To overide this behavior, the variable CMAKE_INSTALL_PREFIX must be configure before build step.
+To overrsouride this behavior, the variable CMAKE_INSTALL_PREFIX must be configure before build step.
 
 Update environment variables for LIS. Make sure that OTB and other dependencies directories are set in your environment variables:
 ```bash
@@ -142,9 +148,11 @@ let-it-snow is now installed.
 
 ## Tests
 
-Enable tests with BUILD_TESTING cmake option. Use ctest to run tests. Do not forget to clean your output test directory when you run a new set of tests.
+Enable tests with BUILD_TESTING cmake option. Use ctest command to run tests. Do not forget to clean your output test directory when you run a new set of tests.
 
-Data (input and baseline) to run validation tests are available on [Zenodo](http://doi.org/10.5281/zenodo.166511).
+Data (input and baseline) to run validation tests are available on Zenodo:
+
+* [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.166511.svg)](https://doi.org/10.5281/zenodo.166511)
 
 Download LIS-Data and extract the folder. It contains all the data needed to run tests. Set Data-LIS path var in cmake configuration files.
 Baseline : Baseline data folder. It contains output files of S2Snow that have been reviewed and validated.

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #=========================================================================
 #
 #  Program:   lis
@@ -40,6 +42,7 @@ from s2snow.snow_product_parser import load_snow_product
 # syntaxx
 GDAL_OPT = "?&gdal:co:NBITS=1&gdal:co:COMPRESS=DEFLATE"
 
+
 def parse_xml(filepath):
     """ Parse an xml file to return the zs value of a snow product
     """
@@ -48,16 +51,8 @@ def parse_xml(filepath):
     group = xmldoc.getElementsByTagName('Global_Index_List')[0]
     zs = group.getElementsByTagName("QUALITY_INDEX")[0].firstChild.data
 
-def findFiles(folder, pattern):
-    """ Search recursively into a folder to find a patern match
-    """
-    matches = []
-    for root, dirs, files in os.walk(folder):
-        for file in files:
-            if re.match(pattern, file):
-                matches.append(os.path.join(root, file))
-    return matches
 
+#TODO move this function in app_wrappers.py along other otb applications
 def gap_filling(img_in, mask_in, img_out, input_dates_file=None,
                 output_dates_file=None, ram=None, out_type=None):
     """ Create and configure the ImageTimeSeriesGapFilling application
@@ -100,6 +95,39 @@ def gap_filling(img_in, mask_in, img_out, input_dates_file=None,
     else:
         logging.error("Parameters img_in, img_out and mask_in are required")
 
+def merge_masks_at_same_date(snow_product_list, merged_snow_product, threshold=100, ram=None):
+    """ This function implement the fusion of multiple snow mask
+
+    Keyword arguments:
+    snow_product_list -- the input mask list
+    merged_snow_product -- the output filepath
+    threshold -- the threshold between valid <= invalid data
+    ram -- the ram limitation (not mandatory)
+    """
+    logging.info("Merging products into " + merged_snow_product)
+
+    # the merging is performed according the following selection:
+    #   if img1 < threshold use img1 data
+    #   else if img2 < threshold use img2 data
+    #   else if imgN < threshold use imgN data
+    # the order of the images in the input list is important:
+    #   we expect to have first the main input products
+    #   and then the densification products
+    img_index = range(1, len(snow_product_list)+1)
+    expression_merging = "".join(["(im" + str(i) + "b1<=" + str(threshold) + "?im" + str(i) + "b1:" for i in img_index])
+    expression_merging += "im"+str(img_index[-1])+"b1"
+    expression_merging += "".join([")" for i in img_index])
+
+    img_list= [i.get_snow_mask() for i in snow_product_list]
+    bandMathApp = band_math(img_list,
+                            merged_snow_product,
+                            expression_merging,
+                            ram,
+                            otb.ImagePixelType_uint8)
+    bandMathApp.ExecuteAndWriteOutput()
+    bandMathApp = None
+
+""" This module provide the implementation of the snow annual map """
 class snow_annual_map():
     def __init__(self, params):
         logging.info("Init snow_multitemp")
@@ -111,12 +139,20 @@ class snow_annual_map():
         self.output_dates_filename = params.get("output_dates_filename", None)
         self.mode = params.get("mode", "RUNTIME")
 
-        self.input_dir = str(params.get("input_dir"))
-        self.path_tmp = str(params.get("path_tmp"))
+        # Compute an id like T31TCH_20170831_20180901 to label the map
+        self.processing_id = str(self.tile_id + "_" + \
+                             datetime_to_str(self.date_start) + "_" + \
+                             datetime_to_str(self.date_stop))
 
-        self.path_out = op.join(str(params.get("path_out")),
-                                self.tile_id + "_" + datetime_to_str(self.date_start)
-                                + "-" + datetime_to_str(self.date_stop))
+        # Retrive the input_products_list
+        self.input_path_list = params.get("input_products_list", [])
+
+        # @TODO an available path_tmp must be provide or the TMPDIR variable must be avaible
+        self.path_tmp = str(params.get("path_tmp", os.environ.get('TMPDIR')))
+        if not os.path.exists(self.path_tmp):
+            logging.error(self.path_tmp + ", the target does not exist and can't be used for processing")
+
+        self.path_out = op.join(str(params.get("path_out")), self.processing_id)
 
         if not os.path.exists(self.path_out):
             os.mkdir(self.path_out)
@@ -124,12 +160,11 @@ class snow_annual_map():
         self.ram = params.get("ram", 512)
         self.nbThreads = params.get("nbThreads", None)
 
-        self.use_l8_for_densification = params.get("use_l8_for_densification", True)
-        if self.use_l8_for_densification:
-            self.l8_tile_id = params.get("l8_tile_id")
-            self.l8_input_dir = str(params.get("l8_input_dir"))
+        self.use_densification = params.get("use_densification", False)
+        if self.use_densification:
+            self.densification_path_list = params.get("densification_products_list", [])
 
-        # Define label for output snow product
+        # Define label for output snow product (cf snow product format)
         self.label_no_snow = "0"
         self.label_snow = "100"
         self.label_cloud = "205"
@@ -141,8 +176,9 @@ class snow_annual_map():
             self.output_dates_filename = op.join(self.path_tmp, "output_dates.txt")
         self.multitemp_snow_vrt = op.join(self.path_tmp, "multitemp_snow_mask.vrt")
         self.multitemp_cloud_vrt = op.join(self.path_tmp, "multitemp_cloud_mask.vrt")
-        self.gapfilled_timeserie = op.join(self.path_tmp, "gap_filled_snow_mask.tif")
-        self.annual_snow_map = op.join(self.path_tmp, "gap_filled_snow_mask_annual_snow.tif")
+        self.gapfilled_timeserie = op.join(self.path_tmp, "DAILY_SNOW_MASKS_" + self.processing_id + ".tif")
+        self.annual_snow_map = op.join(self.path_tmp, "SNOW_OCCURENCE_" + self.processing_id + ".tif")
+        self.cloud_occurence_img = op.join(self.path_tmp, "CLOUD_OCCURENCE_" + self.processing_id +".tif")
 
     def run(self):
         logging.info("Run snow_annual_map")
@@ -152,63 +188,64 @@ class snow_annual_map():
             os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(self.nbThreads)
 
         # search matching snow product
-        self.product_list = self.find_products(self.input_dir, self.tile_id)
-        logging.debug("Product list:")
-        logging.debug(self.product_list)
+        self.product_dict = self.load_products(self.input_path_list, self.tile_id, None)
+        logging.debug("Product dictionnary:")
+        logging.debug(self.product_dict)
 
-        # @TODO clean the loading of the L8 products to densify the timeserie
-        if self.use_l8_for_densification:
-            # search matching L8 snow product
-            l8_product_list = self.find_products(self.l8_input_dir, self.l8_tile_id)
-            logging.info("L8 product list:")
-            logging.info(l8_product_list)
+        # Exiting with error if none of the input products were loaded
+        if not self.product_dict:
+            logging.error("Empty product list!")
+            return
 
-            s2_input_dates = [datetime_to_str(product.acquisition_date) \
-                              for product in self.product_list]
-            s2_footprint_ref = self.product_list[0].get_snow_mask()
+        # Do the loading of the products to densify the timeserie
+        if self.use_densification:
+            # load densification snow products
+            densification_product_dict = self.load_products(self.densification_path_list, None, None)
+            logging.info("Densification product dict:")
+            logging.info(densification_product_dict)
 
-            # filter l8 products to keep only products that don't overlap an existing S2 date
-            final_l8_product_list = []
-            for l8_product in l8_product_list:
-                if not datetime_to_str(l8_product.acquisition_date) in s2_input_dates:
-                    final_l8_product_list.append(l8_product)
-            logging.info(final_l8_product_list)
+            # Get the footprint of the first snow product
+            s2_footprint_ref = self.product_dict[list(self.product_dict.keys())[0]][0].get_snow_mask()
 
-            # reproject the l8 products on S2 tile before going further
-            for l8_product in final_l8_product_list:
-                original_mask = l8_product.get_snow_mask()
-                reprojected_mask = op.join(self.path_tmp,
-                                           l8_product.product_name + "_reprojected.tif")
-                if not os.path.exists(reprojected_mask):
-                    super_impose_app = super_impose(s2_footprint_ref,
-                                                    original_mask,
-                                                    reprojected_mask,
-                                                    "nn",
-                                                    int(self.label_no_data),
-                                                    self.ram,
-                                                    otb.ImagePixelType_uint8)
-                    super_impose_app.ExecuteAndWriteOutput()
-                    super_impose_app = None
-                l8_product.snow_mask = reprojected_mask
-                logging.debug(l8_product.snow_mask)
+            if densification_product_dict:
+                # Reproject the densification products on S2 tile before going further
+                for densifier_product_key in densification_product_dict.keys():
+                    for densifier_product in densification_product_dict[densifier_product_key]:
+                        original_mask = densifier_product.get_snow_mask()
+                        reprojected_mask = op.join(self.path_tmp,
+                                                   densifier_product.product_name + "_reprojected.tif")
+                        if not os.path.exists(reprojected_mask):
+                            super_impose_app = super_impose(s2_footprint_ref,
+                                                            original_mask,
+                                                            reprojected_mask,
+                                                            "nn",
+                                                            int(self.label_no_data),
+                                                            self.ram,
+                                                            otb.ImagePixelType_uint8)
+                            super_impose_app.ExecuteAndWriteOutput()
+                            super_impose_app = None
+                        densifier_product.snow_mask = reprojected_mask
+                        logging.debug(densifier_product.snow_mask)
 
-            logging.info("First l8 mask: " + final_l8_product_list[0].snow_mask)
-            logging.info("Last l8 mask: " + final_l8_product_list[-1].snow_mask)
-            self.product_list.extend(final_l8_product_list)
+                    # Add the products to extend the self.product_dict
+                    if densifier_product_key in self.product_dict.keys():
+                        self.product_dict[densifier_product_key].extend(densification_product_dict[densifier_product_key])
+                    else:
+                        self.product_dict[densifier_product_key] = densification_product_dict[densifier_product_key]
+            else:
+                logging.warning("No Densifying candidate product found!")
 
         # re-order products according acquisition date
-        self.product_list.sort(key=lambda x: x.acquisition_date)
-        logging.debug(self.product_list)
-
-        input_dates = [datetime_to_str(product.acquisition_date) for product in self.product_list]
+        input_dates = sorted(self.product_dict.keys())
         write_list_to_file(self.input_dates_filename, input_dates)
 
+        # compute or retrive the output dates
         output_dates = []
         if op.exists(self.output_dates_filename):
             output_dates = read_list_from_file(self.output_dates_filename)
         else:
             tmp_date = self.date_start
-            while tmp_date < self.date_stop:
+            while tmp_date <= self.date_stop:
                 output_dates.append(datetime_to_str(tmp_date))
                 tmp_date += timedelta(days=1)
             write_list_to_file(self.output_dates_filename, output_dates)
@@ -216,10 +253,18 @@ class snow_annual_map():
         shutil.copy2(self.input_dates_filename, self.path_out)
         shutil.copy2(self.output_dates_filename, self.path_out)
 
-        # load required product
-        self.snowmask_list = self.get_snow_masks()
-        logging.debug("Snow mask list:")
-        logging.debug(self.snowmask_list)
+        # merge products at the same date
+        self.resulting_snow_mask_dict={}
+        for key in self.product_dict.keys():
+            if len(self.product_dict[key]) > 1:
+                merged_mask = op.join(self.path_tmp, key + "_merged_snow_product.tif")
+                merge_masks_at_same_date(self.product_dict[key],
+                                         merged_mask,
+                                         self.label_snow,
+                                         self.ram)
+                self.resulting_snow_mask_dict[key] = merged_mask
+            else:
+                self.resulting_snow_mask_dict[key] = self.product_dict[key][0].get_snow_mask()
 
         # convert the snow masks into binary snow masks
         expression = "(im1b1==" + self.label_snow + ")?1:0"
@@ -240,6 +285,21 @@ class snow_annual_map():
                       self.binary_cloudmask_list,
                       separate=True)
 
+        # generate the summary map
+        band_index = range(1, len(self.binary_cloudmask_list)+1)
+        expression = "+".join(["im1b" + str(i) for i in band_index])
+
+        bandMathApp = band_math([self.multitemp_cloud_vrt],
+                                self.cloud_occurence_img,
+                                expression,
+                                self.ram,
+                                otb.ImagePixelType_uint16)
+        bandMathApp.ExecuteAndWriteOutput()
+        bandMathApp = None
+
+        logging.info("Copying outputs from tmp to output folder")
+        shutil.copy2(self.cloud_occurence_img, self.path_out)
+
         # build snow mask vrt
         logging.info("Building multitemp snow mask vrt")
         logging.info("snow vrt: " + self.multitemp_snow_vrt)
@@ -256,13 +316,17 @@ class snow_annual_map():
                                       self.ram,
                                       otb.ImagePixelType_uint8)
 
-        img_in = get_app_output(app_gap_filling, "out", self.mode)
+        # @TODO the mode is for now forced to DEBUG in order to generate img on disk
+        #img_in = get_app_output(app_gap_filling, "out", self.mode)
+        #if self.mode == "DEBUG":
+            #shutil.copy2(self.gapfilled_timeserie, self.path_out)
+            #app_gap_filling = None
 
-        if self.mode == "DEBUG":
-            shutil.copy2(self.gapfilled_timeserie, self.path_out)
-            app_gap_filling = None
+        img_in = get_app_output(app_gap_filling, "out", "DEBUG")
+        shutil.copy2(self.gapfilled_timeserie, self.path_out)
+        app_gap_filling = None
 
-        # generate the summary map
+        # generate the annual map
         band_index = range(1, len(output_dates)+1)
         expression = "+".join(["im1b" + str(i) for i in band_index])
 
@@ -277,43 +341,51 @@ class snow_annual_map():
         logging.info("Copying outputs from tmp to output folder")
         shutil.copy2(self.annual_snow_map, self.path_out)
 
-        logging.info("End snow_annual_map")
+        logging.info("End of snow_annual_map")
 
         if self.mode == "DEBUG":
-            shutil.copytree(self.path_tmp, op.join(self.path_out, "tmpdir"))
+            dest_debug_dir = op.join(self.path_out, "tmpdir")
+            if op.exists(dest_debug_dir):
+                shutil.rmtree(dest_debug_dir)
+            shutil.copytree(self.path_tmp, dest_debug_dir)
 
-
-    def find_products(self, input_dir, tile_id):
-        logging.info("Retrieving products in " + input_dir)
-        product_files = os.listdir(input_dir)
-        product_list = []
+    def load_products(self, snow_products_list, tile_id=None, product_type=None):
+        logging.info("Parsing provided snow products list")
+        product_dict = {}
         search_start_date = self.date_start - self.date_margin
         search_stop_date = self.date_stop + self.date_margin
-        for product_name in product_files:
-            product_path = op.join(input_dir, product_name)
+        for product_path in snow_products_list:
             try:
-                product = load_snow_product(product_path)
+                product = load_snow_product(str(product_path))
                 logging.info(str(product))
-                if tile_id in product.tile_id and \
-                   search_start_date <= product.acquisition_date and \
-                   search_stop_date >= product.acquisition_date:
-                    product_list.append(product)
+                current_day = datetime_to_str(product.acquisition_date)
+                test_result = True
+                if search_start_date > product.acquisition_date or \
+                   search_stop_date < product.acquisition_date:
+                   test_result = False
+                if (tile_id is not None) and (tile_id not in product.tile_id):
+                   test_result = False
+                if (product_type is not None) and (product_type not in product.platform):
+                   test_result = False
+                if test_result:
+                    if current_day not in product_dict.keys():
+                        product_dict[current_day] = [product]
+                    else:
+                        product_dict[current_day].append(product)
+                    logging.info("Keeping: " + str(product))
+                else:
+                    logging.warning("Discarding: " + str(product))
             except Exception:
                 logging.error("Unable to load product :" + product_path)
-        return product_list
+        return product_dict
 
-
-    def get_snow_masks(self):
-        return [i.get_snow_mask() for i in self.product_list]
-
-
+        
     def convert_mask_list(self, expression, type_name, mask_format=""):
         binary_mask_list = []
-        for product in self.product_list:
-            mask_in = product.get_snow_mask()
+        for mask_date in sorted(self.resulting_snow_mask_dict):
             binary_mask = op.join(self.path_tmp,
-                                  product.product_name + "_" + type_name + "_binary.tif")
-            binary_mask = self.extract_binary_mask(mask_in,
+                                  mask_date + "_" + type_name + "_binary.tif")
+            binary_mask = self.extract_binary_mask(self.resulting_snow_mask_dict[mask_date],
                                                    binary_mask,
                                                    expression,
                                                    mask_format)
@@ -329,40 +401,3 @@ class snow_annual_map():
                                 otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
         return mask_out
-
-###############################################################
-#   Main Test
-###############################################################
-def main():
-    params = {"tile_id":"T31TCH",
-              "date_start":"01/09/2015",
-              "date_stop":"31/08/2016",
-              "mode":"DEBUG",
-              "input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TCH",
-              "path_tmp":os.environ['TMPDIR'],
-              "path_out":"/home/qt/salguesg/scratch/workdir",
-              "ram":2048,
-              "nbThreads":5}
-
-    # params["input_dir"] = "/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_2.4.5/T31TCH"
-    # params["input_dir"] = "/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW"
-
-    #params = {"tile_id":"T32TLS",
-              #"date_start":"01/09/2015",
-              #"date_stop":"31/08/2016",
-              #"mode":"DEBUG",
-              #"input_dir":"/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T32TLS",
-              #"path_tmp":os.environ['TMPDIR'],
-              #"path_out":"/home/qt/salguesg/scratch/workdir",
-              #"ram":4096,
-              #"nbThreads":8}
-
-
-    snow_annual_map_app = snow_annual_map(params)
-    snow_annual_map_app.run()
-
-if __name__ == '__main__':
-    # Set logging level and format.
-    logging.basicConfig(level=logging.DEBUG, format=\
-                        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    main()

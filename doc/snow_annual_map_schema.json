@@ -1,0 +1,134 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "snow_annual_map_params",
+    "properties": {
+        "log": {
+            "default": true,
+            "description": "Log output and error to files (std***.log).",
+            "id": "log",
+            "title": "The Log schema.",
+            "type": "boolean"
+        },
+        "mode": {
+            "deafult":"RUNTIME",
+            "description": "The processing mode to use, RUNTIME to obtain only output products faster, DEBUG to obtain all intermediate files",
+            "id": "mode",
+            "title": "The Mode schema.",
+            "type": "string"
+        },
+        "tile_id": {
+            "description": "The identifier of the tile corresponding to the input input_products_list products",
+            "id": "tile_id",
+            "title": "The Tile_id schema.",
+            "type": "string"
+        },
+        "input_products_list": {
+            "default": [],
+            "description": "The input products list, containing the paths of homogeneous snow products only on tile_id at same resolution and size",
+            "id": "input_products_list",
+            "title": "The input_products_list schema.",
+            "type": "list"
+        },
+        "path_tmp": {
+            "default":"",
+            "description": "The path where to store temporary files, else the application try to retrive $TMPDIR in env",
+            "id": "path_tmp",
+            "title": "The Path_tmp schema.",
+            "type": "string"
+        },
+        "use_densification": {
+            "default":"false",
+            "description": "Activate the densification using snow products from heterogeneous sensors",
+            "id": "use_densification",
+            "title": "The Use_densification schema.",
+            "type": "boolean"
+        },
+        "densification_products_list": {
+            "default": [],
+            "description": "The densification list, containing the paths of heterogenous snow products from heterogeneous sensors",
+            "id": "densification_products_list",
+            "title": "The densification_products_list schema.",
+            "type": "list"
+        },
+        "path_out": {
+            "description": "Path to output directory.",
+            "id": "path_out",
+            "title": "The Path_out schema.",
+            "type": "string"
+        },
+        "date_start": {
+            "description": "Start of the date range for which we want to generate the snow_annual_map (DD/MM/YYYY)",
+            "id": "date_start",
+            "title": "The Date_start schema.",
+            "type": "string"
+        },
+        "date_stop": {
+            "description": "Stop of the date range for which we want to generate the snow_annual_map (DD/MM/YYYY)",
+            "id": "date_stop",
+            "title": "The Date_stop schema.",
+            "type": "string"
+        },
+        "date_margin": {
+            "default": 15,
+            "description": "The margin ouside the date range to use for better interpolation results (in days)",
+            "id": "date_margin",
+            "title": "The Date_margin schema.",
+            "type": "string"
+        },
+        "ram": {
+            "default": 4096,
+            "description": "Maximum number of RAM memory used by the program.",
+            "id": "ram",
+            "title": "The Ram schema.",
+            "type": "integer"
+        },
+        "nb_threads": {
+            "default": 1,
+            "description": "Maximum number of threads use by the program.",
+            "id": "nb_threads",
+            "title": "The Nb_threads schema.",
+            "type": "integer"
+        },
+        "comments": "the following parameters concerns only the snow_annual_map_evaluation",
+        "run_comparison_evaluation": {
+            "default":"false",
+            "description": "Activate the one to one comparison using snow products from heterogeneous sensors",
+            "id": "run_comparison_evaluation",
+            "title": "The run_comparison_evaluation schema.",
+            "type": "boolean"
+        },
+        "comparison_products_list": {
+            "default": [],
+            "description": "The comparison list, containing the paths of heterogenous snow products to compare with daily interpolation",
+            "id": "comparison_products_list",
+            "title": "The comparison_products_list schema.",
+            "type": "list"
+        },
+        "run_modis_comparison": {
+            "default":"false",
+            "description": "Activate the comparison between annual map and modis snow annual map",
+            "id": "run_modis_comparison",
+            "title": "The run_modis_comparison schema.",
+            "type": "boolean"
+        },
+        "modis_snow_map": {
+            "description": "The path to the modis daily snow masks (one file with one band per day)",
+            "id": "modis_snow_map",
+            "title": "The modis_snow_map schema.",
+            "type": "string"
+        },
+        "modis_snow_map_dates": {
+            "description": "The dates corresponding to the bands of the modis_snow_map",
+            "id": "modis_snow_map_dates",
+            "title": "The modis_snow_map_dates schema.",
+            "type": "string"
+        },
+        "dem": {
+            "description": "The dem to use during modis comparison, to generate snow per altitude slices",
+            "id": "dem",
+            "title": "The dem schema.",
+            "type": "string"
+        }
+    },
+    "type": "object"
+}

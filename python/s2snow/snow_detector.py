@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# coding=utf8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #=========================================================================
 #
 #  Program:   lis
@@ -94,6 +94,7 @@ class snow_detector:
         self.rm_snow_inside_cloud = cloud.get("rm_snow_inside_cloud", False)
         self.dilation_radius = cloud.get("rm_snow_inside_cloud_dilation_radius", 5)
         self.cloud_threshold = cloud.get("rm_snow_inside_cloud_threshold", 0.85)
+        self.cloud_min_area_size = cloud.get("rm_snow_inside_cloud_min_area", 25000)
 
         # Parse input parameters
         inputs = data["inputs"]
@@ -102,6 +103,22 @@ class snow_detector:
         # self.img=str(inputs.get("image"))
         self.dem = str(inputs.get("dem"))
         self.cloud_init = str(inputs.get("cloud_mask"))
+
+        ## Get div mask if available
+        self.slope_mask_path = None
+        if inputs.get("div_mask") and inputs.get("div_slope_thres"):
+            self.div_mask = str(inputs.get("div_mask"))
+            self.div_slope_thres = inputs.get("div_slope_thres")
+            self.slope_mask_path = op.join(self.path_tmp, "bad_slope_correction_mask.tif")
+
+            # Extract the bad slope correction flag
+            bandMathSlopeFlag = band_math([self.div_mask],
+                                    self.slope_mask_path,
+                                    "im1b1>="+str(self.div_slope_thres)+"?1:0",
+                                    self.ram,
+                                    otb.ImagePixelType_uint8)
+            bandMathSlopeFlag.ExecuteAndWriteOutput()
+            bandMathSlopeFlag = None
 
         # bands paths
         gb_path_extracted = extract_band(inputs, "green_band", self.path_tmp, self.nodata)
@@ -239,7 +256,12 @@ class snow_detector:
 
         # External preprocessing
         if self.do_preprocessing:
-            build_dem(self.vrt, self.img, self.dem)
+            # Declare a pout dem in the output directory
+            pout_resampled_dem = op.join(self.path_tmp, "dem_resampled.tif")
+            build_dem(self.dem, self.img, pout_resampled_dem, self.ram, self.nbThreads)
+
+            # Change self.dem to use the resampled DEM (output of build_dem) in this case
+            self.dem = pout_resampled_dem
 
         # Initialize the mask
         noDataMaskExpr = "im1b1==" + str(self.nodata) + "?1:0"
@@ -321,6 +343,134 @@ class snow_detector:
         et = etree.ElementTree(root)
         et.write(self.metadata_path, pretty_print=True)
 
+    def extract_all_clouds(self):
+        if self.mode == 'lasrc':
+            # Extract shadow wich corresponds to  all cloud shadows in larsc product
+            logging.info("lasrc mode -> extract all clouds from LASRC product using ComputeCloudMask application...")
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                self.all_cloud_path + GDAL_OPT,
+                str(self.all_cloud_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None 
+        else:
+            if self.mode == 'sen2cor':
+                logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+                logging.info("All clouds in sen2cor SCL layer corresponds to:")
+                logging.info("- label == 3 -> Cloud shadows")
+                logging.info("- label == 8 -> Cloud medium probability")
+                logging.info("- label == 9 -> Cloud high probability")
+                logging.info("- label == 10 -> Thin cirrus")
+                condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
+            else:
+                condition_all_clouds = "im1b1 > 0"
+
+                bandMathAllCloud = band_math(
+                    [self.cloud_init],
+                    self.all_cloud_path + GDAL_OPT,
+                    "("+condition_all_clouds+" > 0)?1:0",
+                    self.ram,
+                    otb.ImagePixelType_uint8)
+                bandMathAllCloud.ExecuteAndWriteOutput()
+                bandMathAllCloud = None
+
+    def extract_cloud_shadows(self):
+        shadow_mask_path = op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT
+
+        # Extract shadow masks differently if sen2cor or MAJA
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("- label == 3 -> Cloud shadows")
+            bandMathShadow = band_math(
+                [self.cloud_init],
+                shadow_mask_path,
+                "(im1b1 == 3)",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathShadow.ExecuteAndWriteOutput()
+            bandMathShadow = None
+        else:
+            # First extract shadow wich corresponds to shadow of clouds inside the
+            # image
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                op.join(self.path_tmp, "shadow_in_mask.tif") + GDAL_OPT,
+                str(self.shadow_in_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None
+
+            # Then extract shadow mask of shadows from clouds outside the image
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                op.join(self.path_tmp, "shadow_out_mask.tif") + GDAL_OPT,
+                str(self.shadow_out_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None
+
+            # The output shadow mask corresponds to a OR logic between the 2 shadow
+            # masks
+            bandMathShadow = band_math(
+                [op.join(self.path_tmp, "shadow_in_mask.tif"),
+                 op.join(self.path_tmp, "shadow_out_mask.tif")],
+                shadow_mask_path,
+                "(im1b1 == 1) || (im2b1 == 1)",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathShadow.ExecuteAndWriteOutput()
+            bandMathShadow = None
+
+    def extract_high_clouds(self):
+        high_clouds_mask_path = op.join(self.path_tmp, "high_cloud_mask.tif") + GDAL_OPT
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("- label == 10 -> Thin cirrus")
+            bandMathHighClouds = band_math(
+                [self.cloud_init],
+                high_clouds_mask_path,
+                "(im1b1 == 10)",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathHighClouds.ExecuteAndWriteOutput()
+            bandMathHighClouds = None
+        else:
+            computeCMApp = compute_cloud_mask(
+                self.cloud_init,
+                high_clouds_mask_path,
+                str(self.high_cloud_mask),
+                self.ram,
+                otb.ImagePixelType_uint8)
+            computeCMApp.ExecuteAndWriteOutput()
+            computeCMApp = None
+
+    def extract_backtocloud_mask(self):
+        cloud_mask_for_backtocloud = self.cloud_init
+
+        if self.mode == 'sen2cor':
+            logging.info("sen2cor mode -> extract all clouds from SCL layer...")
+            logging.info("All clouds in sen2cor SCL layer corresponds to:")
+            logging.info("- label == 3 -> Cloud shadows")
+            logging.info("- label == 8 -> Cloud medium probability")
+            logging.info("- label == 9 -> Cloud high probability")
+            logging.info("- label == 10 -> Thin cirrus")
+            condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
+        else:
+            condition_all_clouds = "im1b1 > 0"
+            
+        condition_back_to_cloud = "("+condition_all_clouds+") and (im2b1 > " + str(self.rRed_backtocloud) + ")"
+        bandMathBackToCloud = band_math(
+            [cloud_mask_for_backtocloud, self.redBand_path],
+            self.mask_backtocloud + GDAL_OPT,
+            condition_back_to_cloud + "?1:0",
+            self.ram,
+            otb.ImagePixelType_uint8)
+        bandMathBackToCloud.ExecuteAndWriteOutput()
+        
     def pass0(self):
         # Pass -0 : generate custom cloud mask
         # Extract red band
@@ -350,7 +500,7 @@ class snow_detector:
             height=ySize / self.rf)
 
         # Resample red band nn
-        # FIXME: use MACCS resampling filter contribute in OTB 5.6 here
+        # FIXME: use MAJA resampling filter contribute in OTB 5.6 here
         gdal.Warp(
             op.join(self.path_tmp, "red_nn.tif"),
             op.join(self.path_tmp, "red_coarse.tif"),
@@ -366,71 +516,19 @@ class snow_detector:
         dataset.SetGeoTransform(geotransform)
         dataset = None
 
-        # Extract all masks
-        bandMathAllCloud = band_math(
-            [self.cloud_init],
-            self.all_cloud_path + GDAL_OPT,
-            "(im1b1 > 0)?1:0",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathAllCloud.ExecuteAndWriteOutput()
-        bandMathAllCloud = None
+        ## Extract layers related to the cloud mask
 
-        # Extract shadow masks
-        # First extract shadow wich corresponds to shadow of clouds inside the
-        # image
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
-            op.join(self.path_tmp, "shadow_in_mask.tif") + GDAL_OPT,
-            str(self.shadow_in_mask),
-            self.ram,
-            otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
+        # Extract all cloud masks
+        self.extract_all_clouds()
 
-        # Then extract shadow mask of shadows from clouds outside the image
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
-            op.join(self.path_tmp, "shadow_out_mask.tif") + GDAL_OPT,
-            str(self.shadow_out_mask),
-            self.ram,
-            otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
-
-        # The output shadow mask corresponds to a OR logic between the 2 shadow
-        # masks
-        bandMathShadow = band_math(
-            [op.join(self.path_tmp, "shadow_in_mask.tif"),
-             op.join(self.path_tmp, "shadow_out_mask.tif")],
-            op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT,
-            "(im1b1 == 1) || (im2b1 == 1)",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathShadow.ExecuteAndWriteOutput()
-        bandMathShadow = None
-
+        # Extract cloud shadows mask
+        self.extract_cloud_shadows()
+        
         # Extract high clouds
-        computeCMApp = compute_cloud_mask(
-            self.cloud_init,
-            op.join(self.path_tmp, "high_cloud_mask.tif") + GDAL_OPT,
-            str(self.high_cloud_mask),
-            self.ram,
-            otb.ImagePixelType_uint8)
-        computeCMApp.ExecuteAndWriteOutput()
-        computeCMApp = None
+        self.extract_high_clouds()
 
         # Extract also a mask for condition back to cloud
-        cloud_mask_for_backtocloud = self.cloud_init
-
-        condition_back_to_cloud = "(im1b1 > 0) and (im2b1 > " + str(self.rRed_backtocloud) + ")"
-        bandMathBackToCloud = band_math(
-            [cloud_mask_for_backtocloud, self.redBand_path],
-            self.mask_backtocloud + GDAL_OPT,
-            condition_back_to_cloud + "?1:0",
-            self.ram,
-            otb.ImagePixelType_uint8)
-        bandMathBackToCloud.ExecuteAndWriteOutput()
+        self.extract_backtocloud_mask()
 
     def pass1(self):
         logging.info("Start pass 1")
@@ -464,7 +562,8 @@ class snow_detector:
             self.pass1_5(self.pass1_path,
                          self.cloud_pass1_path,
                          self.dilation_radius,
-                         self.cloud_threshold)
+                         self.cloud_threshold,
+                         self.cloud_min_area_size)
 
         # The computation of cloud refine is done below,
         # because the inital cloud may be updated within pass1_5
@@ -494,7 +593,7 @@ class snow_detector:
 
         logging.info("End of pass 1")
 
-    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85):
+    def pass1_5(self, snow_mask_path, cloud_mask_path, radius=1, cloud_threshold=0.85, min_area_size=25000):
         logging.info("Start pass 1.5")
         import numpy as np
         import scipy.ndimage as nd
@@ -507,6 +606,7 @@ class snow_detector:
         discarded_snow_area = 0
 
         (snowlabels, nb_label) = nd.measurements.label(snow_mask)
+        logging.info("There is " + str(nb_label) + " snow areas")
 
         # build the structuring element for dilation
         struct = np.zeros((2*radius+1, 2*radius+1))
@@ -514,28 +614,46 @@ class snow_detector:
         mask = x**2 + y**2 <= radius**2
         struct[mask] = 1
 
+        # compute individual snow area size
+        (labels, label_counts)= np.unique(snowlabels, return_counts=True)
+        labels_area = dict(zip(labels, label_counts))
+        logging.debug(labels_area)
+
+        logging.debug("Start loop on snow areas")
+
         # For each snow area
         for lab in range(1, nb_label+1):
             # Compute external contours
-            patch_neige_dilat = nd.binary_dilation(np.where(snowlabels == lab, 1, 0), struct)
-            contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
+            logging.debug("Processing area " + str(lab))
+            current_mask_area = labels_area[lab]
+            logging.debug("Current area size = " + str(current_mask_area))
+            if current_mask_area > min_area_size:
+                logging.debug("Processing snow area of size = " + str(current_mask_area))
+                current_mask = np.where(snowlabels == lab, 1, 0)
+                patch_neige_dilat = nd.binary_dilation(current_mask, struct)
+                logging.debug("Contour processing start")
+                contour = np.where((snow_mask == 0) & (patch_neige_dilat == 1))
 
-            # Compute percent of surronding cloudy pixels
-            cloud_contour = cloud_mask[contour]
-            # print cloud_contour
+                # Compute percent of surronding cloudy pixels
+                cloud_contour = cloud_mask[contour]
+                # print cloud_contour
+                logging.debug("Contour processing done.")
 
-            result = np.bincount(cloud_contour)
-            #logging.info(result)
-            cloud_percent = 0
-            if len(result) > 1:
-                cloud_percent = float(result[1]) / (result[0] + result[1])
-                logging.info(result)
-                logging.info(", " + str(cloud_percent*100) + "% of surrounding cloud")
+                result = np.bincount(cloud_contour)
+                logging.debug(result)
+                cloud_percent = 0
+                if len(result) > 1:
+                    cloud_percent = float(result[1]) / (result[0] + result[1])
+                    logging.info(result)
+                    logging.info(", " + str(cloud_percent*100) + "% of surrounding cloud")
 
-            # Discard snow area where cloud_percent > threshold
-            if cloud_percent > cloud_threshold:
-                discarded_snow_area += 1
-                snow_mask = np.where(snowlabels == lab, 0, snow_mask)
+                # Discard snow area where cloud_percent > threshold
+                if cloud_percent > cloud_threshold:
+                    logging.info("Updating snow mask...")
+                    discarded_snow_area += 1
+                    snow_mask = np.where(snowlabels == lab, 0, snow_mask)
+                    logging.info("Updating snow mask...Done")
+                    logging.info("End of processing area " + str(lab))
 
         logging.info(str(discarded_snow_area) + ' labels entoures de nuages (sur ' \
                      + str(nb_label) + ' labels)')
@@ -560,19 +678,6 @@ class snow_detector:
         logging.info("End of pass 1.5")
 
     def pass2(self):
-        ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
-            ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
-
-        # Pass 2: compute snow fraction (c++ app)
-        # FIXME remove related OTB app
-        # TODO remove related application
-
-        #nb_pixels_app = compute_nb_pixels(self.pass1_path, 0, 1)
-        #nb_pixels_app.Execute()
-
-        #nb_snow_pixels = nb_pixels_app.GetParameterInt("nbpix")
-        #logging.info("Number of snow pixels =" + str(nb_snow_pixels))
-
         # Compute snow fraction in the pass1 image (including nodata pixels)
         snow_fraction = compute_percent(self.pass1_path, 1)/100
         logging.info("snow fraction in pass1 image:" + str(snow_fraction))
@@ -604,6 +709,9 @@ class snow_detector:
             # Test zs value (-1 means that no zs elevation was found)
             if self.zs != -1:
                 # NDSI threshold again
+                ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
+                               ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
+                
                 condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ")" \
                                   + " and (" + ndsi_formula + "> " + str(self.ndsi_pass2) + ")" \
                                   + " and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
@@ -668,18 +776,19 @@ class snow_detector:
         # Final update of the snow  mask (include snow/nosnow/cloud)
 
         ## Strict cloud mask checking
-        logging.info("Strict cloud masking of snow pixels :")
-        logging.info(self.strict_cloud_mask)
         if self.strict_cloud_mask:
+            logging.info("Strict cloud masking of snow pixels.")
             logging.info("Only keep snow pixels which are not in the initial cloud mask in the final mask.")
+            if self.mode == 'sen2cor':
+                logging.info("With sen2cor, strict cloud masking corresponds to the default configuration.")
             condition_snow = "(im2b1==1) and (im3b1==0)"
         else:
             condition_snow = "(im2b1==1)"
 
-        logging.info("condition snow " + condition_snow)
-
         condition_final = condition_snow + "?" + str(self.label_snow) + \
                           ":((im1b1==1) or (im3b1==1))?"+str(self.label_cloud)+":0"
+
+        logging.info("Final condition for snow masking: " + condition_final)
 
         bandMathFinalCloud = band_math([self.cloud_refine_path,
                                         generic_snow_path,
@@ -706,7 +815,9 @@ class snow_detector:
                                 self.pass2_path,
                                 self.cloud_pass1_path,
                                 self.cloud_refine_path,
+                                self.all_cloud_path,
                                 self.snow_all_path,
+                                self.slope_mask_path,
                                 self.ram,
                                 otb.ImagePixelType_uint8)
         app.ExecuteAndWriteOutput()
