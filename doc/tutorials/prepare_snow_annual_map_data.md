@@ -1,8 +1,7 @@
 
 # How to generate configuration file for snow annual map computation on CNES HPC
 
-This tutorial aims at describing and explaining the usage of the python script prepare_data_for_snow_annual_map.py.
-[prepare_data_for_snow_annual_map.py](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/hpc/prepare_data_for_snow_annual_map.py)
+This tutorial aims at describing and explaining the usage of the python script [prepare_data_for_snow_annual_map.py](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/hpc/prepare_data_for_snow_annual_map.py).
 
 **WARNING: The following tutorial applies to LIS version 1.5 and only on CNES HPC.
 However, it could be an example for generating custom preparation script outside of the CNES HPC**
@@ -22,6 +21,11 @@ module load amalthee
 The script prepare_data_for_snow_annual_map.py must be located along the following scripts, in order to launch correctly the sub-tasks:
 - [run_lis_from_filelist.sh](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/hpc/run_lis_from_filelist.sh), it is a PBS script dedicated to the production of the snow products
 - [run_snow_annual_map.sh](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/hpc/run_snow_annual_map.sh), it is a PBS script dedicated to the production of the snow annual maps
+
+Note: It is possible to change the generation parameters of the intermediate snow products by editing the script run_lis_from_filelist.sh (cf. [build_json.py](https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow/blob/develop/app/build_json.py) parameters).
+```
+build_json.py -ram 2048 -dem $inputdem $zip_input_product $pout
+```
 
 ## Configuration parameters
 
