@@ -51,7 +51,7 @@ def main(argv):
     snow_annual_map_evaluation_app = snow_annual_map_evaluation.snow_annual_map_evaluation(data)
     snow_annual_map_evaluation_app.run()
 
-    if data.get("run_l8_evaluation", False):
+    if data.get("run_comparison_evaluation", False):
         snow_annual_map_evaluation_app.run_evaluation()
 
     if data.get("run_modis_comparison", False):

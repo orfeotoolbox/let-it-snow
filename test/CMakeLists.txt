@@ -103,6 +103,34 @@ add_test(NAME preprocessing_test
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
   )
 
+set(OUTPUT_TEST_S2_SMALL_ZIP ${OUTPUT_TEST}/s2-small_zip)
+add_test(NAME s2-small_zip_test_json_builder_test
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
+  -dem "${DATA_TEST}/S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF"
+  "${DATA_TEST}/S2-SMALL.zip"
+  "${OUTPUT_TEST_S2_SMALL_ZIP}"
+  )
+
+add_test(NAME s2-small_zip_test
+  COMMAND ${PYTHON_EXECUTABLE}
+  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
+  )
+  set_tests_properties(s2-small_zip_test PROPERTIES DEPENDS s2-small_zip_test_json_builder_test)
+
+add_test(NAME snow_annual_map_test
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/snow_annual_map_test.py
+    "${DATA_TEST}/SNOW_PRODUCTS"
+    "${OUTPUT_TEST}/snow_annual_map_test"
+    "${OUTPUT_TEST}/snow_annual_map_test/tmp"
+     )
+
+add_test(NAME snow_annual_map_compare_test
+    COMMAND gdalcompare.py
+    "${BASELINE}/snow_annual_map_test/SNOW_OCCURENCE_T31TCH_20180101_20180131.tif"
+    "${OUTPUT_TEST}/snow_annual_map_test/T31TCH_20180101_20180131/SNOW_OCCURENCE_T31TCH_20180101_20180131.tif"
+    )
+  set_tests_properties(snow_annual_map_compare_test PROPERTIES DEPENDS snow_annual_map_test)
+
 # add_test(NAME compare_preprocessing_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
 #   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
@@ -197,6 +225,7 @@ add_test(NAME compute_snow_mask_test
     "${BASELINE}/pass1_highcloud.tif"
     "${BASELINE}/pass2_highcloud.tif"
     "${BASELINE}/cloud_pass1_highcloud.tif"
+    "${BASELINE}/cloud_refine_highcloud.tif"
     "${BASELINE}/cloud_refine_highcloud.tif"
     "${OUTPUT_TEST}/snow_all_test.tif"
      )

@@ -28,7 +28,7 @@ The snow detection is performed in the Python script [run_snow_detector.py](app/
 
 All the parameters of the algorithm, paths to input and output data are stored in the json file. See the provided example [param_test_s2_template.json](tes/param_test_s2_template.json) file for an example.
 
-Moreover The JSON schema is available in the [Algorithm Theoretical Basis Documentation](doc/tex/ATBD_CES-Neige.tex) and gives more information about the roles of these parameters.
+Moreover The JSON schema is available in the [Algorithm Theoretical Basis Documentation](doc/atbd/ATBD_CES-Neige.tex) and gives more information about the roles of these parameters.
 
 NB: To build DEM data download the SRTM files corresponding to the study area and build the .vrt using gdalbuildvrt. Edit config.json file to activate preprocessing : Set "preprocessing" to true and set the vrt path.
 

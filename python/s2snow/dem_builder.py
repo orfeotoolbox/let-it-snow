@@ -104,7 +104,9 @@ def main(argv):
     psrtm = argv[1]
     pimg = argv[2]
     pout = argv[3]
-    build_dem(psrtm, pimg, pout)
+    ram = 128
+    nbThreads = 1
+    build_dem(psrtm, pimg, pout, ram, nbThreads)
 
 
 if __name__ == "__main__":

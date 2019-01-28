@@ -2,7 +2,7 @@
 #PBS -N TheiaNViz
 #PBS -j oe
 #PBS -l select=1:ncpus=4:mem=10gb
-#PBS -l walltime=00:35:00
+#PBS -l walltime=02:00:00
 # make output figures for a better vizualisation
 # qsub -v tile="29SRQ",input_folder="/work/OT/siaa/Theia/Neige/test_snow_in_cloud_removal" makefigureTile_lis_Sentinel2_cluster_muscate_2.sh
 # useful option: qsub -W depend=afterok:<jobid> where jobid is the job id of qsub runTile..
