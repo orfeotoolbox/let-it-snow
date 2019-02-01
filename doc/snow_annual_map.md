@@ -1,20 +1,20 @@
-# Snow Annual Map
+# Snow cover duration map
 
-This file describes the snow annual map generation algorithm.
+This file describes the algorithm to generate the snow cover duration map.
 
 
 ## Objectives:
 
-The main objectives of the snow annual map algorithm is to create a product providing the synthesis of the snow cover on an annual basis over mountain regions. This product relies on LIS snow products computed over different L2A optical products such as S2 or L8, and uses a multi-temporal approach.
+The objective of this algorithm is to provide the snow cover duration (SCD) at 20 m spatial resolution. It was designed to compute the SCD on a yearly basis, however it can work over a longer or shorter period of time. This product relies on LIS snow products from Sentinel-2 or Landsat-8, and uses a multi-temporal approach.
 
-The approach is validated with Modis and Landsat 8 products.
+The approach is evaluated with a similar product derived from MODIS products.
 
 
 **General approach:**
 
-- First a time series is created from Let It Snow (LIS) snow cover products corresponding to the desired time range (a snow season goes from 01/09 of one year to 31/08 of the next one) 
-- Then, the time series is interpolated using the [otbImageTimeSeriesGapFilling](https://gitlab.orfeo-toolbox.org/jinglada/temporalgapfilling) application to obtain sampling on a daily basis.
-- Finally, the daily time-series are combined (temporal sommation) to obtain a mono-band image, representing the number of snow days. 
+- First a time series is created from let-it-snow (LIS) snow cover products corresponding to the desired time range (typically an annual SCD map is computed over the period 01-Sep of year N to 31-Aug of year N+1) 
+- Then, every pixel of this stack is linearly interpolated in the time dimension using the [otbImageTimeSeriesGapFilling](https://gitlab.orfeo-toolbox.org/jinglada/temporalgapfilling) application to obtain a gap-filled time series on a daily basis.
+- Finally, the number of snow days per pixel is computed by temporal aggregation of the daily gap-filled time series of snow cover maps. 
 
 ## Detailed approach
 ### Data Collection
