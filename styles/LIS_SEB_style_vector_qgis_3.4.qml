@@ -1,109 +1,85 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis hasScaleBasedVisibilityFlag="0" version="3.4.4-Madeira" minScale="1e+8" simplifyMaxScale="1" maxScale="0" simplifyDrawingTol="1" simplifyLocal="1" readOnly="0" labelsEnabled="0" simplifyAlgorithm="0" simplifyDrawingHints="1" styleCategories="AllStyleCategories">
+<qgis simplifyDrawingHints="1" simplifyDrawingTol="1" maxScale="0" readOnly="0" labelsEnabled="0" simplifyLocal="1" simplifyAlgorithm="0" simplifyMaxScale="1" minScale="1e+08" hasScaleBasedVisibilityFlag="0" styleCategories="AllStyleCategories" version="3.4.4-Madeira">
   <flags>
     <Identifiable>1</Identifiable>
     <Removable>1</Removable>
     <Searchable>1</Searchable>
   </flags>
-  <renderer-v2 type="categorizedSymbol" symbollevels="0" attr="DN" enableorderby="0" forceraster="0">
+  <renderer-v2 forceraster="0" enableorderby="0" symbollevels="0" attr="DN" type="categorizedSymbol">
     <categories>
-      <category value="" label="" symbol="0" render="false"/>
-      <category value="100" label="snow" symbol="1" render="true"/>
-      <category value="205" label="cloud" symbol="2" render="true"/>
+      <category value="100" render="true" label="snow" symbol="0"/>
+      <category value="205" render="true" label="cloud" symbol="1"/>
     </categories>
     <symbols>
-      <symbol name="0" type="fill" alpha="1" clip_to_extent="1" force_rhr="0">
-        <layer locked="0" enabled="1" pass="0" class="SimpleFill">
-          <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
-          <prop v="205,67,46,255" k="color"/>
-          <prop v="bevel" k="joinstyle"/>
-          <prop v="0,0" k="offset"/>
-          <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
-          <prop v="MM" k="offset_unit"/>
-          <prop v="35,35,35,255" k="outline_color"/>
-          <prop v="solid" k="outline_style"/>
-          <prop v="0.26" k="outline_width"/>
-          <prop v="MM" k="outline_width_unit"/>
-          <prop v="solid" k="style"/>
+      <symbol force_rhr="0" clip_to_extent="1" type="fill" name="0" alpha="1">
+        <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+          <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+          <prop k="color" v="0,255,255,255"/>
+          <prop k="joinstyle" v="bevel"/>
+          <prop k="offset" v="0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+          <prop k="offset_unit" v="MM"/>
+          <prop k="outline_color" v="35,35,35,255"/>
+          <prop k="outline_style" v="no"/>
+          <prop k="outline_width" v="0.26"/>
+          <prop k="outline_width_unit" v="MM"/>
+          <prop k="style" v="solid"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option value="" name="name" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option value="collection" name="type" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="1" type="fill" alpha="1" clip_to_extent="1" force_rhr="0">
-        <layer locked="0" enabled="1" pass="0" class="SimpleFill">
-          <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
-          <prop v="0,255,255,255" k="color"/>
-          <prop v="bevel" k="joinstyle"/>
-          <prop v="0,0" k="offset"/>
-          <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
-          <prop v="MM" k="offset_unit"/>
-          <prop v="35,35,35,255" k="outline_color"/>
-          <prop v="solid" k="outline_style"/>
-          <prop v="0.26" k="outline_width"/>
-          <prop v="MM" k="outline_width_unit"/>
-          <prop v="solid" k="style"/>
+      <symbol force_rhr="0" clip_to_extent="1" type="fill" name="1" alpha="1">
+        <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+          <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+          <prop k="color" v="255,255,255,255"/>
+          <prop k="joinstyle" v="bevel"/>
+          <prop k="offset" v="0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+          <prop k="offset_unit" v="MM"/>
+          <prop k="outline_color" v="35,35,35,255"/>
+          <prop k="outline_style" v="no"/>
+          <prop k="outline_width" v="0.26"/>
+          <prop k="outline_width_unit" v="MM"/>
+          <prop k="style" v="solid"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option value="" name="name" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option value="collection" name="type" type="QString"/>
-            </Option>
-          </data_defined_properties>
-        </layer>
-      </symbol>
-      <symbol name="2" type="fill" alpha="1" clip_to_extent="1" force_rhr="0">
-        <layer locked="0" enabled="1" pass="0" class="SimpleFill">
-          <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
-          <prop v="255,255,255,255" k="color"/>
-          <prop v="bevel" k="joinstyle"/>
-          <prop v="0,0" k="offset"/>
-          <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
-          <prop v="MM" k="offset_unit"/>
-          <prop v="35,35,35,255" k="outline_color"/>
-          <prop v="solid" k="outline_style"/>
-          <prop v="0.26" k="outline_width"/>
-          <prop v="MM" k="outline_width_unit"/>
-          <prop v="solid" k="style"/>
-          <data_defined_properties>
-            <Option type="Map">
-              <Option value="" name="name" type="QString"/>
-              <Option name="properties"/>
-              <Option value="collection" name="type" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
     </symbols>
     <source-symbol>
-      <symbol name="0" type="fill" alpha="1" clip_to_extent="1" force_rhr="0">
-        <layer locked="0" enabled="1" pass="0" class="SimpleFill">
-          <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
-          <prop v="196,60,57,255" k="color"/>
-          <prop v="bevel" k="joinstyle"/>
-          <prop v="0,0" k="offset"/>
-          <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
-          <prop v="MM" k="offset_unit"/>
-          <prop v="35,35,35,255" k="outline_color"/>
-          <prop v="solid" k="outline_style"/>
-          <prop v="0.26" k="outline_width"/>
-          <prop v="MM" k="outline_width_unit"/>
-          <prop v="solid" k="style"/>
+      <symbol force_rhr="0" clip_to_extent="1" type="fill" name="0" alpha="1">
+        <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+          <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+          <prop k="color" v="196,60,57,255"/>
+          <prop k="joinstyle" v="bevel"/>
+          <prop k="offset" v="0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+          <prop k="offset_unit" v="MM"/>
+          <prop k="outline_color" v="35,35,35,255"/>
+          <prop k="outline_style" v="solid"/>
+          <prop k="outline_width" v="0.26"/>
+          <prop k="outline_width_unit" v="MM"/>
+          <prop k="style" v="solid"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option value="" name="name" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option value="collection" name="type" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
     </source-symbol>
-    <colorramp name="[source]" type="randomcolors"/>
     <rotation/>
     <sizescale/>
   </renderer-v2>
@@ -116,16 +92,17 @@
   <featureBlendMode>0</featureBlendMode>
   <layerOpacity>1</layerOpacity>
   <SingleCategoryDiagramRenderer diagramType="Histogram" attributeLegend="1">
-    <DiagramCategory minScaleDenominator="0" backgroundAlpha="255" height="15" backgroundColor="#ffffff" barWidth="5" labelPlacementMethod="XHeight" penColor="#000000" lineSizeScale="3x:0,0,0,0,0,0" scaleBasedVisibility="0" minimumSize="0" diagramOrientation="Up" rotationOffset="270" sizeType="MM" penWidth="0" enabled="0" maxScaleDenominator="1e+8" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" opacity="1" lineSizeType="MM" penAlpha="255" width="15">
-      <fontProperties style="" description="Ubuntu,11,-1,5,50,0,0,0,0,0"/>
+    <DiagramCategory sizeScale="3x:0,0,0,0,0,0" maxScaleDenominator="1e+08" enabled="0" minScaleDenominator="-4.65661e-10" diagramOrientation="Up" penWidth="0" penAlpha="255" lineSizeScale="3x:0,0,0,0,0,0" height="15" scaleBasedVisibility="0" rotationOffset="270" minimumSize="0" penColor="#000000" width="15" lineSizeType="MM" scaleDependency="Area" backgroundColor="#ffffff" backgroundAlpha="255" labelPlacementMethod="XHeight" sizeType="MM" barWidth="5" opacity="1">
+      <fontProperties style="" description=".SF NS Text,13,-1,5,50,0,0,0,0,0"/>
+      <attribute field="" label="" color="#000000"/>
     </DiagramCategory>
   </SingleCategoryDiagramRenderer>
-  <DiagramLayerSettings obstacle="0" zIndex="0" showAll="1" placement="1" priority="0" dist="0" linePlacementFlags="18">
+  <DiagramLayerSettings linePlacementFlags="18" zIndex="0" dist="0" obstacle="0" showAll="1" placement="1" priority="0">
     <properties>
       <Option type="Map">
-        <Option value="" name="name" type="QString"/>
+        <Option value="" type="QString" name="name"/>
         <Option name="properties"/>
-        <Option value="collection" name="type" type="QString"/>
+        <Option value="collection" type="QString" name="type"/>
       </Option>
     </properties>
   </DiagramLayerSettings>
@@ -143,27 +120,27 @@
     </field>
   </fieldConfiguration>
   <aliases>
-    <alias field="DN" name="" index="0"/>
+    <alias field="DN" index="0" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <defaults>
-    <default applyOnUpdate="0" field="DN" expression=""/>
+    <default field="DN" expression="" applyOnUpdate="0"/>
   </defaults>
   <constraints>
-    <constraint notnull_strength="0" field="DN" constraints="0" unique_strength="0" exp_strength="0"/>
+    <constraint field="DN" unique_strength="0" notnull_strength="0" constraints="0" exp_strength="0"/>
   </constraints>
   <constraintExpressions>
-    <constraint exp="" desc="" field="DN"/>
+    <constraint field="DN" desc="" exp=""/>
   </constraintExpressions>
   <expressionfields/>
   <attributeactions>
     <defaultAction value="{00000000-0000-0000-0000-000000000000}" key="Canvas"/>
   </attributeactions>
-  <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
+  <attributetableconfig sortOrder="0" sortExpression="" actionWidgetStyle="dropDown">
     <columns>
-      <column width="-1" name="DN" type="field" hidden="0"/>
-      <column width="-1" type="actions" hidden="1"/>
+      <column hidden="0" width="-1" type="field" name="DN"/>
+      <column hidden="1" width="-1" type="actions"/>
     </columns>
   </attributetableconfig>
   <conditionalstyles>
