@@ -11,9 +11,9 @@ Access to Theia Snow data collection:
 
 * [![DOI:10.24400/329360/f7q52mnk](https://zenodo.org/badge/DOI/10.24400/329360/f7q52mnk.svg)](http://doi.org/10.24400/329360/f7q52mnk)
 
-To read more about the "Centre d'Expertise Scientifique surface enneigée" (in French):
+How to cite:
 
-* [Bulletin THEIA](https://www.theia-land.fr/sites/default/files/imce/BulletinTHEIA3.pdf#page=10)
+*  Gascoin, S., Grizonnet, M., Bouchet, M., Salgues, G., and Hagolle, O.: Theia Snow collection: high resolution operational snow cover maps from Sentinel-2 and Landsat-8 data, Earth Syst. Sci. Data Discuss., [https://doi.org/10.5194/essd-2018-144](https://doi.org/10.5194/essd-2018-144), in review, 2018. 
 
 The input files are Sentinel-2 or Landsat-8 level-2A products from the [Theia Land Data Centre](https://theia.cnes.fr/) or [SPOT-4/5 Take 5 level-2A products](https://spot-take5.org) and a Digital Terrain Model (DTM) like SRTM for instance reprojected at the same resolution as the input image.
 
