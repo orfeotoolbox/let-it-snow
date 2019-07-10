@@ -176,9 +176,9 @@ Note: In case of densification, the nodata value is set automatically to 0 causi
 ## Snow persistence maps production
 
 The current snow annual map production covers Pyrenees and Alps for three snow seasons (2015-2016, 2016-2017, 2017-2018), using S2 and L8 snow products [distibuted by Theia](https://theia.cnes.fr/atdistrib/rocket/#/search?collection=Snow). When the snow products were not available trough the webportal, the snow products were generated from the L2A products using LIS snow detector.
-A blog ticket showing the results of the production covering Pyrenees and Alps for the snow seasons 2016-2017 and 2017-2018 is available, and it also provides comparaison between the snow annual cover and the ski stations implentation.
+A blog post shows the results over the Pyrenees and the Alps for the snow seasons 2016-2017 and 2017-2018, which highlights the comparison of the annual snow cover duration map with ski pistes.
 
-Link to the ticket blog:  [http://www.cesbio.ups-tlse.fr/multitemp/?p=14620](http://www.cesbio.ups-tlse.fr/multitemp/?p=14620).
+Link to the blog post:  [http://www.cesbio.ups-tlse.fr/multitemp/?p=14620](http://www.cesbio.ups-tlse.fr/multitemp/?p=14620).
 
 Link to the interactive map: [http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/simon/snowMaps.html](http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/simon/snowMaps.html).
 
