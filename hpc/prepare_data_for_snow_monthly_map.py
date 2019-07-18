@@ -25,8 +25,8 @@ import copy
 import logging
 import subprocess
 from datetime import datetime, timedelta
-from dateutil import relativedelta
 from libamalthee import Amalthee
+from dateutil import relativedelta
 
 def str_to_datetime(date_string, format="%Y%m%d"):
     """ Return the datetime corresponding to the input string
@@ -59,7 +59,7 @@ class prepare_data_for_snow_annual_map():
 
         self.tile_id = params.get("tile_id")
         self.date_start = str_to_datetime(params.get("date_start"), "%d/%m/%Y")
-        self.date_stop = self.date_start+relativedelta.relativedelta(months=+1,days=-1)
+        self.date_stop = str_to_datetime(params.get("date_stop"), "%d/%m/%Y")
         self.date_margin = timedelta(days=params.get("date_margin", 0))
         self.output_dates_filename = params.get("output_dates_filename", None)
         self.mode = params.get("mode", "RUNTIME")
@@ -247,15 +247,18 @@ class prepare_data_for_snow_annual_map():
             logging.warning("Order was submitted the snow annual map will soon be available, but missinterpreted return code")
 
 def main():
-	for iy in list(range(2016,2019)):
+	for iy in list(range(2018,2019)):
 		y='{:d}'.format(iy)
 	# iterate from April to July yyyy
 		for im in list(range(4,8)):
 			m1='{:02d}'.format(im)
+			m2='{:02d}'.format(im+1)
 			d1="01/"+m1+"/"+y
+			d2=datetime_to_str(str_to_datetime(d1,"%d/%m/%Y")+relativedelta.relativedelta(months=+1,days=-1),"%d/%m/%Y")
+			logging.info("Processing month "+d1+" to "+d2)
 			params = {"tile_id":"T32TPS",
 					  "date_start":d1,
-					  #"date_stop":x,
+					  "date_stop":d2,
 					  "date_margin":30,
 					  "mode":"DEBUG",
 					  "input_products_list":[],
