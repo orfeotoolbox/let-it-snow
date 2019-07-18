@@ -173,7 +173,7 @@ class prepare_data_for_snow_annual_map():
                     logging.info("Requesting an update of the datalake because of " + str(datalake_update_requested) + " unavailable products...")
                     # this will request all products of the request
                     # @TODO request only the products for which the snow products are not available
-                    #amalthee_theia.fill_datalake()
+                    amalthee_theia.fill_datalake()
                     logging.info("End of requesting datalake.")
             # we only append a single type of products to the main input list
             if mission_tag == "SENTINEL2":#"LANDSAT":#
@@ -227,7 +227,7 @@ class prepare_data_for_snow_annual_map():
             command.insert(2, "1-"+str(array_size+1))
         print(" ".join(command))
         try:
-            #call_subprocess(command)
+            call_subprocess(command)
             logging.info("Order was submitted the snow annual map will soon be available.")
         except:
             logging.warning("Order was submitted the snow annual map will soon be available, but missinterpreted return code")
