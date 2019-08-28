@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# This script computes the snow onset date (SOD) and the snow melt-out date (SMOD) from a stack of daily snow maps
+# The dates are given in number of days since the first day of the synthesis (usually September 01)
+# In HAL the dependencies are loaded with module load lis/develop
+# Author: Simon Gascoin
+
 import rasterio
 import numpy as np
 import itertools,operator,sys,os

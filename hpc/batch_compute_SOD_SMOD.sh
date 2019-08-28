@@ -6,16 +6,21 @@
 #PBS -M gascoins@cesbio.cnes.fr
 #PBS -m e
 
-# Se positionner  dans le répertoire courant
-# PBS_O_WORKDIR correspond au répertoire depuis lequel la commande qsub est lancée
-cd "${PBS_O_WORKDIR}"
+# Load lis environnment 
 module load lis/develop
 
-# load the available product names from the tile directory
+# Stay in currrent directory
+cd "${PBS_O_WORKDIR}"
+
+# Load all the available product names from the tile directory
 pin=/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification/
 inputFiles=($(find $pin -maxdepth 2 -name DAILY_SNOW_MASKS*tif))
-echo "array size" ${#inputFiles[@]}
 
+# Check array size 
+if [ ${#inputFiles[@]} != 63 ]; then 
+  echo "PSB array size should be equal to" ${#inputFiles[@]}
+  exit
+fi
 # use the PBS_ARRAY_INDEX variable to distribute jobs in parallel (bash indexing is zero-based)
 i="${inputFiles[${PBS_ARRAY_INDEX} - 1]}"
 
