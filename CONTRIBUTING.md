@@ -1,4 +1,4 @@
-# How to contribute to Let It Snow ?
+# How to contribute to let-it-snow (LIS) ?
 
 Thank you for taking the time to contribute to LIS! This document will guide you
 through the workflow and best practices you need to know to send your
