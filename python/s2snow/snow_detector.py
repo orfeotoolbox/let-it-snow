@@ -66,13 +66,22 @@ class snow_detector:
         # (if -1 the target resolution is equal to the max resolution of the input band)
         self.target_resolution = general.get("target_resolution", -1)
 
-        # Parse vector option
+        # Parse vector options
         vector_options = data["vector"]
         self.generate_vector = vector_options.get("generate_vector", True)
         self.generate_intermediate_vectors = vector_options.get("generate_intermediate_vectors", False)
         self.use_gdal_trace_outline = vector_options.get("use_gdal_trace_outline", True)
         self.gdal_trace_outline_dp_toler = vector_options.get("gdal_trace_outline_dp_toler", 0)
         self.gdal_trace_outline_min_area = vector_options.get("gdal_trace_outline_min_area", 0)
+
+        # Parse FSC options
+        if data.get("fsc", False):
+            self.dofsc = data["fsc"]['dofsc']
+            self.tcd_path = str(data["fsc"]['tcd'])
+            self.fscOg_Eq = data["fsc"]['fscOg_Eq']
+            self.fscToc_Eq = data["fsc"]['fscToc_Eq']
+        else:
+            self.dofsc = False
 
         # Parse cloud data
         cloud = data["cloud"]
@@ -248,6 +257,9 @@ class snow_detector:
         self.composition_path = op.join(self.product_path, "LIS_COMPO.TIF")
         self.histogram_path = op.join(self.product_path, "LIS_HISTO.TXT")
         self.metadata_path = op.join(self.product_path, "LIS_METADATA.XML")
+        self.ndsi_path = op.join(self.product_path, "LIS_NDSI.TIF")
+        self.fscToc_path = op.join(self.product_path, "LIS_FSCTOC.TIF")
+        self.fscOg_path = op.join(self.product_path, "LIS_FSCOG.TIF")
 
     def detect_snow(self, nbPass):
         # Set maximum ITK threads
@@ -279,6 +291,8 @@ class snow_detector:
             self.pass1()
         if nbPass == 2:
             self.pass2()
+        if self.dofsc:
+            self.passfsc()
 
         # RGB composition
         composition_RGB(
@@ -367,14 +381,14 @@ class snow_detector:
             else:
                 condition_all_clouds = "im1b1 > 0"
 
-                bandMathAllCloud = band_math(
-                    [self.cloud_init],
-                    self.all_cloud_path + GDAL_OPT,
-                    "("+condition_all_clouds+" > 0)?1:0",
-                    self.ram,
-                    otb.ImagePixelType_uint8)
-                bandMathAllCloud.ExecuteAndWriteOutput()
-                bandMathAllCloud = None
+            bandMathAllCloud = band_math(
+                [self.cloud_init],
+                self.all_cloud_path + GDAL_OPT,
+                "("+condition_all_clouds+" > 0)?1:0",
+                self.ram,
+                otb.ImagePixelType_uint8)
+            bandMathAllCloud.ExecuteAndWriteOutput()
+            bandMathAllCloud = None
 
     def extract_cloud_shadows(self):
         shadow_mask_path = op.join(self.path_tmp, "shadow_mask.tif") + GDAL_OPT
@@ -534,12 +548,12 @@ class snow_detector:
         logging.info("Start pass 1")
 
         # Pass1 : NDSI threshold
-        ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
+        self.ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
             ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
-        logging.info("ndsi formula: "+ ndsi_formula)
+        logging.info("ndsi formula: "+ self.ndsi_formula)
 
         # NDSI condition (ndsi > x and not cloud)
-        condition_ndsi = "(im2b1!=1 and (" + ndsi_formula + ")>" + str(self.ndsi_pass1) + " "
+        condition_ndsi = "(im2b1!=1 and (" + self.ndsi_formula + ")>" + str(self.ndsi_pass1) + " "
 
         condition_pass1 = condition_ndsi + \
             " and im1b" + str(self.nRed) + "> " + str(self.rRed_pass1) + ")"
@@ -708,12 +722,12 @@ class snow_detector:
         if snow_fraction > self.fsnow_total_lim:
             # Test zs value (-1 means that no zs elevation was found)
             if self.zs != -1:
-                # NDSI threshold again
-                ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
-                               ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
+                #~ # NDSI threshold again
+                #~ ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
+                               #~ ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
                 
                 condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ")" \
-                                  + " and (" + ndsi_formula + "> " + str(self.ndsi_pass2) + ")" \
+                                  + " and (" + self.ndsi_formula + "> " + str(self.ndsi_pass2) + ")" \
                                   + " and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
 
                 bandMathPass2 = band_math([self.img,
@@ -832,3 +846,42 @@ class snow_detector:
                                   self.ram,
                                   otb.ImagePixelType_uint8)
         bandMathPass3.ExecuteAndWriteOutput()
+        bandMathPass3 = None
+
+    def passfsc(self):
+        # write NDSIx100 (0-100), nosnow (0) cloud (205) and nodata (254)
+        expression = "(im2b1 == 100)?100*"+str(self.ndsi_formula)+":im2b1"
+        bandMathApp = band_math([self.img,self.final_mask_path],
+                                    self.ndsi_path,
+                                    expression,
+                                    self.ram,
+                                    otb.ImagePixelType_uint8)
+        bandMathApp.ExecuteAndWriteOutput()
+        bandMathApp = None
+
+        # write top-of-canopy FSC (0-100), nosnow (0) cloud (205) and nodata (254)
+        #~ self.fscToc_Eq="1.45*ndsi-0.01" 
+        eq="min("+str(self.fscToc_Eq)+",1)"
+        exp=eq.replace("ndsi", "im1b1/100") # ndsi was written in %
+        expression = "(im2b1 == 100) ? 100*"+exp+" : im2b1"
+        bandMathApp = band_math([self.ndsi_path,self.final_mask_path],
+                                    self.fscToc_path,
+                                    expression,
+                                    self.ram,
+                                    otb.ImagePixelType_uint8)
+        bandMathApp.ExecuteAndWriteOutput()
+        bandMathApp = None
+
+        # write on-ground FSC (0-100), nosnow (0) cloud (205) and nodata (254)
+        #~ self.fscOg_Eq="fscToc/(1-tcd)" 
+        eq="min("+str(self.fscOg_Eq)+",1)"
+        exp=eq.replace("fscToc", "im1b1/100") # fscToc was written in %
+        exp=exp.replace("tcd", "im3b1/100") # tcd is given in %
+        expression = "(im2b1 == 100) ? 100*"+exp+" : im2b1"
+        bandMathApp = band_math([self.fscToc_path,self.final_mask_path,self.tcd_path],
+                                    self.fscOg_path,
+                                    expression,
+                                    self.ram,
+                                    otb.ImagePixelType_uint8)
+        bandMathApp.ExecuteAndWriteOutput()
+        bandMathApp = None
