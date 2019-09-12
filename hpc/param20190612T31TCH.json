@@ -1,0 +1,67 @@
+{
+    "inputs": {
+        "swir_band": {
+            "path": "./input/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2_FRE_B11.tif", 
+            "noBand": 1
+        }, 
+        "red_band": {
+            "path": "./input/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2_FRE_B4.tif", 
+            "noBand": 1
+        }, 
+        "cloud_mask": "./input/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2/MASKS/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2_CLM_R2.tif", 
+        "green_band": {
+            "path": "./input/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2_FRE_B3.tif", 
+            "noBand": 1
+        }, 
+        "div_mask": "./input/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2/MASKS/SENTINEL2A_20190612-104918-663_L2A_T31TCH_C_V2-2_MG2_R2.tif", 
+        "dem": "/work/OT/siaa/Theia/Neige/DEM/S2__TEST_AUX_REFDE2_T31TCH_0001.DBL.DIR/S2__TEST_AUX_REFDE2_T31TCH_0001_ALT_R2.TIF", 
+        "div_slope_thres": 64
+    }, 
+    "vector": {
+        "generate_vector": false, 
+        "generate_intermediate_vectors": false, 
+        "gdal_trace_outline_dp_toler": 0, 
+        "use_gdal_trace_outline": true, 
+        "gdal_trace_outline_min_area": 0
+    }, 
+    "snow": {
+        "fsnow_total_lim": 0.001, 
+        "fsnow_lim": 0.1, 
+        "dz": 100, 
+        "ndsi_pass1": 0.4, 
+        "ndsi_pass2": 0.15, 
+        "red_pass1": 200, 
+        "red_pass2": 40, 
+        "fclear_lim": 0.1
+    }, 
+    "cloud": {
+        "rm_snow_inside_cloud": false, 
+        "rm_snow_inside_cloud_threshold": 0.85, 
+        "strict_cloud_mask": false, 
+        "rm_snow_inside_cloud_min_area": 5000, 
+        "shadow_out_mask": 64, 
+        "all_cloud_mask": 1, 
+        "shadow_in_mask": 32, 
+        "red_darkcloud": 300, 
+        "red_backtocloud": 100, 
+        "rf": 12, 
+        "high_cloud_mask": 128, 
+        "rm_snow_inside_cloud_dilation_radius": 1
+    }, 
+    "general": {
+        "nb_threads": 1, 
+        "multi": 10, 
+        "ram": 2048, 
+        "log": true, 
+        "pout": "./output/", 
+        "target_resolution": -1, 
+        "nodata": -10000, 
+        "preprocessing": false
+    },
+    "fsc": {
+        "dofsc": true,
+        "fscToc_Eq": "1.45*ndsi-0.01", 
+        "fscOg_Eq": "fscToc/(1-tcd)",
+        "tcd": "/work/OT/siaa/Theia/Neige/CoSIMS/data/TCD/TCD_2015_R2_T31TCH.TIF"
+    }    
+}
