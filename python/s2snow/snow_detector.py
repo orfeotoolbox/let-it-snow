@@ -36,7 +36,7 @@ from s2snow.app_wrappers import compute_snow_mask, compute_cloud_mask
 from s2snow.app_wrappers import band_math, compute_snow_line
 
 # Import utilities for snow detection
-from s2snow.utils import polygonize, extract_band, burn_polygons_edges, composition_RGB
+from s2snow.utils import polygonize, extract_band, burn_polygons_edges, composition_RGB, edit_raster_from_shapefile, edit_raster_from_raster, edit_nodata_value
 from s2snow.utils import compute_percent, format_SEB_VEC_values, get_raster_as_array
 
 # this allows GDAL to throw Python Exceptions
@@ -80,8 +80,10 @@ class snow_detector:
             self.tcd_path = str(data["fsc"]['tcd'])
             self.fscOg_Eq = data["fsc"]['fscOg_Eq']
             self.fscToc_Eq = data["fsc"]['fscToc_Eq']
+            self.cosims_mode = data["fsc"]['cosims_mode']
         else:
             self.dofsc = False
+
 
         # Parse cloud data
         cloud = data["cloud"]
@@ -133,6 +135,7 @@ class snow_detector:
         gb_path_extracted = extract_band(inputs, "green_band", self.path_tmp, self.nodata)
         rb_path_extracted = extract_band(inputs, "red_band", self.path_tmp, self.nodata)
         sb_path_extracted = extract_band(inputs, "swir_band", self.path_tmp, self.nodata)
+        
 
         # Keep the input product directory basename as product_id
         self.product_id = op.basename(op.dirname(inputs["green_band"]["path"]))
@@ -196,6 +199,23 @@ class snow_detector:
                 yRes=self.target_resolution)
         else:
             sb_path_resampled = sb_path_extracted
+            
+        #apply water mask as NAN values to extracted bands so that they are not used
+        if 'water_mask' in data:
+            if data['water_mask']['apply']:
+                water_mask_path = data['water_mask']['water_mask_path']
+                water_mask_type = water_mask_path.split('.')[-1].lower()
+                if water_mask_type == 'tif':
+                    self.water_mask_raster_values = data['water_mask']['water_mask_raster_values']
+                    edit_raster_from_raster(rb_path_resampled, water_mask_path, src_values=data['water_mask']['water_mask_raster_values'], applied_value=self.nodata)
+                    edit_raster_from_raster(gb_path_resampled, water_mask_path, src_values=data['water_mask']['water_mask_raster_values'], applied_value=self.nodata)
+                    edit_raster_from_raster(sb_path_resampled, water_mask_path, src_values=data['water_mask']['water_mask_raster_values'], applied_value=self.nodata)
+                elif water_mask_type == 'shp':
+                    edit_raster_from_shapefile(rb_path_resampled, water_mask_path, applied_value=self.nodata)
+                    edit_raster_from_shapefile(gb_path_resampled, water_mask_path, applied_value=self.nodata)
+                    edit_raster_from_shapefile(sb_path_resampled, water_mask_path, applied_value=self.nodata)
+                else:
+                    raise IOError('Input water_mask_path must either be a GeoTIFF raster (.tif) or a shapefile (.shp)')
 
         # build vrt
         logging.info("building bands vrt")
@@ -232,7 +252,10 @@ class snow_detector:
         self.label_no_snow = "0"
         self.label_snow = "100"
         self.label_cloud = "205"
-        self.label_no_data = "254"
+        if self.cosims_mode:
+            self.label_no_data = "255"
+        else:
+            self.label_no_data = "254"
 
         # Build useful paths
         self.pass1_path = op.join(self.path_tmp, "pass1.tif")
@@ -294,42 +317,46 @@ class snow_detector:
         if self.dofsc:
             self.passfsc()
 
-        # RGB composition
-        composition_RGB(
-            self.img,
-            self.composition_path,
-            self.nSWIR,
-            self.nRed,
-            self.nGreen,
-            self.multi)
+        if self.cosims_mode:
+            self.create_cosims_metadata()
+        else:
+            # RGB composition
+            composition_RGB(
+                self.img,
+                self.composition_path,
+                self.nSWIR,
+                self.nRed,
+                self.nGreen,
+                self.multi)
 
-        # Gdal polygonize (needed to produce composition)
-        # TODO: Study possible loss and issue with vectorization product
-        if self.generate_vector:
-            polygonize(
+            # Gdal polygonize (needed to produce composition)
+            # TODO: Study possible loss and issue with vectorization product
+            if self.generate_vector:
+                polygonize(
+                    self.final_mask_path,
+                    self.final_mask_path,
+                    self.final_mask_vec_path,
+                    self.use_gdal_trace_outline,
+                    self.gdal_trace_outline_min_area,
+                    self.gdal_trace_outline_dp_toler)
+
+            # Burn polygons edges on the composition
+            # TODO add pass1 snow polygon in yellow
+            burn_polygons_edges(
+                self.composition_path,
                 self.final_mask_path,
-                self.final_mask_path,
-                self.final_mask_vec_path,
-                self.use_gdal_trace_outline,
-                self.gdal_trace_outline_min_area,
-                self.gdal_trace_outline_dp_toler)
+                self.label_snow,
+                self.label_cloud,
+                self.ram)
 
-        # Burn polygons edges on the composition
-        # TODO add pass1 snow polygon in yellow
-        burn_polygons_edges(
-            self.composition_path,
-            self.final_mask_path,
-            self.label_snow,
-            self.label_cloud,
-            self.ram)
-
-        # Product formating
-        #~ format_SEB_VEC_values(self.final_mask_vec_path,
-                              #~ self.label_snow,
-                              #~ self.label_cloud,
-                              #~ self.label_no_data)
-        self.create_metadata()
-
+            # Product formating
+            #~ format_SEB_VEC_values(self.final_mask_vec_path,
+                                  #~ self.label_snow,
+                                  #~ self.label_cloud,
+                                  #~ self.label_no_data)
+            self.create_metadata()
+        
+        
     def create_metadata(self):
         # Compute and create the content for the product metadata file.
         snow_percent = compute_percent(self.final_mask_path,
@@ -356,6 +383,11 @@ class snow_detector:
             name='CloudPercent').text = str(cloud_percent)
         et = etree.ElementTree(root)
         et.write(self.metadata_path, pretty_print=True)
+        
+
+    def create_cosims_metadata(self):
+        self.create_metadata()
+        
 
     def extract_all_clouds(self):
         if self.mode == 'lasrc':
@@ -858,6 +890,8 @@ class snow_detector:
                                     otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
         bandMathApp = None
+        if cosims_mode:
+            edit_nodata_value(self.ndsi_path, nodata_value=self.label_no_data)
 
         # write top-of-canopy FSC (0-100), nosnow (0) cloud (205) and nodata (254)
         #~ self.fscToc_Eq="1.45*ndsi-0.01" 
@@ -871,6 +905,7 @@ class snow_detector:
                                     otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
         bandMathApp = None
+        edit_nodata_value(self.fscToc_path, nodata_value=self.label_no_data)
 
         # write on-ground FSC (0-100), nosnow (0) cloud (205) and nodata (254)
         #~ self.fscOg_Eq="fscToc/(1-tcd)" 
@@ -885,3 +920,4 @@ class snow_detector:
                                     otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
         bandMathApp = None
+        edit_nodata_value(self.fscOg_path, nodata_value=self.label_no_data)
