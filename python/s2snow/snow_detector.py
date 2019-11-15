@@ -890,8 +890,7 @@ class snow_detector:
                                     otb.ImagePixelType_uint8)
         bandMathApp.ExecuteAndWriteOutput()
         bandMathApp = None
-        if cosims_mode:
-            edit_nodata_value(self.ndsi_path, nodata_value=self.label_no_data)
+        edit_nodata_value(self.ndsi_path, nodata_value=self.label_no_data)
 
         # write top-of-canopy FSC (0-100), nosnow (0) cloud (205) and nodata (254)
         #~ self.fscToc_Eq="1.45*ndsi-0.01" 
