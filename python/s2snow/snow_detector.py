@@ -682,7 +682,7 @@ class snow_detector:
 
                 # Compute percent of surronding cloudy pixels
                 cloud_contour = cloud_mask[contour]
-                # print cloud_contour
+                # print(cloud_contour)
                 logging.debug("Contour processing done.")
 
                 result = np.bincount(cloud_contour)

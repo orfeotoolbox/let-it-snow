@@ -15,8 +15,8 @@ import gdalconst
 
 
 def show_help():
-    print "This script is used to remove clouds from snow data"
-    print "Usage: cloud_removal.py config.json"
+    print("This script is used to remove clouds from snow data")
+    print("Usage: cloud_removal.py config.json")
 
 
 def get_raster_as_array(raster_file_name):
@@ -124,7 +124,7 @@ def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 def step2(t0_path, dem_path, output_path, ram):
 
     percentage_cloud = compute_cloudpercent(t0_path)
-    print "cloud percent : " + str(percentage_cloud)
+    print("cloud percent : " + str(percentage_cloud))
 
     # Perform step 2 only if cloud coverage is less than a threshold value
     # (hard coded for now to 30%)
@@ -133,7 +133,7 @@ def step2(t0_path, dem_path, output_path, ram):
     if cloudpercent_condition:
         # S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
         hs_min = compute_HSmin(t0_path, dem_path)
-        print "hs_min: " + str(hs_min)
+        print("hs_min: " + str(hs_min))
         call(["otbcli_BandMath",
               "-ram",
               str(ram),
@@ -145,7 +145,7 @@ def step2(t0_path, dem_path, output_path, ram):
               "-exp",
               "im1b1==205?(im2b1<" + str(hs_min) + "?0:im1b1):im1b1"])
         hs_max = compute_HSmax(t0_path, dem_path)
-        print "hs_max: " + str(hs_max)
+        print("hs_max: " + str(hs_max))
         # S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
         call(["otbcli_BandMath",
               "-ram",
@@ -164,7 +164,7 @@ def step2(t0_path, dem_path, output_path, ram):
 def step3(t0_path, output_path):
 
     # four-pixels neighboring
-    print "Starting step 3"
+    print("Starting step 3")
     array, dataset = get_raster_as_array(t0_path)
 
     # compute 4 pixel snow neighboring
@@ -172,7 +172,7 @@ def step3(t0_path, output_path):
 
     set_array_as_raster(array, dataset, output_path)
     # create file
-    print "End of step 3"
+    print("End of step 3")
 
 
 def step3_internal(array):
@@ -194,7 +194,7 @@ def step3_internal(array):
 def step4(t0_path, dem_path, output_path):
     # S(y,x,t) = 1 if (S(y+k,x+k,t)(kc(-1,1)) = 1 and H(y+k,x+k)(kc(-1,1)) <
     # H(y,x))
-    print "Starting step 4"
+    print("Starting step 4")
     array, dataset = get_raster_as_array(t0_path)
     array_dem, dataset_dem = get_raster_as_array(dem_path)
 
@@ -203,7 +203,7 @@ def step4(t0_path, dem_path, output_path):
 
     # create file
     set_array_as_raster(array, dataset, output_path)
-    print "End of step 4"
+    print("End of step 4")
 
 
 def step4_internal(array, array_dem):
@@ -355,7 +355,7 @@ def run(data):
     try:
         nb_defaultThreads = multiprocessing.cpu_count()
     except NotImplementedError:
-        print "Cannot get max number of CPU on the system. nbDefaultThreads set to 1."
+        print("Cannot get max number of CPU on the system. nbDefaultThreads set to 1.")
         nb_defaultThreads = 1
 
     nb_threads = general.get("nb_threads", nb_defaultThreads)
@@ -450,10 +450,10 @@ def run(data):
         stats_array_percent = np.vstack([stats_array_percent, np.sum(
             stats_array_percent, axis=0)])  # add total to array
 
-        print stats_array
+        print(stats_array)
         np.set_printoptions(precision=3)
         np.set_printoptions(suppress=True)
-        print stats_array_percent
+        print(stats_array_percent)
 
         # plot_stats(stats_array)
 

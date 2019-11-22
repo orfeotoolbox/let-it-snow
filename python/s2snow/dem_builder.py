@@ -9,8 +9,8 @@ import ast
 from osgeo import gdal, gdalconst, osr
 
 def show_help():
-    print "This script is used to compute srtm mask from a vrt file to a region extent"
-    print "Usage: preprocessing.py srtm.vrt img.tif output.tif"
+    print("This script is used to compute srtm mask from a vrt file to a region extent")
+    print("Usage: preprocessing.py srtm.vrt img.tif output.tif")
 
 
 def get_extent(geotransform, cols, rows):
