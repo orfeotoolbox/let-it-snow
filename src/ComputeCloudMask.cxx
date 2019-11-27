@@ -35,7 +35,7 @@ public:
     SetDescription("Compute Cloud Mask application");
 
     // Documentation
-    SetDocName("Application for Compute Cloud Mask");
+    //~ SetDocName("Application for Compute Cloud Mask");
     SetDocLongDescription("This application does compute the cloud mask");
     SetDocLimitations("None");
     SetDocAuthors("Germain SALGUES");

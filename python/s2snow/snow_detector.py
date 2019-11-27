@@ -662,7 +662,7 @@ class snow_detector:
 
         # compute individual snow area size
         (labels, label_counts)= np.unique(snowlabels, return_counts=True)
-        labels_area = dict(zip(labels, label_counts))
+        labels_area = dict(list(zip(labels, label_counts)))
         logging.debug(labels_area)
 
         logging.debug("Start loop on snow areas")

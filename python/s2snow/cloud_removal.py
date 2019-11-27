@@ -124,7 +124,7 @@ def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 def step2(t0_path, dem_path, output_path, ram):
 
     percentage_cloud = compute_cloudpercent(t0_path)
-    print("cloud percent : " + str(percentage_cloud))
+    print(("cloud percent : " + str(percentage_cloud)))
 
     # Perform step 2 only if cloud coverage is less than a threshold value
     # (hard coded for now to 30%)
@@ -133,7 +133,7 @@ def step2(t0_path, dem_path, output_path, ram):
     if cloudpercent_condition:
         # S(y,x,t) = 1 if (H(x,y) < Hsmin(t))
         hs_min = compute_HSmin(t0_path, dem_path)
-        print("hs_min: " + str(hs_min))
+        print(("hs_min: " + str(hs_min)))
         call(["otbcli_BandMath",
               "-ram",
               str(ram),
@@ -145,7 +145,7 @@ def step2(t0_path, dem_path, output_path, ram):
               "-exp",
               "im1b1==205?(im2b1<" + str(hs_min) + "?0:im1b1):im1b1"])
         hs_max = compute_HSmax(t0_path, dem_path)
-        print("hs_max: " + str(hs_max))
+        print(("hs_max: " + str(hs_max)))
         # S(y,x,t) = 1 if (H(x,y) > Hsmax(t))
         call(["otbcli_BandMath",
               "-ram",
@@ -333,7 +333,7 @@ def format_percent(array, total_cloud):
 
 
 def plot_stats(array):
-    steps = range(0, array.shape[0])
+    steps = list(range(0, array.shape[0]))
     TCE = array[:, 0]
     TRUE = array[:, 1]
     FALSE = array[:, 2]

@@ -226,7 +226,7 @@ class prepare_data_for_snow_annual_map():
         if array_size:
             command.insert(1, "-J")
             command.insert(2, "1-"+str(array_size+1))
-        print(" ".join(command))
+        print((" ".join(command)))
         try:
             call_subprocess(command)
             logging.info("Order was submitted the snow annual map will soon be available.")
@@ -239,7 +239,7 @@ class prepare_data_for_snow_annual_map():
                    "-v",
                    "config=\""+file_to_process+"\",overwrite=false",
                    "run_snow_annual_map.sh"]
-        print(" ".join(command))
+        print((" ".join(command)))
         try:
             call_subprocess(command)
             logging.info("Order was submitted the snow annual map will soon be available.")

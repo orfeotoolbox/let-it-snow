@@ -145,23 +145,23 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     a = snow_product("/work/OT/siaa/Theia/S2L2A/data_production_muscate_juillet2017/L2B-SNOW/SENTINEL2A_20170314-104411-573_L2B-SNOW_T31TGK_D_V1-0")
-    print a.get_snow_mask()
+    print(a.get_snow_mask())
     a.extract_snow_mask(".")
-    print a.get_snow_mask()
-    print a.get_metadata()
-    print a.acquisition_date
+    print(a.get_snow_mask())
+    print(a.get_metadata())
+    print(a.acquisition_date)
 
     b = snow_product("/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/T31TGL/SENTINEL2A_20151230-105153-392_L2A_T31TGL_D_V1-0")
-    print b.get_snow_mask()
+    print(b.get_snow_mask())
     b.extract_snow_mask(".")
-    print b.get_snow_mask()
-    print b.get_metadata()
+    print(b.get_snow_mask())
+    print(b.get_metadata())
 
     c = snow_product("/work/OT/siaa/Theia/Neige/output_muscate_v2pass2red40/Landsat-8/D0005H0001/LANDSAT8_OLITIRS_XS_20160812_N2A_France-MetropoleD0005H0001")
-    print c.get_snow_mask()
+    print(c.get_snow_mask())
     c.extract_snow_mask(".")
-    print c.get_snow_mask()
-    print c.get_metadata()
+    print(c.get_snow_mask())
+    print(c.get_metadata())
 
 if __name__ == '__main__':
     main()

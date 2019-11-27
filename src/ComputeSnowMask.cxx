@@ -36,7 +36,7 @@ public:
     SetDescription("Compute Snow Mask application");
 
     // Documentation
-    SetDocName("Application for Compute Snow Mask");
+    //~ SetDocName("Application for Compute Snow Mask");
     SetDocLongDescription("This application does compute the snow mask");
     SetDocLimitations("None");
     SetDocAuthors("Germain SALGUES");

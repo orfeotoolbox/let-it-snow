@@ -94,9 +94,9 @@ def build_dem(psrtm, pimg, pout, ram, nbThreads):
          )
 
     except subprocess.CalledProcessError as e:
-        print e.output
-        print 'Error running command: ' + str(e.cmd) + ' see above shell error'
-        print 'Return code: ' + str(e.returncode)
+        print(e.output)
+        print('Error running command: ' + str(e.cmd) + ' see above shell error')
+        print('Return code: ' + str(e.returncode))
         return e.returncode
     
 def main(argv):

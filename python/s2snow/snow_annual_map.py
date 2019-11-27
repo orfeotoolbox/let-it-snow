@@ -113,7 +113,7 @@ def merge_masks_at_same_date(snow_product_list, merged_snow_product, threshold=1
     # the order of the images in the input list is important:
     #   we expect to have first the main input products
     #   and then the densification products
-    img_index = range(1, len(snow_product_list)+1)
+    img_index = list(range(1, len(snow_product_list)+1))
     expression_merging = "".join(["(im" + str(i) + "b1<=" + str(threshold) + "?im" + str(i) + "b1:" for i in img_index])
     expression_merging += "im"+str(img_index[-1])+"b1"
     expression_merging += "".join([")" for i in img_index])
@@ -209,7 +209,7 @@ class snow_annual_map():
 
             if densification_product_dict:
                 # Reproject the densification products on S2 tile before going further
-                for densifier_product_key in densification_product_dict.keys():
+                for densifier_product_key in list(densification_product_dict.keys()):
                     for densifier_product in densification_product_dict[densifier_product_key]:
                         original_mask = densifier_product.get_snow_mask()
                         reprojected_mask = op.join(self.path_tmp,
@@ -228,7 +228,7 @@ class snow_annual_map():
                         logging.debug(densifier_product.snow_mask)
 
                     # Add the products to extend the self.product_dict
-                    if densifier_product_key in self.product_dict.keys():
+                    if densifier_product_key in list(self.product_dict.keys()):
                         self.product_dict[densifier_product_key].extend(densification_product_dict[densifier_product_key])
                     else:
                         self.product_dict[densifier_product_key] = densification_product_dict[densifier_product_key]
@@ -255,7 +255,7 @@ class snow_annual_map():
 
         # merge products at the same date
         self.resulting_snow_mask_dict={}
-        for key in self.product_dict.keys():
+        for key in list(self.product_dict.keys()):
             if len(self.product_dict[key]) > 1:
                 merged_mask = op.join(self.path_tmp, key + "_merged_snow_product.tif")
                 merge_masks_at_same_date(self.product_dict[key],
@@ -286,7 +286,7 @@ class snow_annual_map():
                       separate=True)
 
         # generate the summary map
-        band_index = range(1, len(self.binary_cloudmask_list)+1)
+        band_index = list(range(1, len(self.binary_cloudmask_list)+1))
         expression = "+".join(["im1b" + str(i) for i in band_index])
 
         bandMathApp = band_math([self.multitemp_cloud_vrt],
@@ -327,7 +327,7 @@ class snow_annual_map():
         app_gap_filling = None
 
         # generate the annual map
-        band_index = range(1, len(output_dates)+1)
+        band_index = list(range(1, len(output_dates)+1))
         expression = "+".join(["im1b" + str(i) for i in band_index])
 
         bandMathApp = band_math([img_in],
@@ -368,7 +368,7 @@ class snow_annual_map():
                 if (product_type is not None) and (product_type not in product.platform):
                    test_result = False
                 if test_result:
-                    if current_day not in product_dict.keys():
+                    if current_day not in list(product_dict.keys()):
                         product_dict[current_day] = [product]
                     else:
                         product_dict[current_day].append(product)
