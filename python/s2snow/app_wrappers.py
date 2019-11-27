@@ -200,7 +200,10 @@ def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, \
         snowLineApp.SetParameterFloat("fclearlim", fclearlim)
         snowLineApp.SetParameterInt("offset", offset)
         if not isinstance(centeroffset, int):
-            print("WARNING: centeroffset shoud be an interger, got %s instead with value %s => converting to int"%(type(centeroffset), centeroffset))
+            if round(centeroffset,0) != centeroffset:
+                raise IOError("centeroffset shoud be an integer, got %s instead with value %s => error"%(type(centeroffset), centeroffset))
+            else:
+                print("WARNING: centeroffset shoud be an integer, got %s instead with value %s => converting to int"%(type(centeroffset), centeroffset))
             centeroffset = int(centeroffset)
         snowLineApp.SetParameterInt("centeroffset", centeroffset)
         if reverse:
