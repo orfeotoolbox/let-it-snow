@@ -36,7 +36,6 @@ public:
         SetDescription("Compute Contours application");
 
         // Documentation
-        //~ SetDocName("Application for Computing Contours");
         SetDocLongDescription("This application does compute the contours of the final mask");
         SetDocLimitations("None");
         SetDocAuthors("Germain SALGUES");

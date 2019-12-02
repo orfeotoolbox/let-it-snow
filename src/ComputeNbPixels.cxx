@@ -35,7 +35,6 @@ public:
     SetDescription("Compute Snow line application");
 
     // Documentation
-    //~ SetDocName("Application to compute the snow line");
     SetDocLongDescription("This application does compute the ZS value and output the histogram of snow pixels per altitude slices.");
     SetDocLimitations("None");
     SetDocAuthors("Manuel Grizonnet");
