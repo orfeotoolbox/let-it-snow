@@ -878,7 +878,7 @@ class snow_detector:
         bandMathPass3 = None
 
     def passfsc(self):
-        # write NDSIx100 (0-100), nosnow (0) cloud (205) and nodata (254, 255 in cosims_mode)
+        # write NDSIx100 (0-100), nosnow (0) cloud (205) and nodata (255)
         expression = "(im2b1 == 100)?100*"+str(self.ndsi_formula)+":im2b1"
         bandMathApp = band_math([self.img,self.final_mask_path],
                                     self.ndsi_path,
@@ -889,7 +889,7 @@ class snow_detector:
         bandMathApp = None
         edit_nodata_value(self.ndsi_path, nodata_value=int(self.label_no_data))
 
-        # write top-of-canopy FSC (0-100), nosnow (0) cloud (205) and nodata (254, 255 in cosims_mode)
+        # write top-of-canopy FSC (0-100), nosnow (0) cloud (205) and nodata (255)
         #~ self.fscToc_Eq="1.45*ndsi-0.01" 
         eq="min("+str(self.fscToc_Eq)+",1)"
         exp=eq.replace("ndsi", "im1b1/100") # ndsi was written in %
@@ -903,7 +903,7 @@ class snow_detector:
         bandMathApp = None
         edit_nodata_value(self.fscToc_path, nodata_value=int(self.label_no_data))
 
-        # write on-ground FSC (0-100), nosnow (0) cloud (205) and nodata (254, 255 in cosims_mode)
+        # write on-ground FSC (0-100), nosnow (0) cloud (205) and nodata (255)
         #~ self.fscOg_Eq="fscToc/(1-tcd)" 
         eq="min("+str(self.fscOg_Eq)+",1)"
         exp=eq.replace("fscToc", "im1b1/100") # fscToc was written in %
