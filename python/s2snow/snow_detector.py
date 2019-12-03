@@ -252,10 +252,7 @@ class snow_detector:
         self.label_no_snow = "0"
         self.label_snow = "100"
         self.label_cloud = "205"
-        if self.cosims_mode:
-            self.label_no_data = "255"
-        else:
-            self.label_no_data = "254"
+        self.label_no_data = "255"
 
         # Build useful paths
         self.pass1_path = op.join(self.path_tmp, "pass1.tif")
