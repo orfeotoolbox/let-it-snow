@@ -226,7 +226,7 @@ class prepare_data_for_snow_annual_map():
         if array_size:
             command.insert(1, "-J")
             command.insert(2, "1-"+str(array_size+1))
-        print((" ".join(command)))
+        print(" ".join(command))
         try:
             call_subprocess(command)
             logging.info("Order was submitted the snow annual map will soon be available.")
@@ -239,59 +239,60 @@ class prepare_data_for_snow_annual_map():
                    "-v",
                    "config=\""+file_to_process+"\",overwrite=false",
                    "run_snow_annual_map.sh"]
-        print((" ".join(command)))
+        print(" ".join(command))
         try:
             call_subprocess(command)
             logging.info("Order was submitted the snow annual map will soon be available.")
         except:
             logging.warning("Order was submitted the snow annual map will soon be available, but missinterpreted return code")
 
+
 def main():
-	for iy in list(range(2018,2019)):
-		y='{:d}'.format(iy)
-	# iterate from April to July yyyy
-		for im in list(range(4,8)):
-			m1='{:02d}'.format(im)
-			m2='{:02d}'.format(im+1)
-			d1="01/"+m1+"/"+y
-			d2=datetime_to_str(str_to_datetime(d1,"%d/%m/%Y")+relativedelta.relativedelta(months=+1,days=-1),"%d/%m/%Y")
-			logging.info("Processing month "+d1+" to "+d2)
-			params = {"tile_id":"T32TPS",
-					  "date_start":d1,
-					  "date_stop":d2,
-					  "date_margin":30,
-					  "mode":"DEBUG",
-					  "input_products_list":[],
-					  # path_tmp is an actual parameter but must only be uncomment with a correct path
-					  # else the processing use $TMPDIR by default
-					  #"path_tmp":"",
-					  #"path_out":"/home/qt/salguesg/scratch/multitemp_workdir/tmp_test",
-					  "path_out":"/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification_Months/",
-					  #"path_out":"/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification/YYYY0901_YYYY0401/",
-					  "ram":8192,
-					  "nbThreads":6,
-					  "use_densification":True,
-					  "log":True,
-					  "densification_products_list":[],
-					  # the following parameters are only use in this script, and doesn't affect snow_annual_map processing
-					  "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
-					  "data_availability_check":False}
+    for iy in list(range(2018,2019)):
+        y='{:d}'.format(iy)
+    # iterate from April to July yyyy
+        for im in list(range(4,8)):
+            m1='{:02d}'.format(im)
+            m2='{:02d}'.format(im+1)
+            d1="01/"+m1+"/"+y
+            d2=datetime_to_str(str_to_datetime(d1,"%d/%m/%Y")+relativedelta.relativedelta(months=+1,days=-1),"%d/%m/%Y")
+            logging.info("Processing month "+d1+" to "+d2)
+            params = {"tile_id":"T32TPS",
+                      "date_start":d1,
+                      "date_stop":d2,
+                      "date_margin":30,
+                      "mode":"DEBUG",
+                      "input_products_list":[],
+                      # path_tmp is an actual parameter but must only be uncomment with a correct path
+                      # else the processing use $TMPDIR by default
+                      # "path_tmp":"",
+                      #"path_out":"/home/qt/salguesg/scratch/multitemp_workdir/tmp_test",
+                      "path_out":"/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification_Months/",
+                      #"path_out":"/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification/YYYY0901_YYYY0401/",
+                      "ram":8192,
+                      "nbThreads":6,
+                      "use_densification":True,
+                      "log":True,
+                      "densification_products_list":[],
+                      # the following parameters are only use in this script, and doesn't affect snow_annual_map processing
+                      "snow_products_dir":"/work/OT/siaa/Theia/Neige/PRODUITS_NEIGE_LIS_develop_1.5",
+                      "data_availability_check":False}
+            with open('selectNeigeSyntheseMultitempAlpesFr.csv', 'r') as csvfile:
+                tilesreader = csv.reader(csvfile)
+                firstline = True
+                for row in tilesreader:
+                    if firstline:    #skip first line
+                        firstline = False
+                    else:
+                        tile_id = 'T' + str(row[0])
+                        params['tile_id'] = tile_id
 
-			with open('selectNeigeSyntheseMultitempAlpesFr.csv', 'r') as csvfile:
-				tilesreader = csv.reader(csvfile)
-				firstline = True
-				for row in tilesreader:
-					if firstline:    #skip first line
-						firstline = False
-					else:
-						tile_id = 'T' + str(row[0])
-						params['tile_id'] = tile_id
+                        prepare_data_for_snow_annual_map_app = prepare_data_for_snow_annual_map(params)
+                        prepare_data_for_snow_annual_map_app.run()
+                        config_file = prepare_data_for_snow_annual_map_app.build_json()
+                        if config_file is not None:
+                            prepare_data_for_snow_annual_map_app.process_snow_annual_map(config_file)
 
-						prepare_data_for_snow_annual_map_app = prepare_data_for_snow_annual_map(params)
-						prepare_data_for_snow_annual_map_app.run()
-						config_file = prepare_data_for_snow_annual_map_app.build_json()
-						if config_file is not None:
-							prepare_data_for_snow_annual_map_app.process_snow_annual_map(config_file)
 
 if __name__== "__main__":
     # Set logging level and format.

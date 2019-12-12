@@ -98,18 +98,18 @@ def get_raster_intersection(raster1, raster2):
     Return the instersection polygon and the associated projection
     """
     poly1, srs1 = get_raster_extent_as_poly(raster1)
-    print(("poly1", poly1))
+    print("poly1", poly1)
 
     poly2, srs2 = get_raster_extent_as_poly(raster2)
-    print(("poly2", poly2))
+    print("poly2", poly2)
 
     # convert poly2 into poly1 ProjectionRef
     transform = osr.CoordinateTransformation(srs2, srs1)
     poly2.Transform(transform)
-    print(("poly2 transformed", poly2))
+    print("poly2 transformed", poly2)
 
     intersection = poly2.Intersection(poly1)
-    print(("intersection", intersection))
+    print("intersection", intersection)
 
     #return also the srs in which is expressed the intersection
     return intersection, srs1
