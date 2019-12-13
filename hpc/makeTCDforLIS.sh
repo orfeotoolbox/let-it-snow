@@ -10,5 +10,5 @@ gdalbuildvrt $tcdFolder/TCD_2015_020m_eu_03035_d05.vrt $tcdFolder/TCD_2015_020m_
 dem="/work/OT/siaa/Theia/Neige/DEM/S2__TEST_AUX_REFDE2_${tile}_0001.DBL.DIR/S2__TEST_AUX_REFDE2_${tile}_0001_ALT_R2.TIF"
 proj=$(gdalsrsinfo -o proj4 $dem)
 gdalinfo $dem -json > tmp.json
-te=$(python -c "import json; print '{} {} {} {}'.format(*[item for sublist in [json.load(open('tmp.json'))['cornerCoordinates'][x] for x in ['lowerLeft','upperRight']] for item in sublist])")
+te=$(python2.7 -c "import json; print '{} {} {} {}'.format(*[item for sublist in [json.load(open('tmp.json'))['cornerCoordinates'][x] for x in ['lowerLeft','upperRight']] for item in sublist])")
 eval gdalwarp -te $te -t_srs "${proj}" -tr 20 20 -r cubic $tcdFolder/TCD_2015_020m_eu_03035_d05.vrt $tcdFolder/TCD_2015_R2_${tile}.TIF
