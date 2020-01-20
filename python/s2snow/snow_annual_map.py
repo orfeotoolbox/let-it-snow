@@ -168,7 +168,7 @@ class snow_annual_map():
         self.label_no_snow = "0"
         self.label_snow = "100"
         self.label_cloud = "205"
-        self.label_no_data = "254"
+        self.label_no_data = "255"
 
         # Build useful paths
         self.input_dates_filename = op.join(self.path_tmp, "input_dates.txt")
