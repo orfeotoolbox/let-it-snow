@@ -53,13 +53,13 @@ pixel_value & 00000101
   * 0: No-snow
   * 100: Snow
   * 205: Cloud including cloud shadow
-  * 254: No data
+  * 255: No data
 * SEB_VEC: Vector image of the snow mask and cloud mask. Two fields of information are embedded in this product. DN (for Data Neige) and type.
   * DN field :
      * 0: No-snow
      * 100: Snow
      * 205: Cloud including cloud shadow
-     * 254: No data
+     * 255: No data
 
 ## Data set example
 
@@ -78,9 +78,9 @@ LIS processing chain uses CMake (http://www.cmake.org) for building from source.
 Following a summary of the required dependencies: 
 
 * GDAL >=2.0
-* OTB >= 6.2
+* OTB >= 7.0
 * Python interpreter >= 2.7
-* Python libs >= 2.7
+* Python libs >= 3.7
 * Python packages:
 * numpy
 * lxml
@@ -163,7 +163,7 @@ Do not modify these folders.
 
 ## Contributors
 
-Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES), Germain Salgues (Magellium)
+Manuel Grizonnet (CNES), Simon Gascoin (CNRS/CESBIO), Tristan Klempka (CNES), Germain Salgues (Magellium), Aurore Dupuis (CNES), Rémi Jugier (Magellium)
 
 ## License
 
