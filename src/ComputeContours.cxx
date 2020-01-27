@@ -36,7 +36,6 @@ public:
         SetDescription("Compute Contours application");
 
         // Documentation
-        SetDocName("Application for Computing Contours");
         SetDocLongDescription("This application does compute the contours of the final mask");
         SetDocLimitations("None");
         SetDocAuthors("Germain SALGUES");
@@ -56,9 +55,8 @@ public:
         MandatoryOff("backgroundvalue");
         SetDefaultParameterInt("backgroundvalue", 0);
 
-        AddParameter(ParameterType_Empty, "fullyconnected", "cloud refine image");
+        AddParameter(ParameterType_Int, "fullyconnected", "cloud refine image");
         SetParameterDescription( "fullyconnected", "Input cloud refine image");
-        DisableParameter("fullyconnected");
 
         AddRAMParameter();
 
@@ -94,7 +92,7 @@ public:
         m_ContourFilter->SetBackgroundValue(0);
         m_ContourFilter->SetBackgroundValue(GetParameterInt("backgroundvalue"));
        
-        m_ContourFilter->SetFullyConnected(IsParameterEnabled("fullyconnected"));
+        m_ContourFilter->SetFullyConnected(GetParameterInt("fullyconnected")==1);
 
         // Set the output image
         SetParameterOutputImage("out", m_ContourFilter->GetOutput());

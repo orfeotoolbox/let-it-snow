@@ -10,12 +10,12 @@ VERSION="0.1"
 
 def show_help():
     """Show help of the run_cloud_removal script"""
-    print "Usage: python run_cloud_removal.py param.json"
-    print "python run_cloud_removal.py version to show version"
-    print "python run_cloud_removal.py help to show help"
+    print("Usage: python run_cloud_removal.py param.json")
+    print("python run_cloud_removal.py version to show version")
+    print("python run_cloud_removal.py help to show help")
 
 def show_version():
-    print VERSION
+    print(VERSION)
 
 #----------------- MAIN ---------------------------------------------------
 

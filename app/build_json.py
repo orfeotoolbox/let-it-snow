@@ -12,13 +12,13 @@ import zipfile
 ### Configuration Template ###
 conf_template = {"general":{"pout":"",
                             "nodata":-10000,
-                            "ram":1024,
+                            "ram":2048,
                             "nb_threads":1,
                             "preprocessing":False,
                             "log":True,
-                            "multi":1,
+                            "multi":10,
                             "target_resolution":-1},
-                 "vector":{"generate_vector":True,
+                 "vector":{"generate_vector":False,
                            "generate_intermediate_vectors":False,
                            "use_gdal_trace_outline":True,
                            "gdal_trace_outline_dp_toler":0,
@@ -39,10 +39,10 @@ conf_template = {"general":{"pout":"",
                          "fsnow_lim":0.1,
                          "fclear_lim":0.1,
                          "fsnow_total_lim":0.001},
-                 "cloud":{"shadow_in_mask":64,
-                          "shadow_out_mask":128,
+                 "cloud":{"shadow_in_mask":32,
+                          "shadow_out_mask":64,
                           "all_cloud_mask":1,
-                          "high_cloud_mask":32,
+                          "high_cloud_mask":128,
                           "rf":12,
                           "red_darkcloud":300,
                           "red_backtocloud":100,
@@ -50,7 +50,20 @@ conf_template = {"general":{"pout":"",
                           "rm_snow_inside_cloud":False,
                           "rm_snow_inside_cloud_dilation_radius":1,
                           "rm_snow_inside_cloud_threshold":0.85,
-                          "rm_snow_inside_cloud_min_area":5000}}
+                          "rm_snow_inside_cloud_min_area":5000},
+                "fsc": {
+                        "dofsc": False,
+                        "fscToc_Eq": "1.45*ndsi-0.01", 
+                        "fscOg_Eq": "fscToc/(1-tcd)",
+                        "tcd": "",
+                        "cosims_mode": False
+                    },
+                "water_mask": {
+                        "apply": False,
+                        "path": None,
+                        "raster_values": [1]
+                }
+}
 
 
 ### Mission Specific Parameters ###
@@ -295,6 +308,16 @@ def main():
     group_cloud.add_argument("-red_darkcloud", type=int)
     group_cloud.add_argument("-red_backtocloud", type=int)
     group_cloud.add_argument("-strict_cloud_mask", type=str2bool, help="true/false")
+    
+    group_fsc = parser.add_argument_group('fsc', 'fractional snow cover parameters')
+    group_fsc.add_argument("-fsc", type=str, help="path to tree cover density file, automatically activates sets fsc: dofsc to true")
+    group_fsc.add_argument("-cosims_mode", action='store_true', help="CoSIMS mode : Generate CoSIMS formatted outputs.")
+    
+    group_water_mask = parser.add_argument_group('water_mask', 'water mask parameters')
+    group_water_mask.add_argument("-water_mask_path", type=str, help="Path to a raster or a shapefile")
+    group_water_mask.add_argument("-water_mask_raster_value", type=int, action='append', help="If the input water_mask_path is a raster, you can specify all the values corresponding " + \
+        "to water which are to be masked by repeating this optional argument -water_mask_raster_value value1 -water_mask_raster_value value2 etc... " + \
+        "If no values are specified, 1 will be used by default.")
 
     args = parser.parse_args()
 
@@ -405,6 +428,26 @@ def main():
         if not jsonData["inputs"].get("dem"):
             logging.error("No DEM found!")
             return 1
+            
+        if args.fsc:
+            jsonData["fsc"]["dofsc"] = True
+            jsonData["fsc"]["tcd"] = os.path.abspath(args.fsc)
+            jsonData["fsc"]["cosims_mode"] = args.cosims_mode
+        else:
+            jsonData["fsc"]["dofsc"] = False
+            
+        if args.water_mask_path is not None:
+            jsonData["water_mask"]["apply"] = True
+            suffix = args.water_mask_path.split('.')[-1].lower()
+            if suffix not in ['shp', 'tif']:
+                raise IOError('Input water_mask_path must either be a GeoTIFF raster (.tif) or a shapefile (.shp)')
+            jsonData["water_mask"]["water_mask_path"] = os.path.abspath(args.water_mask_path)
+            if args.water_mask_raster_value is None:
+                jsonData["water_mask"]["water_mask_raster_values"] = [1]
+            else:
+                jsonData["water_mask"]["water_mask_raster_values"] = args.water_mask_raster_value
+        else:
+            jsonData["water_mask"]["apply"] = False
 
         jsonFile = open(os.path.join(outputPath, "param_test.json"), "w")
         jsonFile.write(json.dumps(jsonData, indent=4))

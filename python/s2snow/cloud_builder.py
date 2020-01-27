@@ -13,9 +13,9 @@ from subprocess import call
 
 
 def show_help():
-    print "This script is used to create clouds on data"
-    print "Usage: cloud_builder.py mode plaincloudthreshold randomcloudthreshold inputpath outputplaincloudpath ouputrandomcloudpath"
-    print "Mode : 0 %plain cloud image, 1 %random cloud image, 2 both"
+    print("This script is used to create clouds on data")
+    print("Usage: cloud_builder.py mode plaincloudthreshold randomcloudthreshold inputpath outputplaincloudpath ouputrandomcloudpath")
+    print("Mode : 0 %plain cloud image, 1 %random cloud image, 2 both")
 
 
 def main(argv):

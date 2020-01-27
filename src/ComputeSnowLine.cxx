@@ -35,7 +35,6 @@ public:
     SetDescription("Compute Snow line application");
 
     // Documentation
-    SetDocName("Application to compute the snow line");
     SetDocLongDescription("This application does compute the ZS value and output the histogram of snow pixels per altitude slices.");
     SetDocLimitations("None");
     SetDocAuthors("Manuel Grizonnet");
@@ -60,10 +59,8 @@ public:
     AddParameter(ParameterType_Float, "fclearlim", "fclearlim");
     SetParameterDescription("fclearlim", "fclearlim");
 
-    AddParameter(ParameterType_Empty, "reverse", "reverse");
+    AddParameter(ParameterType_Int, "reverse", "reverse");
     SetParameterDescription("reverse", "reverse");
-    MandatoryOff("reverse");
-    DisableParameter("reverse");
 
     AddParameter(ParameterType_Int, "offset", "offset");
     SetParameterDescription("offset", "offset");
@@ -130,7 +127,7 @@ public:
                                     GetParameterInt("dz"),
                                     GetParameterFloat("fsnowlim"),
                                     GetParameterFloat("fclearlim"),
-                                    IsParameterEnabled("reverse"),
+                                    GetParameterInt("reverse")==1,
                                     GetParameterInt("offset"),
                                     GetParameterInt("centeroffset"),
                                     GetParameterAsString("outhist").c_str()

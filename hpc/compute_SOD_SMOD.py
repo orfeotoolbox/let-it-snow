@@ -12,12 +12,12 @@ import itertools,operator,sys,os
 # Example: /work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification//T31TCH_20160901_20170831/DAILY_SNOW_MASKS_T31TCH_20160901_20170831.tif             
 f=sys.argv[1]
 src=rasterio.open(f, 'r')
-print "Start compute_SOD_SMOD.py using: ",f
+print("Start compute_SOD_SMOD.py using: ",f)
 
 # memory heavy, load all raster bands in memory 
 # runs in 23 min in HAl with 100 Gb RAM: qsub -I -l select=1:ncpus=4:mem=100000mb -l walltime=05:00:00
 # 20 Gb should be fine: qsub -I -l walltime=00:50:00 -l select=1:ncpus=1:mem=20000mb
-W = src.read(range(1,365))
+W = src.read(list(range(1,365)))
 
 n=np.shape(W)[1]
 m=np.shape(W)[2]
@@ -45,5 +45,5 @@ with rasterio.Env():
     with rasterio.open("{}/SOD_{}".format(os.path.split(f)[0],os.path.split(f)[1]), 'w', **profile) as dst:
         dst.write(SOD.astype(rasterio.uint16), 1)
 
-print "End of compute_SOD_SMOD.py"
+print("End of compute_SOD_SMOD.py")
 

@@ -27,14 +27,14 @@ def load_histo(histo_path):
 
         fsnow_rate=v[:,1]/(v[:,1]+v[:,2])
 
-        #print v[:,1]
-        #print v[:,2]
+        #print(v[:,1])
+        #print(v[:,2])
         #b = np.zeros(6).reshape(2, 3)
         
-        #print fsnow_rate
-        print fsnow_rate[0]
-        print fsnow_rate
-        print np.shape(fsnow_rate)[0]
+        #print(fsnow_rate)
+        print(fsnow_rate[0])
+        print(fsnow_rate)
+        print(np.shape(fsnow_rate)[0])
         plt.plot(np.arange(np.shape(fsnow_rate)[0]), fsnow_rate[:], 'ro')
         #plt.axis([0, 6, 0, 20])
         plt.show()
@@ -50,7 +50,7 @@ def print_histo(histo_path):
 	#n, bins, patches = ax1.hist(v_hist, bins=50, normed=1, facecolor='green')
 	#plt.show()
 
-	print v
+	print(v)
 
 	dem=v[:,0]
 	width = 0.8
@@ -74,7 +74,7 @@ def main():
     (opts, args) = parser.parse_args()
 
     if opts.histo_path is None: 
-        print "A mandatory option is missing\n"
+        print("A mandatory option is missing\n")
         parser.print_help()
         exit(-1)
     else:

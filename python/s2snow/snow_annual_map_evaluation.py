@@ -98,18 +98,18 @@ def get_raster_intersection(raster1, raster2):
     Return the instersection polygon and the associated projection
     """
     poly1, srs1 = get_raster_extent_as_poly(raster1)
-    print "poly1", poly1
+    print("poly1", poly1)
 
     poly2, srs2 = get_raster_extent_as_poly(raster2)
-    print "poly2", poly2
+    print("poly2", poly2)
 
     # convert poly2 into poly1 ProjectionRef
     transform = osr.CoordinateTransformation(srs2, srs1)
     poly2.Transform(transform)
-    print "poly2 transformed", poly2
+    print("poly2 transformed", poly2)
 
     intersection = poly2.Intersection(poly1)
-    print "intersection", intersection
+    print("intersection", intersection)
 
     #return also the srs in which is expressed the intersection
     return intersection, srs1
@@ -159,7 +159,7 @@ class snow_annual_map_evaluation(snow_annual_map):
 
         # load required product
         self.resulting_snow_mask_dict={}
-        for key in self.product_dict.keys():
+        for key in list(self.product_dict.keys()):
             comparison_tag = key + "_comparison"
             if len(self.product_dict[key]) > 1:
                 merged_mask = op.join(self.path_tmp, comparison_tag + "_merged_snow_product.tif")
@@ -182,7 +182,7 @@ class snow_annual_map_evaluation(snow_annual_map):
             for comparison_index, comparison_date in enumerate(comparison_input_dates):
                 if ts_date in comparison_date:
                     pair_dict[comparison_date] = (ts_index, comparison_index)
-        print pair_dict
+        print(pair_dict)
 
         # project the snow masks onto the same foot print
         self.binary_snowmask_list_reprojected = []
@@ -202,7 +202,7 @@ class snow_annual_map_evaluation(snow_annual_map):
 
         # compare the two snow masks
         comparision_list = []
-        for comparison_date in pair_dict.keys():
+        for comparison_date in list(pair_dict.keys()):
             s2_index, comparison_index = pair_dict[comparison_date]
 
             path_extracted = op.join(self.path_tmp, "gapfilled_s2_" + comparison_date + ".tif")
@@ -279,7 +279,7 @@ class snow_annual_map_evaluation(snow_annual_map):
                 modis_stop_index = i
 
         # generate the summary map
-        band_index = range(modis_start_index+1, modis_stop_index+2)
+        band_index = list(range(modis_start_index+1, modis_stop_index+2))
         expression = "+".join(["(im1b" + str(i) + "==200?1:0)" for i in band_index])
 
         if not op.exists(self.modis_annual_snow_map):

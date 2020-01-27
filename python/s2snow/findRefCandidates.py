@@ -22,15 +22,15 @@ def main(argv):
 				
 				# Find potential
 				if snow_percent > minsnowthreshold and cloud_percent > mincloudthreshold and snow_percent < maxsnowthreshold and cloud_percent < maxcloudthreshold :
-					print root
-					print "snow percent: " + str(snow_percent)
-					print "cloud percent: " + str(cloud_percent)
+					print(root)
+					print(("snow percent: " + str(snow_percent)))
+					print(("cloud percent: " + str(cloud_percent)))
 					total_images += 1
 					
-	print "total images :" + str(total_images)
+	print(("total images :" + str(total_images)))
 
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
-		print "Missing arguments"
+		print("Missing arguments")
 	else:
 		main(sys.argv)

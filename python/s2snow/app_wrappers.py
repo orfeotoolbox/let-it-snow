@@ -40,7 +40,7 @@ def band_math(il, out, exp, ram=None, out_type=None):
         bandMathApp = otb.Registry.CreateApplication("BandMath")
         bandMathApp.SetParameterString("exp", exp)
         for image in il:
-            if isinstance(image, basestring):
+            if isinstance(image, str):
                 bandMathApp.AddParameterStringList("il", image)
             else:
                 bandMathApp.AddImageToParameterInputImageList("il", image)
@@ -155,7 +155,7 @@ def band_mathX(il, out, exp, ram=None, out_type=None):
         bandMathApp = otb.Registry.CreateApplication("BandMathX")
         bandMathApp.SetParameterString("exp", exp)
         for image in il:
-            if isinstance(image, basestring):
+            if isinstance(image, str):
                 bandMathApp.AddParameterStringList("il", image)
             else:
                 bandMathApp.AddImageToParameterInputImageList("il", image)
@@ -199,10 +199,17 @@ def compute_snow_line(img_dem, img_snow, img_cloud, dz, fsnowlim, fclearlim, \
         snowLineApp.SetParameterFloat("fsnowlim", fsnowlim)
         snowLineApp.SetParameterFloat("fclearlim", fclearlim)
         snowLineApp.SetParameterInt("offset", offset)
+        if not isinstance(centeroffset, int):
+            if round(centeroffset,0) != centeroffset:
+                raise IOError("centeroffset shoud be an integer, got %s instead with value %s => error"%(type(centeroffset), centeroffset))
+            else:
+                print("WARNING: centeroffset shoud be an integer, got %s instead with value %s => converting to int"%(type(centeroffset), centeroffset))
+            centeroffset = int(centeroffset)
         snowLineApp.SetParameterInt("centeroffset", centeroffset)
-
         if reverse:
-            snowLineApp.SetParameterString("reverse", "true")
+            snowLineApp.SetParameterInt("reverse", 1)
+        else:
+            snowLineApp.SetParameterInt("reverse", 0)
 
         if ram is not None:
             logging.info("ram = " + str(ram))
@@ -304,8 +311,10 @@ def compute_contour(img_in, img_out, foreground_value, fullyconnected, \
             logging.info("out = " + img_out)
             cloudMaskApp.SetParameterString("out", img_out)
         if fullyconnected:
-            cloudMaskApp.SetParameterString("fullyconnected", "true")
+            cloudMaskApp.SetParameterInt("fullyconnected", 1)
             cloudMaskApp.SetParameterString("inputmask", img_in)
+        else:
+            cloudMaskApp.SetParameterInt("fullyconnected", 0)
         if ram is not None:
             logging.info("ram = " + str(ram))
             cloudMaskApp.SetParameterString("ram", str(ram))
