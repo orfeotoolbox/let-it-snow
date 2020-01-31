@@ -97,7 +97,7 @@ foreach( test_name ${TEST_CASES_LIST})
 endforeach()
 
 add_test(NAME preprocessing_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/s2snow/dem_builder.py 
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python_include/s2snow/dem_builder.py
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
   "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20150312_N2A_ORTHO_SURF_CORR_PENTE_France-MetropoleD0005H0001.TIF"
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"

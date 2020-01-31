@@ -1,0 +1,11 @@
+##${otb-module} will be the name of this module and will not need to be
+#changed when this module is renamed.
+set(${otb-module}_SRC
+  histo_utils.cxx
+)
+
+add_library(${otb-module} ${${otb-module}_SRC})
+# note : ${${otb-module}_LIBRARIES} contains all dependencies declared in otb-module.cmake
+target_link_libraries(${otb-module} ${${otb-module}_LIBRARIES})
+otb_module_target(${otb-module})
+
