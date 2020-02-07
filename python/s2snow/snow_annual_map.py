@@ -169,6 +169,7 @@ class snow_annual_map():
         self.label_snow = "100"
         self.label_cloud = "205"
         self.label_no_data = "255"
+        self.label_no_data_old = "254"
 
         # Build useful paths
         self.input_dates_filename = op.join(self.path_tmp, "input_dates.txt")
@@ -273,7 +274,7 @@ class snow_annual_map():
         logging.debug(self.binary_snowmask_list)
 
         # convert the snow masks into binary cloud masks
-        expression = "im1b1=="+self.label_cloud+"?1:(im1b1=="+self.label_no_data+"?1:0)"
+        expression = "im1b1=="+self.label_cloud+"?1:(im1b1=="+self.label_no_data+"?1:(im1b1=="+self.label_no_data_old+"?1:0)"
         self.binary_cloudmask_list = self.convert_mask_list(expression, "cloud", GDAL_OPT)
         logging.debug("Binary cloud mask list:")
         logging.debug(self.binary_cloudmask_list)

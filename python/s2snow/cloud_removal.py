@@ -59,7 +59,7 @@ def compute_HSmax(image_path, dem_path):
 def compute_cloudpercent(image_path):
     array_image, dataset_image = get_raster_as_array(image_path)
     cloud = np.sum(array_image == 205)
-    tot_pix = np.sum(array_image != 254)
+    tot_pix = np.sum(array_image < 254)
     return (float(cloud) / float(tot_pix)) * 100
 
 
@@ -72,7 +72,7 @@ def compute_cloud(image):
 def step1(m2_path, m1_path, t0_path, p1_path, p2_path, output_path, ram):
 
     # Cloud conditions (include pixel flagged as cloud and also as no data
-    cloud_nodata_condition = "(im2b1 == 205 || im2b1 == 254)"
+    cloud_nodata_condition = "(im2b1 == 205 || im2b1 >= 254)"
 
     # S(y,x,t) = 1 if (S(y,x,t-1) = 1 and S(y,x,t+1) = 1)
     call(
