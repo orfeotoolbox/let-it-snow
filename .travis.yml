@@ -1,0 +1,73 @@
+language: cpp
+
+git:
+  depth: 3
+
+env:
+  global:
+    - OTB_URL=https://www.orfeo-toolbox.org/packages/archives/OTB
+#    - OTB_URL=https://www.orfeo-toolbox.org/packages/ci/latest
+    - OTB_VER=7.0.0
+
+matrix:
+  include:
+  - os: linux
+    dist: bionic
+    compiler: gcc
+    sudo: required
+    before_install:
+      - sudo apt-get install -y
+          ninja-build
+          libglvnd-dev
+          libglu1-mesa-dev
+          python3-numpy
+          python3-dev
+    env:
+      - OTB_OS=Linux64
+      - OTB_PKG_EXT=run
+  - os: osx
+    osx_image: xcode10.2
+    compiler: clang
+    before_install:
+      - brew install ninja libomp git-lfs
+    env:
+      - OTB_OS=Darwin64
+      - OTB_PKG_EXT=run
+  - os: windows
+    before_install:
+      - choco install python3 --params "/InstallDir:C:\Python3"
+      - choco install ninja
+      - export PATH="/c/Python3:/c/ProgramData/chocolatey/lib/ninja/tools:$PATH"
+      - /c/Python3/Scripts/pip install numpy
+      - eval "$(python vcvars_proxy.py
+        'c:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/Common7/Tools/VsDevCmd.bat'
+        '-arch=amd64'
+        '-host_arch=amd64'
+        '-vcvars_ver=14.0')"
+      - export CC=cl.exe
+      - export CXX=cl.exe
+      - export CC_FOR_BUILD=cl.exe
+      - export CXX_FOR_BUILD=cl.exe
+    env:
+      - OTB_OS=Win64
+      - OTB_PKG_EXT=zip
+
+install:
+  - export OTB_PKG="OTB-${OTB_VER}-${OTB_OS}.${OTB_PKG_EXT}"
+  - wget ${OTB_URL}/${OTB_PKG}
+  - if [ "$OTB_PKG_EXT" = "run" ]; then chmod +x ${OTB_PKG} ; ./${OTB_PKG} --target xdk ; fi
+  - if [ "$OTB_PKG_EXT" = "zip" ]; then 7z x -y ${OTB_PKG} ; mv OTB-${OTB_VER}-${OTB_OS} xdk ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
+    source xdk/otbenv.bash;
+    else
+    source xdk/otbenv.profile;
+    fi
+  # build_wrapping is needed if you use Python wrappers in your module
+  - ctest -S xdk/share/otb/swig/build_wrapping.cmake -VV
+  # NamespaceHandler is needed if you have target conflicts between OTB and your module
+  # - ctest -DNAMESPACE:STRING="OTB" -S xdk/lib/cmake/OTB-6.7/NamespaceHandler.cmake
+  # LFS install needed if you use OTB/Data
+  # - git lfs install
+
+script:
+  - ctest -VV -S ./ci.cmake

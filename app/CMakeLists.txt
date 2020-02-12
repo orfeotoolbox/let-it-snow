@@ -1,35 +1,40 @@
 
-# Build our library
-add_library( histo_utils SHARED histo_utils.cxx )
-target_link_libraries(histo_utils ${OTB_LIBRARIES})
+# This macro creates the application EmptyApp. It must be linked to
+# OTBApplicationEngine. Since the module has its own library,
+# the variable ${otb-module}_LIBRARIES only contains this library, which doesn't
+# drag OTBApplicationEngine, so we need to add it explicitely.
 
-# Install for executables and libraries
-install(TARGETS histo_utils
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/static)
+
+message(${${otb-module}_LIBRARIES})
+
 
 # Create the ComputeCloudMask OTB application
-otb_create_application(NAME           ComputeCloudMask
-                       SOURCES        otbComputeCloudMask.cxx
-                       LINK_LIBRARIES ${OTB_LIBRARIES})
+OTB_CREATE_APPLICATION(NAME           ComputeCloudMask
+                      SOURCES        otbComputeCloudMask.cxx
+                      #LINK_LIBRARIES ${OTB_LIBRARIES})
+                      LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                      )
 
 # Create the ComputeSnowMask OTB application
-otb_create_application(NAME           ComputeSnowMask
+OTB_CREATE_APPLICATION(NAME           ComputeSnowMask
                        SOURCES        otbComputeSnowMask.cxx
-                       LINK_LIBRARIES ${OTB_LIBRARIES})
-
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )
+ 
 # Create the ComputeContour OTB application
-otb_create_application(NAME           ComputeContours
+OTB_CREATE_APPLICATION(NAME           ComputeContours
                        SOURCES        otbComputeContours.cxx
-                       LINK_LIBRARIES ${OTB_LIBRARIES})
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )
 
 # Create the ComputeSnowLine OTB application
-otb_create_application(NAME           ComputeSnowLine
-                       SOURCES        otbComputeSnowLine.cxx
-                       LINK_LIBRARIES ${OTB_LIBRARIES} histo_utils)
+#OTB_CREATE_APPLICATION(NAME           ComputeSnowLine
+#                       SOURCES        otbComputeSnowLine.cxx
+#                       LINK_LIBRARIES ${${otb-module}_LIBRARIES})
 
 # Create the ComputeNbPixels OTB application
-otb_create_application(NAME           ComputeNbPixels
+OTB_CREATE_APPLICATION(NAME           ComputeNbPixels
                        SOURCES        otbComputeNbPixels.cxx
-                       LINK_LIBRARIES ${OTB_LIBRARIES})
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )                   
+

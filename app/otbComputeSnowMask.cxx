@@ -4,6 +4,7 @@
 
 #include "itkNarySnowMaskImageFilter.h"
 #include "otbImage.h"
+#include "histo_utils.h"
 
 namespace otb
 {
@@ -105,6 +106,9 @@ public:
     m_SnowMaskFilter->SetInput(3, img_cloud_refine);
     m_SnowMaskFilter->SetInput(4, img_all_cloud);
 
+
+  
+    
     if(IsParameterEnabled("slopeflag")){
         InputImageType::Pointer img_slope_flag = GetParameterImage<InputImageType>("slopeflag");
         m_SnowMaskFilter->SetInput(5, img_slope_flag);

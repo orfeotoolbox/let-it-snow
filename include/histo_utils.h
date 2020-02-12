@@ -37,7 +37,6 @@ short get_elev_snowline_from_bin(const itk::Statistics::ImageToHistogramFilter<i
  */
 int compute_nb_pixels_between_bounds(const std::string & infname, const int lowerbound, const int upperbound);
 
-
 /**
  * \fn void print_histogram (const itk::Statistics::ImageToHistogramFilter<itk::VectorImage<short, 2> >::HistogramType & histogram, const char * histo_file)
  * \brief Print histogram values to file (useful to validate)

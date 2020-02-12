@@ -171,6 +171,8 @@ short compute_snowline(const std::string & infname, const std::string & inmasksn
   return compute_snowline_internal(imageToVectorImageFilter->GetOutput(), min, max, dz, fsnow_lim, fclear_lim, reverse, offset, center_offset, histo_file);
 }
 
+
+
 short compute_snowline_internal(const itk::VectorImage<short, 2>::Pointer compose_image, const short min, const short max, const int dz, const float fsnow_lim, const float fclear_lim, const bool reverse, const int offset, const int center_offset,  const char* histo_file)
 {
   typedef itk::VectorImage<short, 2>  VectorImageType;
