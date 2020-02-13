@@ -50,8 +50,16 @@ add_lis_json_test(
   OUTPUT_PATH "s2-small"
   )
 
+if(NOT PROJECT_NAME STREQUAL "LIS")
+  get_filename_component(PKG_PREFIX "${OTB_LIBRARY_DIRS}" PATH)
+  set(OTB_PYTHONPATH ${PKG_PREFIX}/${OTB_INSTALL_PYTHON_DIR})
+else()
+  set(OTB_PYTHONPATH ${CMAKE_BINARY_DIR}/${OTB_INSTALL_PYTHON_DIR})
+endif()
+
+
 set(LIS_TEST_DRIVER otbTestDriver
-    --add-before-env PYTHONPATH        ${CMAKE_BINARY_DIR}/${OTB_INSTALL_PYTHON_DIR}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}
+    --add-before-env PYTHONPATH   ${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}
     --add-before-env OTB_APPLICATION_PATH $<TARGET_FILE_DIR:otbapp_Smoothing>
     --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
     --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
@@ -68,12 +76,12 @@ foreach(test_name s2-small take5 l8 s2)
   set_tests_properties(${test_name}_test PROPERTIES DEPENDS ${test_name}_test_json_builder_test)
   set_tests_properties(${test_name}_test PROPERTIES LABELS LIS)
 
- set_tests_properties(${test_name}_test PROPERTIES
-   ENVIRONMENT
-  PYTHONPATH=${PYTHON_PATH_DIR}:${CMAKE_BINARY_DIR}/lib/otb/python:$ENV{PYTHONPATH}
-   LD_LIBRARY_PATH=$<TARGET_FILE_DIR:OTBCommon>:$ENV{LD_LIBRARY_PATH}
-   OTB_APPLICATION_PATH=$<TARGET_FILE_DIR:otbapp_Smoothing>
-   )
+ # set_tests_properties(${test_name}_test PROPERTIES
+ #   ENVIRONMENT
+ #  PYTHONPATH=${PYTHON_PATH_DIR}:${CMAKE_BINARY_DIR}/lib/otb/python:$ENV{PYTHONPATH}
+ #   LD_LIBRARY_PATH=$<TARGET_FILE_DIR:OTBCommon>:$ENV{LD_LIBRARY_PATH}
+ #   OTB_APPLICATION_PATH=$<TARGET_FILE_DIR:otbapp_Smoothing>
+ #   )
 
   add_test(NAME ${test_name}_compare_pass1_test
     COMMAND gdalcompare.py
@@ -163,32 +171,31 @@ add_test(NAME snow_annual_map_compare_test
 
 # add_test(NAME compare_preprocessing_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
-#   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
+#   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
 #   "${BASELINE}/landsat_bassies_srtm.tif"
 #   )
 # set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
 
 #gdalcompare.py doesn't work on dbf files
 #COMMENT this test for now
-#TODO find an other way to compare vector files to validate this part 
+#TODO find an other way to compare vector files to validate this part
 # add_test(NAME compare_final_mask_vec_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
 #   "${BASELINE}/final_mask_vec_highcloud.dbf"
-#   "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf" 
+#   "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf"
 #   )
 # set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 # C++ function compute_snowline is deprecated
-# FIXME add test with the application? 
+# FIXME add test with the application?
 # ADD_EXECUTABLE(histo_utils_snowline_test histo_utils_snowline_test.cxx)
 # TARGET_LINK_LIBRARIES(histo_utils_snowline_test histo_utils)
 
-ADD_EXECUTABLE(histo_utils_snowline_internal_test histo_utils_snowline_internal_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test histo_utils)
+ADD_EXECUTABLE(histo_utils_snowline_internal_test histo_utils_snowline_internal_test.cxx ../src/histo_utils.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
 
-ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
-
+ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx ../src/histo_utils.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
 # C++ function compute_snowline is deprecated
 # add_test(NAME histo_utils_snowline_test
 #   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
@@ -268,13 +275,13 @@ add_test(NAME compute_cloud_mask_test
      )
 
 add_test(NAME cloud_removal_step3_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py) 
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py)
 
 add_test(NAME cloud_removal_step4_test
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py)
 
-ADD_EXECUTABLE(itkUnaryCloudMaskImageFilterTest itkUnaryCloudMaskImageFilterTest.cxx)
-TARGET_LINK_LIBRARIES(itkUnaryCloudMaskImageFilterTest histo_utils)
+ADD_EXECUTABLE(itkUnaryCloudMaskImageFilterTest itkUnaryCloudMaskImageFilterTest.cxx  ../src/histo_utils.cxx)
+TARGET_LINK_LIBRARIES(itkUnaryCloudMaskImageFilterTest ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
 
 add_test(NAME TvitkUnaryCloudMaskImageFilterTest
   COMMAND ${CMAKE_BINARY_DIR}/bin/itkUnaryCloudMaskImageFilterTest

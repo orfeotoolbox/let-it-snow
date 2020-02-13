@@ -9,6 +9,7 @@ dependencies = [
     'numpy>=1.11.0',
     'scipy>=0.17.0',
     'matplotlib>=1.5.1',
+    'setuptools>=20.7.0'
 ]
 
 pkg_resources.require(dependencies)
@@ -26,13 +27,5 @@ setup(name='s2snow',
                'scripts/run_snow_annual_map.py',
                'scripts/run_snow_detector.py',
                'scripts/build_json.py'
-      ],
-      # entry_points={
-      #     'console_scripts': [
-      #         'lis_run_cloud_removal=run_cloud_removal:main',
-      #         'lis_run_snow_annual_map=run_snow_annual_map:main',
-      #         'lis_run_snow_detector=run_snow_detector:main',
-      #         'lis_build_json=build_json:main'
-      #     ],
-      # },
+      ]
 )

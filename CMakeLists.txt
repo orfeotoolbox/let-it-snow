@@ -1,7 +1,6 @@
-cmake_minimum_required(VERSION 3.10.2)
-project(LIS)
-
 if(NOT OTB_SOURCE_DIR)
+  cmake_minimum_required(VERSION 3.10.2)
+  project(LIS)
   # Handle the compilation outside OTB source tree: find where OTB is built/installed
   find_package(OTB REQUIRED)
   list(APPEND CMAKE_MODULE_PATH ${OTB_CMAKE_DIR})

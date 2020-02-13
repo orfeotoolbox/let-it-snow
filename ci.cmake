@@ -3,10 +3,7 @@
 set(REMOTE_MODULE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set (ENV{LANG} "C") # Only ascii output
 
-# Get project name
-file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" _project_match REGEX "^project *\\(")
-string(REGEX REPLACE "^project *\\( *([a-zA-Z0-9]+) *\\)" "\\1" otb-module ${_project_match})
-
+message(FATAL)
 # Build Configuration : Release, Debug..
 if(ci_build_type)
   set (CTEST_BUILD_CONFIGURATION ${ci_build_type})
@@ -25,7 +22,7 @@ else()
   set(ci_short_sha "$ENV{TRAVIS_COMMIT}")
 endif()
 
-set(CTEST_PROJECT_NAME "${otb-module}")
+set(CTEST_PROJECT_NAME "LIS")
 set(CTEST_DROP_METHOD "https")
 set(CTEST_DROP_SITE "cdash.orfeo-toolbox.org")
 set(CTEST_DROP_LOCATION "/submit.php?project=OTB")
@@ -73,7 +70,8 @@ BUILD_TESTING:BOOL=ON
 OTB_BUILD_MODULE_AS_STANDALONE:BOOL=ON
 CMAKE_PREFIX_PATH:PATH=${REMOTE_MODULE_SOURCE_DIR}/xdk
 CMAKE_INSTALL_PREFIX:PATH=${CTEST_INSTALL_DIRECTORY}
-CMAKE_BUILD_TYPE=${CTEST_BUILD_CONFIGURATION}")
+CMAKE_BUILD_TYPE=${CTEST_BUILD_CONFIGURATION}
+LIS_DATA_ROOT:STRING=$ENV{LIS_DATA_ROOT}")
 
 if(UNIX AND NOT APPLE)
 set(all_options
@@ -147,9 +145,9 @@ ctest_configure(BUILD "${CTEST_BINARY_DIRECTORY}"
     CAPTURE_CMAKE_ERROR _configure_error
     )
 # Configure log
-file ( WRITE 
+file ( WRITE
   "${REMOTE_MODULE_SOURCE_DIR}/log/configure_return_value_log.txt" "${_configure_rv}")
-file ( WRITE 
+file ( WRITE
   "${REMOTE_MODULE_SOURCE_DIR}/log/configure_cmake_error_log.txt" "${_configure_error}")
 
 if ( NOT _configure_rv EQUAL 0 )
@@ -176,9 +174,9 @@ ctest_build(BUILD "${CTEST_BINARY_DIRECTORY}"
             CAPTURE_CMAKE_ERROR _build_error
             )
 # Build log
-file ( WRITE 
+file ( WRITE
   "${REMOTE_MODULE_SOURCE_DIR}/log/build_return_value_log.txt" "${_build_rv}")
-file ( WRITE 
+file ( WRITE
   "${REMOTE_MODULE_SOURCE_DIR}/log/build_cmake_error_log.txt" "${_build_error}")
 
 if ( NOT _build_rv EQUAL 0 )
@@ -195,9 +193,9 @@ else()
              CAPTURE_CMAKE_ERROR _test_error
              )
   # Test log
-  file ( WRITE 
+  file ( WRITE
     "${REMOTE_MODULE_SOURCE_DIR}/log/test_return_value_log.txt" "${_test_rv}")
-  file ( WRITE 
+  file ( WRITE
     "${REMOTE_MODULE_SOURCE_DIR}/log/test_cmake_error_log.txt" "${_test_error}")
 endif()
 

@@ -6,8 +6,8 @@ git:
 env:
   global:
     - OTB_URL=https://www.orfeo-toolbox.org/packages/archives/OTB
-#    - OTB_URL=https://www.orfeo-toolbox.org/packages/ci/latest
     - OTB_VER=7.0.0
+    - LIS_DATA_ROOT=$HOME/Data-LIS
 
 matrix:
   include:
@@ -16,41 +16,54 @@ matrix:
     compiler: gcc
     sudo: required
     before_install:
+      - python --version
+      - sudo update-alternatives --remove python /usr/bin/python2
+      - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+      - python --version
       - sudo apt-get install -y
           ninja-build
           libglvnd-dev
           libglu1-mesa-dev
+          python3-lxml
           python3-numpy
+          python3-scipy
+          python3-matplotlib
           python3-dev
+          python3-setuptools
+          python3-gdal
+          gdal-bin
+          curl
+      - curl -k https://zenodo.org/record/166511/files/Data-LIS.tar.gz?download=1 -o $HOME/Data-LIS.tar.gz
+      - cd $HOME && tar -xf Data-LIS.tar.gz
     env:
       - OTB_OS=Linux64
       - OTB_PKG_EXT=run
-  - os: osx
-    osx_image: xcode10.2
-    compiler: clang
-    before_install:
-      - brew install ninja libomp git-lfs
-    env:
-      - OTB_OS=Darwin64
-      - OTB_PKG_EXT=run
-  - os: windows
-    before_install:
-      - choco install python3 --params "/InstallDir:C:\Python3"
-      - choco install ninja
-      - export PATH="/c/Python3:/c/ProgramData/chocolatey/lib/ninja/tools:$PATH"
-      - /c/Python3/Scripts/pip install numpy
-      - eval "$(python vcvars_proxy.py
-        'c:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/Common7/Tools/VsDevCmd.bat'
-        '-arch=amd64'
-        '-host_arch=amd64'
-        '-vcvars_ver=14.0')"
-      - export CC=cl.exe
-      - export CXX=cl.exe
-      - export CC_FOR_BUILD=cl.exe
-      - export CXX_FOR_BUILD=cl.exe
-    env:
-      - OTB_OS=Win64
-      - OTB_PKG_EXT=zip
+  # - os: osx
+  #   osx_image: xcode10.2
+  #   compiler: clang
+  #   before_install:
+  #     - brew install ninja libomp git-lfs
+  #   env:
+  #     - OTB_OS=Darwin64
+  #     - OTB_PKG_EXT=run
+  # - os: windows
+  #   before_install:
+  #     - choco install python3 --params "/InstallDir:C:\Python3"
+  #     - choco install ninja
+  #     - export PATH="/c/Python3:/c/ProgramData/chocolatey/lib/ninja/tools:$PATH"
+  #     - /c/Python3/Scripts/pip install numpy matplotlib scipy lxml
+  #     - eval "$(python vcvars_proxy.py
+  #       'c:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/Common7/Tools/VsDevCmd.bat'
+  #       '-arch=amd64'
+  #       '-host_arch=amd64'
+  #       '-vcvars_ver=14.0')"
+  #     - export CC=cl.exe
+  #     - export CXX=cl.exe
+  #     - export CC_FOR_BUILD=cl.exe
+  #     - export CXX_FOR_BUILD=cl.exe
+  #   env:
+  #     - OTB_OS=Win64
+  #     - OTB_PKG_EXT=zip
 
 install:
   - export OTB_PKG="OTB-${OTB_VER}-${OTB_OS}.${OTB_PKG_EXT}"
@@ -70,4 +83,4 @@ install:
   # - git lfs install
 
 script:
-  - ctest -VV -S ./ci.cmake
+  - cd $TRAVIS_BUILD_DIR && ctest -VV -S ./ci.cmake
