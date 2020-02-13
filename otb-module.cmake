@@ -11,7 +11,7 @@ otb_module(LIS
   TEST_DEPENDS
     OTBTestKernel
     OTBCommandLine
-    OTBSWIG
+    OTBSWIGWrapper
   DESCRIPTION
     "${DOCUMENTATION}"
 )
