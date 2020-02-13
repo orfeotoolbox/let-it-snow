@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(LISOTBModule)
-
-# This module create a library, with the same name as the module
-set(LISOTBModule_LIBRARIES LISOTBModule)
+project(LIS)
 
 if(NOT OTB_SOURCE_DIR)
   # Handle the compilation outside OTB source tree: find where OTB is built/installed
@@ -19,4 +16,3 @@ if(NOT OTB_SOURCE_DIR)
 else()
   otb_module_impl()
 endif()
-
