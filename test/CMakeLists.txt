@@ -8,56 +8,80 @@ set(BASELINE ${LIS_DATA_ROOT}/Baseline)
 set(DATA_TEST ${LIS_DATA_ROOT}/Input-Data-Test)
 set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
-set(OUTPUT_TEST_TAKE5 ${OUTPUT_TEST}/take5)
-add_test(NAME take5_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/Take5/AOI_test_CESNeige"
-  "${OUTPUT_TEST_TAKE5}"
-  )
+set(PYTHON_PATH_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/python/lib)
+set(PYTHON_SCRIPTS_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/python/scripts-${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
 
-set(OUTPUT_TEST_L8 ${OUTPUT_TEST}/l8)
-add_test(NAME l8_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20170308_N2A_France-MetropoleD0004H0001"
-  "${OUTPUT_TEST_L8}"
-  )
+function(add_lis_json_test)
+  cmake_parse_arguments(LIS_TEST "" "NAME;INPUT_PATH;OUTPUT_PATH" "" ${ARGN} )
+  add_test(NAME ${LIS_TEST_NAME}
+    COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/build_json.py
+    "${DATA_TEST}/${LIS_TEST_INPUT_PATH}"
+    "${OUTPUT_TEST}/${LIS_TEST_OUTPUT_PATH}"
+    )
+  set_tests_properties(${LIS_TEST_NAME} PROPERTIES DEPENDS LIS-py)
+  set_tests_properties(${LIS_TEST_NAME} PROPERTIES LABELS LIS)
+endfunction()
 
-set(OUTPUT_TEST_S2 ${OUTPUT_TEST}/s2)
-add_test(NAME s2_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/S2"
-  "${OUTPUT_TEST_S2}"
-# Test with an alternative target resolution
-  #-target_resolution 10
-  #-dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
-  #-cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
-  )
+add_lis_json_test(
+  NAME take5_test_json_builder_test
+  INPUT_PATH "Take5/AOI_test_CESNeige"
+  OUTPUT_PATH "take5")
+
+add_lis_json_test(
+  NAME l8_test_json_builder_test
+  INPUT_PATH "Landsat/LANDSAT8_OLITIRS_XS_20170308_N2A_France-MetropoleD0004H0001"
+  OUTPUT_PATH "l8")
+
+add_lis_json_test(
+  NAME s2_test_json_builder_test
+  INPUT_PATH "S2"
+  OUTPUT_PATH "s2")
+
+# # Test with an alternative target resolution
+#   #-target_resolution 10
+#   #-dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
+#   #-cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
+#   )
 
 #Add Test with extract 1000*1000 of S2 (x=1400,y=2200 pixel coord at 20 meters)
-set(OUTPUT_TEST_S2_SMALL ${OUTPUT_TEST}/s2-small)
-add_test(NAME s2-small_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/S2-SMALL"
-  "${OUTPUT_TEST_S2_SMALL}"
+add_lis_json_test(
+  NAME s2-small_test_json_builder_test
+  INPUT_PATH "S2-SMALL"
+  OUTPUT_PATH "s2-small"
   )
 
-set( TEST_CASES_LIST ${TEST_CASES_LIST} s2-small take5 l8 s2)
-foreach( test_name ${TEST_CASES_LIST})
+set(LIS_TEST_DRIVER otbTestDriver
+    --add-before-env PYTHONPATH        ${CMAKE_BINARY_DIR}/${OTB_INSTALL_PYTHON_DIR}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}
+    --add-before-env OTB_APPLICATION_PATH $<TARGET_FILE_DIR:otbapp_Smoothing>
+    --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
+    --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
+    )
+
+
+foreach(test_name s2-small take5 l8 s2)
   set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
   set(CURRENT_TEST_OUTPUT ${OUTPUT_TEST}/${test_name})
-  
   add_test(NAME ${test_name}_test
-    COMMAND ${PYTHON_EXECUTABLE}
-    ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
+    COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
+#    COMMAND ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
     )
   set_tests_properties(${test_name}_test PROPERTIES DEPENDS ${test_name}_test_json_builder_test)
-  
+  set_tests_properties(${test_name}_test PROPERTIES LABELS LIS)
+
+ set_tests_properties(${test_name}_test PROPERTIES
+   ENVIRONMENT
+  PYTHONPATH=${PYTHON_PATH_DIR}:${CMAKE_BINARY_DIR}/lib/otb/python:$ENV{PYTHONPATH}
+   LD_LIBRARY_PATH=$<TARGET_FILE_DIR:OTBCommon>:$ENV{LD_LIBRARY_PATH}
+   OTB_APPLICATION_PATH=$<TARGET_FILE_DIR:otbapp_Smoothing>
+   )
+
   add_test(NAME ${test_name}_compare_pass1_test
     COMMAND gdalcompare.py
     "${CURRENT_TEST_BASELINE}/pass1.tif"
-    "${CURRENT_TEST_OUTPUT}/pass1.tif" 
+    "${CURRENT_TEST_OUTPUT}/pass1.tif"
     )
   set_tests_properties(${test_name}_compare_pass1_test PROPERTIES DEPENDS ${test_name}_test)
+  set_tests_properties(${test_name}_compare_pass1_test PROPERTIES LABELS LIS)
 
   add_test(NAME ${test_name}_compare_pass2_test
     COMMAND gdalcompare.py
@@ -65,6 +89,7 @@ foreach( test_name ${TEST_CASES_LIST})
     "${CURRENT_TEST_OUTPUT}/pass2.tif"
     )
   set_tests_properties(${test_name}_compare_pass2_test PROPERTIES DEPENDS ${test_name}_test)
+  set_tests_properties(${test_name}_compare_pass2_test PROPERTIES LABELS LIS)
 
   add_test(NAME ${test_name}_compare_pass3_test
     COMMAND gdalcompare.py
@@ -72,6 +97,7 @@ foreach( test_name ${TEST_CASES_LIST})
     "${CURRENT_TEST_OUTPUT}/pass3.tif"
     )
   set_tests_properties(${test_name}_compare_pass3_test PROPERTIES DEPENDS ${test_name}_test)
+  set_tests_properties(${test_name}_compare_pass3_test PROPERTIES LABELS LIS)
 
   add_test(NAME ${test_name}_compare_composition_test
     COMMAND gdalcompare.py
@@ -79,21 +105,25 @@ foreach( test_name ${TEST_CASES_LIST})
     "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_COMPO.TIF"
     )
   set_tests_properties(${test_name}_compare_composition_test PROPERTIES DEPENDS ${test_name}_test)
-  
+  set_tests_properties(${test_name}_compare_composition_test PROPERTIES LABELS LIS)
+
   add_test(NAME ${test_name}_compare_snow_all_test
   COMMAND gdalcompare.py
   "${CURRENT_TEST_BASELINE}/snow_all.tif"
   "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_SNOW_ALL.TIF"
   )
+
   set_tests_properties(${test_name}_compare_snow_all_test PROPERTIES DEPENDS ${test_name}_test)
-  
+  set_tests_properties(${test_name}_compare_snow_all_test PROPERTIES LABELS LIS)
+
   add_test(NAME ${test_name}_compare_final_mask_output_test
     COMMAND gdalcompare.py
     "${CURRENT_TEST_BASELINE}/final_mask.tif"
     "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_SEB.TIF"
     )
   set_tests_properties(${test_name}_compare_final_mask_output_test PROPERTIES DEPENDS ${test_name}_test)
-  
+  set_tests_properties(${test_name}_compare_final_mask_output_test PROPERTIES LABELS LIS)
+
 endforeach()
 
 add_test(NAME preprocessing_test
