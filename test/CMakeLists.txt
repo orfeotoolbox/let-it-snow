@@ -51,12 +51,12 @@ add_lis_json_test(
   )
 
 if(NOT PROJECT_NAME STREQUAL "LIS")
-  get_filename_component(PKG_PREFIX "${OTB_LIBRARY_DIRS}" PATH)
-  set(OTB_PYTHONPATH ${PKG_PREFIX}/${OTB_INSTALL_PYTHON_DIR})
-else()
   set(OTB_PYTHONPATH ${CMAKE_BINARY_DIR}/${OTB_INSTALL_PYTHON_DIR})
+else()
+  if(NOT EXISTS ${OTB_PYTHONPATH})
+   set(OTB_PYTHONPATH ${OTB_INSTALL_PREFIX}/lib/python)
+  endif()
 endif()
-
 
 set(LIS_TEST_DRIVER otbTestDriver
     --add-before-env PYTHONPATH   ${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}
@@ -64,7 +64,6 @@ set(LIS_TEST_DRIVER otbTestDriver
     --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
     --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
     )
-
 
 foreach(test_name s2-small take5 l8 s2)
   set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
