@@ -12,7 +12,11 @@ set(PYTHON_PATH_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/python/lib)
 set(PYTHON_SCRIPTS_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/python/scripts-${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
 
 function(add_lis_json_test)
-  cmake_parse_arguments(LIS_TEST "" "NAME;INPUT_PATH;OUTPUT_PATH" "" ${ARGN} )
+  cmake_parse_arguments(LIS_TEST "" "NAME;INPUT_PATH;OUTPUT_PATH;DEM" "" ${ARGN} )
+  set(dem_arg)
+  if(LIS_TEST_DEM)
+    set(dem_arg "-dem ${DATA_TEST}/${LIS_TEST_DEM}")
+    endif()
   add_test(NAME ${LIS_TEST_NAME}
     COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/build_json.py
     "${DATA_TEST}/${LIS_TEST_INPUT_PATH}"
@@ -57,19 +61,19 @@ else()
    set(OTB_PYTHONPATH ${OTB_INSTALL_PREFIX}/lib/python)
   endif()
 endif()
-
+#message(FATAL_ERROR "${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}")
 set(LIS_TEST_DRIVER otbTestDriver
-    --add-before-env PYTHONPATH   ${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}
-    --add-before-env OTB_APPLICATION_PATH $<TARGET_FILE_DIR:otbapp_Smoothing>
-    --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
-    --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
-    )
+  --add-before-env PYTHONPATH   "${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}"
+  --add-before-env OTB_APPLICATION_PATH $<TARGET_FILE_DIR:otbapp_Smoothing>
+  --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
+  --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
+  )
 
 foreach(test_name s2-small take5 l8 s2)
   set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
   set(CURRENT_TEST_OUTPUT ${OUTPUT_TEST}/${test_name})
   add_test(NAME ${test_name}_test
-    COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
+    COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json -test-env
 #    COMMAND ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
     )
   set_tests_properties(${test_name}_test PROPERTIES DEPENDS ${test_name}_test_json_builder_test)
@@ -134,28 +138,27 @@ foreach(test_name s2-small take5 l8 s2)
 endforeach()
 
 add_test(NAME preprocessing_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python_include/s2snow/dem_builder.py
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} -m s2snow.dem_builder
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
   "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20150312_N2A_ORTHO_SURF_CORR_PENTE_France-MetropoleD0005H0001.TIF"
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
   )
 
-set(OUTPUT_TEST_S2_SMALL_ZIP ${OUTPUT_TEST}/s2-small_zip)
-add_test(NAME s2-small_zip_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  -dem "${DATA_TEST}/S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF"
-  "${DATA_TEST}/S2-SMALL.zip"
-  "${OUTPUT_TEST_S2_SMALL_ZIP}"
-  )
+add_lis_json_test(
+  NAME l8_s2-small_zip_test_json_builder_test
+  INPUT_PATH "S2-SMALL.zip"
+  OUTPUT_PATH "s2-small_zip"
+  -dem "S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF")
 
 add_test(NAME s2-small_zip_test
-  COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detecter.py
+  ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
   )
   set_tests_properties(s2-small_zip_test PROPERTIES DEPENDS s2-small_zip_test_json_builder_test)
 
-add_test(NAME snow_annual_map_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/snow_annual_map_test.py
+  add_test(NAME snow_annual_map_test
+    COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/snow_annual_map_test.py
     "${DATA_TEST}/SNOW_PRODUCTS"
     "${OUTPUT_TEST}/snow_annual_map_test"
     "${OUTPUT_TEST}/snow_annual_map_test/tmp"
