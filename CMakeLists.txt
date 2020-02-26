@@ -10,8 +10,10 @@ if(NOT OTB_SOURCE_DIR)
   set(Python_ADDITIONAL_VERSIONS "3")
   find_package( PythonInterp REQUIRED)
 
-  # This script will process the module sources
+  set(OTB_BUILD_MODULE_AS_STANDALONE "ON" CACHE BOOL "LIS (forced)" FORCE)
+
   include(OTBModuleExternal)
+
 else()
   otb_module_impl()
 endif()
