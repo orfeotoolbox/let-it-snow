@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #=========================================================================
 #
@@ -379,7 +379,7 @@ class snow_annual_map():
                 logging.error("Unable to load product :" + product_path)
         return product_dict
 
-        
+
     def convert_mask_list(self, expression, type_name, mask_format=""):
         binary_mask_list = []
         for mask_date in sorted(self.resulting_snow_mask_dict):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #=========================================================================
 #
@@ -135,7 +135,7 @@ class snow_detector:
         gb_path_extracted = extract_band(inputs, "green_band", self.path_tmp, self.nodata)
         rb_path_extracted = extract_band(inputs, "red_band", self.path_tmp, self.nodata)
         sb_path_extracted = extract_band(inputs, "swir_band", self.path_tmp, self.nodata)
-        
+
 
         # Keep the input product directory basename as product_id
         self.product_id = op.basename(op.dirname(inputs["green_band"]["path"]))
@@ -199,7 +199,7 @@ class snow_detector:
                 yRes=self.target_resolution)
         else:
             sb_path_resampled = sb_path_extracted
-            
+
         #apply water mask as NAN values to extracted bands so that they are not used
         if 'water_mask' in data:
             if data['water_mask']['apply']:
@@ -352,8 +352,8 @@ class snow_detector:
                                   #~ self.label_cloud,
                                   #~ self.label_no_data)
             self.create_metadata()
-        
-        
+
+
     def create_metadata(self):
         # Compute and create the content for the product metadata file.
         snow_percent = compute_percent(self.final_mask_path,
@@ -380,11 +380,11 @@ class snow_detector:
             name='CloudPercent').text = str(cloud_percent)
         et = etree.ElementTree(root)
         et.write(self.metadata_path, pretty_print=True)
-        
+
 
     def create_cosims_metadata(self):
         self.create_metadata()
-        
+
 
     def extract_all_clouds(self):
         if self.mode == 'lasrc':
@@ -397,7 +397,7 @@ class snow_detector:
                 self.ram,
                 otb.ImagePixelType_uint8)
             computeCMApp.ExecuteAndWriteOutput()
-            computeCMApp = None 
+            computeCMApp = None
         else:
             if self.mode == 'sen2cor':
                 logging.info("sen2cor mode -> extract all clouds from SCL layer...")
@@ -504,7 +504,7 @@ class snow_detector:
             condition_all_clouds = "im1b1==3 || im1b1==8 || im1b1==9 || im1b1==10"
         else:
             condition_all_clouds = "im1b1 > 0"
-            
+
         condition_back_to_cloud = "("+condition_all_clouds+") and (im2b1 > " + str(self.rRed_backtocloud) + ")"
         bandMathBackToCloud = band_math(
             [cloud_mask_for_backtocloud, self.redBand_path],
@@ -513,7 +513,7 @@ class snow_detector:
             self.ram,
             otb.ImagePixelType_uint8)
         bandMathBackToCloud.ExecuteAndWriteOutput()
-        
+
     def pass0(self):
         # Pass -0 : generate custom cloud mask
         # Extract red band
@@ -566,7 +566,7 @@ class snow_detector:
 
         # Extract cloud shadows mask
         self.extract_cloud_shadows()
-        
+
         # Extract high clouds
         self.extract_high_clouds()
 
@@ -754,7 +754,7 @@ class snow_detector:
                 #~ # NDSI threshold again
                 #~ ndsi_formula = "(im1b" + str(self.nGreen) + "-im1b" + str(self.nSWIR) + \
                                #~ ")/(im1b" + str(self.nGreen) + "+im1b" + str(self.nSWIR) + ")"
-                
+
                 condition_pass2 = "(im3b1 != 1) and (im2b1>" + str(self.zs) + ")" \
                                   + " and (" + self.ndsi_formula + "> " + str(self.ndsi_pass2) + ")" \
                                   + " and (im1b" + str(self.nRed) + ">" + str(self.rRed_pass2) + ")"
@@ -890,7 +890,7 @@ class snow_detector:
         edit_nodata_value(self.ndsi_path, nodata_value=int(self.label_no_data))
 
         # write top-of-canopy FSC (0-100), nosnow (0) cloud (205) and nodata (255)
-        #~ self.fscToc_Eq="1.45*ndsi-0.01" 
+        #~ self.fscToc_Eq="1.45*ndsi-0.01"
         eq="min("+str(self.fscToc_Eq)+",1)"
         exp=eq.replace("ndsi", "im1b1/100") # ndsi was written in %
         expression = "(im2b1 == 100) ? 100*"+exp+" : im2b1"
@@ -904,7 +904,7 @@ class snow_detector:
         edit_nodata_value(self.fscToc_path, nodata_value=int(self.label_no_data))
 
         # write on-ground FSC (0-100), nosnow (0) cloud (205) and nodata (255)
-        #~ self.fscOg_Eq="fscToc/(1-tcd)" 
+        #~ self.fscOg_Eq="fscToc/(1-tcd)"
         eq="min("+str(self.fscOg_Eq)+",1)"
         exp=eq.replace("fscToc", "im1b1/100") # fscToc was written in %
         exp=exp.replace("tcd", "im3b1/100") # tcd is given in %

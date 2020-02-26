@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -206,23 +206,23 @@ def extract_band(inputs, band, path_tmp, noData):
             outputType=gdal.GDT_Int16,
             noData=noData,
             bandList=[band_no])
- 
+
     return path_extracted
-    
-    
+
+
 
 def edit_nodata_value(raster_file, nodata_value=None, bands=None):
-    
+
     ds = gdal.Open(raster_file, gdal.GA_Update)
-    
+
     #iterate on each band
     for band_no in range(1, ds.RasterCount+1):
-        
+
         if bands is not None:
             if band_no not in bands:
                 #this band was not specified for edition, skip
                 continue
-        
+
         band = ds.GetRasterBand(band_no)
         if nodata_value is None:
             #remove nodata value
@@ -230,9 +230,9 @@ def edit_nodata_value(raster_file, nodata_value=None, bands=None):
         else:
             #change nodata value
             ds.GetRasterBand(band_no).SetNoDataValue(nodata_value)
-    
-    
-def edit_raster_from_shapefile(raster_target, src_shapefile, applied_value=0):    
+
+
+def edit_raster_from_shapefile(raster_target, src_shapefile, applied_value=0):
     shape_mask = ogr.Open(src_shapefile)
     ds = gdal.Open(raster_target, gdal.GA_Update)
     for shape_mask_layer in shape_mask:
@@ -246,7 +246,7 @@ def edit_raster_from_raster(raster_target, src_raster, src_values, applied_value
     band = ds.GetRasterBand(1)
     if band.XSize != band_mask.XSize or band.YSize != band_mask.YSize:
         raise IOError('array sizes from files do not match:\n%s'%('\n'.join([' - %s'%el for el in [raster_target, src_raster]])))
-        
+
     if layered_processing:
         #iterate load line per line to avoid memory issues
         for ii in range(band.YSize - 1, -1, -1):

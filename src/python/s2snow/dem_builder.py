@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import sys
@@ -98,7 +98,7 @@ def build_dem(psrtm, pimg, pout, ram, nbThreads):
         print('Error running command: ' + str(e.cmd) + ' see above shell error')
         print('Return code: ' + str(e.returncode))
         return e.returncode
-    
+
 def main(argv):
         # parse files path
     psrtm = argv[1]
@@ -112,7 +112,7 @@ def main(argv):
 if __name__ == "__main__":
     # Set logging level and format.
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
-    
+
     if len(sys.argv) != 4:
         show_help()
     else:
