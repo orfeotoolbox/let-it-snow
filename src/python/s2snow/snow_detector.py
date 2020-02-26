@@ -22,11 +22,11 @@ import shutil
 import logging
 from lxml import etree
 
+# OTB Applications (import otbApplication before gdal. see otb issue #2030)
+import otbApplication as otb
+
 import gdal
 from gdalconst import GA_ReadOnly, GA_Update
-
-# OTB Applications
-import otbApplication as otb
 
 # Preprocessing script
 from s2snow.dem_builder import build_dem

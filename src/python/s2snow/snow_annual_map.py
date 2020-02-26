@@ -25,11 +25,12 @@ from datetime import timedelta
 
 from lxml import etree
 
+# OTB Applications (import otbApplication before gdal. see otb issue #2030)
+import otbApplication as otb
+
 import gdal
 from gdalconst import GA_ReadOnly
 
-# OTB Applications
-import otbApplication as otb
 
 # Import python decorators for the different needed OTB applications
 from s2snow.app_wrappers import band_math, get_app_output, super_impose

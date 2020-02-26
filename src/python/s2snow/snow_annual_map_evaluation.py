@@ -21,11 +21,13 @@ import shutil
 import logging
 import subprocess
 
+# OTB Applications (import otbApplication before gdal. see otb issue #2030)
+import otbApplication as otb
+
 from osgeo import gdal, ogr, osr
 import gdalconst
 
-# OTB Applications
-import otbApplication as otb
+
 
 # Import python decorators for the different needed OTB applications
 from s2snow.app_wrappers import band_math, super_impose, confusion_matrix
