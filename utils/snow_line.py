@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #=========================================================================
 #
@@ -30,7 +30,7 @@ def load_histo(histo_path):
         #print(v[:,1])
         #print(v[:,2])
         #b = np.zeros(6).reshape(2, 3)
-        
+
         #print(fsnow_rate)
         print(fsnow_rate[0])
         print(fsnow_rate)
@@ -59,10 +59,10 @@ def print_histo(histo_path):
 	plt.bar(dem, v[:,1], width=width, color="red", label="all")
 	plt.bar([i+0.25*width for i in dem], v[:,2], width=0.5*width, color="blue", alpha=1. , label="snow")
 
-	plt.xticks(dem+width/2., 
+	plt.xticks(dem+width/2.,
            [i for i in dem] )
 
-	plt.legend()	
+	plt.legend()
 	plt.show()
 
 def main():
@@ -73,7 +73,7 @@ def main():
 
     (opts, args) = parser.parse_args()
 
-    if opts.histo_path is None: 
+    if opts.histo_path is None:
         print("A mandatory option is missing\n")
         parser.print_help()
         exit(-1)
@@ -82,4 +82,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-   

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This script computes the Permanent snow area AKA "PSL" in CoSIMS from annnual snow map outputs
 # The PSL of a given year is defined as pixels where snow was always observed when possible from May 01 to Sep 01 of this year
 # In HAL the dependencies are loaded with module load lis/develop
@@ -9,7 +9,7 @@ import numpy as np
 import os,sys
 import numpy as np
 
-# input file is input_dates.txt 
+# input file is input_dates.txt
 # Example: f="/work/OT/siaa/Theia/Neige/SNOW_ANNUAL_MAP_LIS_1.5/S2_with_L8_Densification//T32TNS_20170901_20180831/tmpdir/multitemp_cloud_mask.vrt"
 
 f=sys.argv[1]
@@ -30,7 +30,7 @@ snow = srcSnow.read(range(idx,n))
 obs = srcObs.read(range(idx,n))
 # pixels in p are either snow (1), cloud (1) or no snow (0)
 p=snow+obs
-# PSL corresponds to pixels always flagged as snow or cloud 
+# PSL corresponds to pixels always flagged as snow or cloud
 PSL=np.all(p,axis=0)
 
 # output file suffix
@@ -46,4 +46,3 @@ with rasterio.Env():
 
     with rasterio.open("{}/PSL_{}.tif".format(fdir,outfile), 'w', **profile) as dst:
         dst.write(PSL.astype(rasterio.uint8), 1)
-

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys 
+import sys
 import numpy as np
 from s2snow import cloud_removal
 

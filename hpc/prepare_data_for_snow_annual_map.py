@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #=========================================================================
 #
@@ -287,5 +287,3 @@ if __name__== "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=\
         '%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
     main()
-
-

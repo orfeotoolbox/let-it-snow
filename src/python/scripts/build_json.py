@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -53,7 +53,7 @@ conf_template = {"general":{"pout":"",
                           "rm_snow_inside_cloud_min_area":5000},
                 "fsc": {
                         "dofsc": False,
-                        "fscToc_Eq": "1.45*ndsi-0.01", 
+                        "fscToc_Eq": "1.45*ndsi-0.01",
                         "fscOg_Eq": "fscToc/(1-tcd)",
                         "tcd": "",
                         "cosims_mode": False
@@ -179,8 +179,8 @@ LANDSAT8_LASRC_parameters = {"mode":"lasrc",
                  "dem":".*\.tif",
                  "shadow_in_mask":8,
                  "shadow_out_mask":8,
-                 "all_cloud_mask":224, # cloud with high confidence (32+(64+128)) 
-                 "high_cloud_mask":800, # cloud and high cloud with high confidence (32 + (512+256)) 
+                 "all_cloud_mask":224, # cloud with high confidence (32+(64+128))
+                 "high_cloud_mask":800, # cloud and high cloud with high confidence (32 + (512+256))
                  "rf":8}
 
 mission_parameters = {"S2":S2_parameters,\
@@ -257,8 +257,8 @@ def read_product(inputPath, mission):
         # Use in case of SEN2COR to handle differences between maja and sen2cor encoding
         if 'mode' in params:
             conf_json["general"]["mode"] = params["mode"]
- 
-        
+
+
         return conf_json
     else:
         logging.error(inputPath + " doesn't exist.")
@@ -308,11 +308,11 @@ def main():
     group_cloud.add_argument("-red_darkcloud", type=int)
     group_cloud.add_argument("-red_backtocloud", type=int)
     group_cloud.add_argument("-strict_cloud_mask", type=str2bool, help="true/false")
-    
+
     group_fsc = parser.add_argument_group('fsc', 'fractional snow cover parameters')
     group_fsc.add_argument("-fsc", type=str, help="path to tree cover density file, automatically activates sets fsc: dofsc to true")
     group_fsc.add_argument("-cosims_mode", action='store_true', help="CoSIMS mode : Generate CoSIMS formatted outputs.")
-    
+
     group_water_mask = parser.add_argument_group('water_mask', 'water mask parameters')
     group_water_mask.add_argument("-water_mask_path", type=str, help="Path to a raster or a shapefile")
     group_water_mask.add_argument("-water_mask_raster_value", type=int, action='append', help="If the input water_mask_path is a raster, you can specify all the values corresponding " + \
@@ -325,7 +325,7 @@ def main():
     outputPath = os.path.abspath(args.outputPath)
 
     sentinel2Acronyms = ['S2', 'SENTINEL2', 'S2A', 'S2B']
-    
+
     # Test if it is a MAJA output products (generated with MAJA processor version XX)
     # FIXME: This detection based on directory substring detection is very week and error prone
     # FIXME: use a factory and detect by using xml metadata
@@ -428,14 +428,14 @@ def main():
         if not jsonData["inputs"].get("dem"):
             logging.error("No DEM found!")
             return 1
-            
+
         if args.fsc:
             jsonData["fsc"]["dofsc"] = True
             jsonData["fsc"]["tcd"] = os.path.abspath(args.fsc)
             jsonData["fsc"]["cosims_mode"] = args.cosims_mode
         else:
             jsonData["fsc"]["dofsc"] = False
-            
+
         if args.water_mask_path is not None:
             jsonData["water_mask"]["apply"] = True
             suffix = args.water_mask_path.split('.')[-1].lower()

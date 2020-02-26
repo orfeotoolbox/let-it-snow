@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import sys
@@ -27,17 +27,17 @@ def main(argv):
     #load json_file from json files
     with open(json_file) as json_data_file:
       data = json.load(json_data_file)
-    
+
     general = data["general"]
     pout = general.get("pout")
-    
+
     log = general.get("log", True)
     if log:
         sys.stdout = open(op.join(pout, "stdout.log"), 'w')
         sys.stderr = open(op.join(pout, "stderr.log"), 'w')
-    
+
     cloud_removal.run(data)
-      
+
 if __name__ == "__main__":
     if len(sys.argv) != 2 :
         show_help()

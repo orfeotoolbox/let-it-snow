@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #=========================================================================
 #
@@ -30,16 +30,16 @@ def main(argv):
     json_file = argv[0]
     snow_mask = argv[1]
     cloud_mask = argv[2]
-    
+
     # Load json_file from json files
     with open(json_file) as json_data_file:
         data = json.load(json_data_file)
-    
+
     #dummy json
     sd = snow_detector.snow_detector(data)
 
     #
     sd.pass1_5(snow_mask, cloud_mask, 1, 0.85)
-    
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
