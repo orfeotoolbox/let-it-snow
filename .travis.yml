@@ -83,4 +83,4 @@ install:
   # - git lfs install
 
 script:
-  - cd $TRAVIS_BUILD_DIR && ctest -VV -S ./ci.cmake
+  - cd $TRAVIS_BUILD_DIR && unset PYTHONPATH;ctest -VV -S ./ci.cmake
