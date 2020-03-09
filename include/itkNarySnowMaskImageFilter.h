@@ -23,6 +23,7 @@ namespace Functor
 {
 /**
  * \class SnowMask
+ * \ingroup LIS
  * \brief
  */
 template< typename TInput, typename TOutput >
@@ -37,9 +38,9 @@ public:
   std::bitset<8> bits(0x0);
 
   for ( unsigned int i = 0; i < B.size(); i++ )
-    { 
+    {
     if ( B[i]>0 )
-    { 
+    {
     bits.set(i,1);
     }
   }
@@ -59,7 +60,8 @@ public:
 };
 }
 /** \class NarySnowMaskImageFilter
- * \brief SnowMask  functor
+ *  \brief SnowMask  functor
+ *  \ingroup LIS
  *
  */
 template< typename TInputImage, typename TOutputImage >
@@ -105,4 +107,3 @@ private:
   void operator=(const Self &);
 };
 } // end namespace itk
-
