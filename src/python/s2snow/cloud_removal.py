@@ -7,11 +7,11 @@ import json
 import multiprocessing
 import csv
 import numpy as np
+import gdal
+import gdalconst
 import matplotlib.pyplot as plot
 from subprocess import call
 import os.path as op
-import gdal
-import gdalconst
 
 
 def show_help():
