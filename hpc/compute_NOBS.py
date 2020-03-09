@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This script computes NOBS.tif, the number of clear observations to compute the SCD, SMOD and SOD syntheses
 # In HAL the dependencies are loaded with module load lis/develop
 # Author: Simon Gascoin
@@ -29,5 +29,3 @@ with rasterio.Env():
 
     with rasterio.open("{}/NOBS_{}.tif".format(outdir,outfile), 'w', **profile) as dst:
         dst.write(S.astype(rasterio.uint16), 1)
-
-

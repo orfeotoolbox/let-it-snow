@@ -93,6 +93,9 @@ public:
 
     InputImageType * inDEMImage = GetParameterImage<InputImageType>("dem");
 
+
+
+
     // Instantiating object (compute min/max from dem image)
     m_Filter = StreamingMinMaxImageFilterType::New();
 
@@ -139,6 +142,8 @@ public:
 
   StreamingMinMaxImageFilterType::Pointer m_Filter;
   ComposeImageFilterType::Pointer m_ComposeFilter;
+
+
 };
 
 }

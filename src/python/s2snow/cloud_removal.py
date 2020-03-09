@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -7,11 +7,11 @@ import json
 import multiprocessing
 import csv
 import numpy as np
-import matplotlib.pyplot as plot
-from subprocess import call
-import os.path as op
 import gdal
 import gdalconst
+import matplotlib.pyplot as plot
+import os.path as op
+from subprocess import call
 
 
 def show_help():

@@ -1,9 +1,24 @@
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/run_snow_detector.py DESTINATION ${CMAKE_BINARY_DIR}/app)
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/run_cloud_removal.py DESTINATION ${CMAKE_BINARY_DIR}/app)
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/run_snow_annual_map.py DESTINATION ${CMAKE_BINARY_DIR}/app)
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/build_json.py DESTINATION ${CMAKE_BINARY_DIR}/app)
+OTB_CREATE_APPLICATION(NAME           ComputeCloudMask
+                      SOURCES        otbComputeCloudMask.cxx
+                      LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                      )
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/run_snow_detector.py DESTINATION ${CMAKE_INSTALL_PREFIX}/app)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/run_snow_annual_map.py DESTINATION ${CMAKE_INSTALL_PREFIX}/app)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/run_cloud_removal.py DESTINATION ${CMAKE_INSTALL_PREFIX}/app)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/build_json.py DESTINATION ${CMAKE_INSTALL_PREFIX}/app)
+OTB_CREATE_APPLICATION(NAME           ComputeSnowMask
+                       SOURCES        otbComputeSnowMask.cxx
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )
+
+OTB_CREATE_APPLICATION(NAME           ComputeContours
+                       SOURCES        otbComputeContours.cxx
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )
+
+OTB_CREATE_APPLICATION(NAME           ComputeSnowLine
+                       SOURCES        otbComputeSnowLine.cxx ../src/histo_utils.cxx
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )
+
+OTB_CREATE_APPLICATION(NAME           ComputeNbPixels
+                       SOURCES        otbComputeNbPixels.cxx
+                       LINK_LIBRARIES ${${otb-module}_LIBRARIES}
+                       )

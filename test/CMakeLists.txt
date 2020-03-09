@@ -8,56 +8,91 @@ set(BASELINE ${LIS_DATA_ROOT}/Baseline)
 set(DATA_TEST ${LIS_DATA_ROOT}/Input-Data-Test)
 set(OUTPUT_TEST ${CMAKE_BINARY_DIR}/Testing/Temporary)
 
-set(OUTPUT_TEST_TAKE5 ${OUTPUT_TEST}/take5)
-add_test(NAME take5_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/Take5/AOI_test_CESNeige"
-  "${OUTPUT_TEST_TAKE5}"
-  )
+set(PYTHON_PATH_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/python/lib)
+set(PYTHON_SCRIPTS_DIR ${CMAKE_CURRENT_BINARY_DIR}/../src/python/scripts-${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
 
-set(OUTPUT_TEST_L8 ${OUTPUT_TEST}/l8)
-add_test(NAME l8_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20170308_N2A_France-MetropoleD0004H0001"
-  "${OUTPUT_TEST_L8}"
-  )
+function(add_lis_json_test)
+  cmake_parse_arguments(LIS_TEST "" "NAME;INPUT_PATH;OUTPUT_PATH;DEM" "" ${ARGN} )
+  set(dem_arg)
+  if(LIS_TEST_DEM)
+    set(dem_arg "-dem ${DATA_TEST}/${LIS_TEST_DEM}")
+    endif()
+  add_test(NAME ${LIS_TEST_NAME}
+    COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/build_json.py
+    "${DATA_TEST}/${LIS_TEST_INPUT_PATH}"
+    "${OUTPUT_TEST}/${LIS_TEST_OUTPUT_PATH}"
+    )
+  set_tests_properties(${LIS_TEST_NAME} PROPERTIES DEPENDS LIS-py)
+  set_tests_properties(${LIS_TEST_NAME} PROPERTIES LABELS LIS)
+endfunction()
 
-set(OUTPUT_TEST_S2 ${OUTPUT_TEST}/s2)
-add_test(NAME s2_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/S2"
-  "${OUTPUT_TEST_S2}"
-# Test with an alternative target resolution
-  #-target_resolution 10
-  #-dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
-  #-cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
-  )
+add_lis_json_test(
+  NAME take5_test_json_builder_test
+  INPUT_PATH "Take5/AOI_test_CESNeige"
+  OUTPUT_PATH "take5")
+
+add_lis_json_test(
+  NAME l8_test_json_builder_test
+  INPUT_PATH "Landsat/LANDSAT8_OLITIRS_XS_20170308_N2A_France-MetropoleD0004H0001"
+  OUTPUT_PATH "l8")
+
+add_lis_json_test(
+  NAME s2_test_json_builder_test
+  INPUT_PATH "S2"
+  OUTPUT_PATH "s2")
+
+# # Test with an alternative target resolution
+#   #-target_resolution 10
+#   #-dem "${DATA_TEST}/S2/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R1.TIF"
+#   #-cloud_mask  "${DATA_TEST}/S2/MASKS/SENTINEL2A_20160217-111843-605_L2A_T29RNQ_D_V1-0_CLM_R1.tif"
+#   )
 
 #Add Test with extract 1000*1000 of S2 (x=1400,y=2200 pixel coord at 20 meters)
-set(OUTPUT_TEST_S2_SMALL ${OUTPUT_TEST}/s2-small)
-add_test(NAME s2-small_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  "${DATA_TEST}/S2-SMALL"
-  "${OUTPUT_TEST_S2_SMALL}"
+add_lis_json_test(
+  NAME s2-small_test_json_builder_test
+  INPUT_PATH "S2-SMALL"
+  OUTPUT_PATH "s2-small"
   )
 
-set( TEST_CASES_LIST ${TEST_CASES_LIST} s2-small take5 l8 s2)
-foreach( test_name ${TEST_CASES_LIST})
+if(NOT PROJECT_NAME STREQUAL "LIS")
+  set(OTB_PYTHONPATH ${CMAKE_BINARY_DIR}/${OTB_INSTALL_PYTHON_DIR})
+else()
+  if(NOT EXISTS ${OTB_PYTHONPATH})
+   set(OTB_PYTHONPATH ${OTB_INSTALL_PREFIX}/lib/python)
+  endif()
+endif()
+#message(FATAL_ERROR "${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}")
+set(LIS_TEST_DRIVER otbTestDriver
+  --add-before-env PYTHONPATH   "${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}"
+  --add-before-env OTB_APPLICATION_PATH "$<TARGET_FILE_DIR:otbapp_Smoothing>:$<TARGET_FILE_DIR:otbapp_ComputeSnowMask>"
+  --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
+  --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
+  )
+
+foreach(test_name s2-small take5 l8 s2)
   set(CURRENT_TEST_BASELINE ${BASELINE}/${test_name}_test)
   set(CURRENT_TEST_OUTPUT ${OUTPUT_TEST}/${test_name})
-  
   add_test(NAME ${test_name}_test
-    COMMAND ${PYTHON_EXECUTABLE}
-    ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
+    COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json -test-env
+#    COMMAND ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py ${CURRENT_TEST_OUTPUT}/param_test.json
     )
   set_tests_properties(${test_name}_test PROPERTIES DEPENDS ${test_name}_test_json_builder_test)
-  
+  set_tests_properties(${test_name}_test PROPERTIES LABELS LIS)
+
+ # set_tests_properties(${test_name}_test PROPERTIES
+ #   ENVIRONMENT
+ #  PYTHONPATH=${PYTHON_PATH_DIR}:${CMAKE_BINARY_DIR}/lib/otb/python:$ENV{PYTHONPATH}
+ #   LD_LIBRARY_PATH=$<TARGET_FILE_DIR:OTBCommon>:$ENV{LD_LIBRARY_PATH}
+ #   OTB_APPLICATION_PATH=$<TARGET_FILE_DIR:otbapp_Smoothing>
+ #   )
+
   add_test(NAME ${test_name}_compare_pass1_test
     COMMAND gdalcompare.py
     "${CURRENT_TEST_BASELINE}/pass1.tif"
-    "${CURRENT_TEST_OUTPUT}/pass1.tif" 
+    "${CURRENT_TEST_OUTPUT}/pass1.tif"
     )
   set_tests_properties(${test_name}_compare_pass1_test PROPERTIES DEPENDS ${test_name}_test)
+  set_tests_properties(${test_name}_compare_pass1_test PROPERTIES LABELS LIS)
 
   add_test(NAME ${test_name}_compare_pass2_test
     COMMAND gdalcompare.py
@@ -65,6 +100,7 @@ foreach( test_name ${TEST_CASES_LIST})
     "${CURRENT_TEST_OUTPUT}/pass2.tif"
     )
   set_tests_properties(${test_name}_compare_pass2_test PROPERTIES DEPENDS ${test_name}_test)
+  set_tests_properties(${test_name}_compare_pass2_test PROPERTIES LABELS LIS)
 
   add_test(NAME ${test_name}_compare_pass3_test
     COMMAND gdalcompare.py
@@ -72,6 +108,7 @@ foreach( test_name ${TEST_CASES_LIST})
     "${CURRENT_TEST_OUTPUT}/pass3.tif"
     )
   set_tests_properties(${test_name}_compare_pass3_test PROPERTIES DEPENDS ${test_name}_test)
+  set_tests_properties(${test_name}_compare_pass3_test PROPERTIES LABELS LIS)
 
   add_test(NAME ${test_name}_compare_composition_test
     COMMAND gdalcompare.py
@@ -79,46 +116,49 @@ foreach( test_name ${TEST_CASES_LIST})
     "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_COMPO.TIF"
     )
   set_tests_properties(${test_name}_compare_composition_test PROPERTIES DEPENDS ${test_name}_test)
-  
+  set_tests_properties(${test_name}_compare_composition_test PROPERTIES LABELS LIS)
+
   add_test(NAME ${test_name}_compare_snow_all_test
   COMMAND gdalcompare.py
   "${CURRENT_TEST_BASELINE}/snow_all.tif"
   "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_SNOW_ALL.TIF"
   )
+
   set_tests_properties(${test_name}_compare_snow_all_test PROPERTIES DEPENDS ${test_name}_test)
-  
+  set_tests_properties(${test_name}_compare_snow_all_test PROPERTIES LABELS LIS)
+
   add_test(NAME ${test_name}_compare_final_mask_output_test
     COMMAND gdalcompare.py
     "${CURRENT_TEST_BASELINE}/final_mask.tif"
     "${CURRENT_TEST_OUTPUT}/LIS_PRODUCTS/LIS_SEB.TIF"
     )
   set_tests_properties(${test_name}_compare_final_mask_output_test PROPERTIES DEPENDS ${test_name}_test)
-  
+  set_tests_properties(${test_name}_compare_final_mask_output_test PROPERTIES LABELS LIS)
+
 endforeach()
 
 add_test(NAME preprocessing_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/s2snow/dem_builder.py 
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} -m s2snow.dem_builder
   "${DATA_TEST}/SRTM/sud_ouest.vrt"
   "${DATA_TEST}/Landsat/LANDSAT8_OLITIRS_XS_20150312_N2A_ORTHO_SURF_CORR_PENTE_France-MetropoleD0005H0001.TIF"
   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
   )
 
-set(OUTPUT_TEST_S2_SMALL_ZIP ${OUTPUT_TEST}/s2-small_zip)
-add_test(NAME s2-small_zip_test_json_builder_test
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_BINARY_DIR}/app/build_json.py
-  -dem "${DATA_TEST}/S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF"
-  "${DATA_TEST}/S2-SMALL.zip"
-  "${OUTPUT_TEST_S2_SMALL_ZIP}"
-  )
+add_lis_json_test(
+  NAME s2-small_zip_test_json_builder_test
+  INPUT_PATH "S2-SMALL.zip"
+  OUTPUT_PATH "s2-small_zip"
+  -dem "S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF")
 
 add_test(NAME s2-small_zip_test
-  COMMAND ${PYTHON_EXECUTABLE}
-  ${CMAKE_BINARY_DIR}/app/run_snow_detector.py ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py
+  ${OUTPUT_TEST}/s2-small_zip/param_test.json
   )
   set_tests_properties(s2-small_zip_test PROPERTIES DEPENDS s2-small_zip_test_json_builder_test)
 
-add_test(NAME snow_annual_map_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/snow_annual_map_test.py
+  add_test(NAME snow_annual_map_test
+    COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/snow_annual_map_test.py
     "${DATA_TEST}/SNOW_PRODUCTS"
     "${OUTPUT_TEST}/snow_annual_map_test"
     "${OUTPUT_TEST}/snow_annual_map_test/tmp"
@@ -133,32 +173,31 @@ add_test(NAME snow_annual_map_compare_test
 
 # add_test(NAME compare_preprocessing_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
-#   "${OUTPUT_TEST}/landsat_bassies_srtm.tif" 
+#   "${OUTPUT_TEST}/landsat_bassies_srtm.tif"
 #   "${BASELINE}/landsat_bassies_srtm.tif"
 #   )
 # set_tests_properties(compare_preprocessing_output_test PROPERTIES DEPENDS s2snow_test)
 
 #gdalcompare.py doesn't work on dbf files
 #COMMENT this test for now
-#TODO find an other way to compare vector files to validate this part 
+#TODO find an other way to compare vector files to validate this part
 # add_test(NAME compare_final_mask_vec_output_test
 #   COMMAND ${CMAKE_COMMAND} -E compare_files
 #   "${BASELINE}/final_mask_vec_highcloud.dbf"
-#   "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf" 
+#   "${OUTPUT_TEST_TAKE5}/final_mask_vec.dbf"
 #   )
 # set_tests_properties(compare_final_mask_vec_output_test PROPERTIES DEPENDS s2snow_test)
 
 # C++ function compute_snowline is deprecated
-# FIXME add test with the application? 
+# FIXME add test with the application?
 # ADD_EXECUTABLE(histo_utils_snowline_test histo_utils_snowline_test.cxx)
 # TARGET_LINK_LIBRARIES(histo_utils_snowline_test histo_utils)
 
-ADD_EXECUTABLE(histo_utils_snowline_internal_test histo_utils_snowline_internal_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test histo_utils)
+ADD_EXECUTABLE(histo_utils_snowline_internal_test histo_utils_snowline_internal_test.cxx ../src/histo_utils.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_snowline_internal_test ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
 
-ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx)
-TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test histo_utils)
-
+ADD_EXECUTABLE(histo_utils_snow_fraction_test histo_utils_snow_fraction_test.cxx ../src/histo_utils.cxx)
+TARGET_LINK_LIBRARIES(histo_utils_snow_fraction_test ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
 # C++ function compute_snowline is deprecated
 # add_test(NAME histo_utils_snowline_test
 #   COMMAND ${CMAKE_BINARY_DIR}/bin/histo_utils_snowline_test
@@ -221,7 +260,7 @@ add_test(NAME histo_utils_snow_fraction_test
     )
 
 add_test(NAME compute_snow_mask_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeSnowMask_test.py
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeSnowMask_test.py
     "${BASELINE}/pass1_highcloud.tif"
     "${BASELINE}/pass2_highcloud.tif"
     "${BASELINE}/cloud_pass1_highcloud.tif"
@@ -231,20 +270,20 @@ add_test(NAME compute_snow_mask_test
      )
 
 add_test(NAME compute_cloud_mask_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeCloudMask_test.py
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeCloudMask_test.py
     "${DATA_TEST}/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
     "1"
     "${OUTPUT_TEST}/cloud_mask_test.tif"
      )
 
 add_test(NAME cloud_removal_step3_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py) 
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py)
 
 add_test(NAME cloud_removal_step4_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py)
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py)
 
-ADD_EXECUTABLE(itkUnaryCloudMaskImageFilterTest itkUnaryCloudMaskImageFilterTest.cxx)
-TARGET_LINK_LIBRARIES(itkUnaryCloudMaskImageFilterTest histo_utils)
+ADD_EXECUTABLE(itkUnaryCloudMaskImageFilterTest itkUnaryCloudMaskImageFilterTest.cxx  ../src/histo_utils.cxx)
+TARGET_LINK_LIBRARIES(itkUnaryCloudMaskImageFilterTest ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
 
 add_test(NAME TvitkUnaryCloudMaskImageFilterTest
   COMMAND ${CMAKE_BINARY_DIR}/bin/itkUnaryCloudMaskImageFilterTest
