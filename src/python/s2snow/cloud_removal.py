@@ -10,8 +10,8 @@ import numpy as np
 import gdal
 import gdalconst
 import matplotlib.pyplot as plot
-from subprocess import call
 import os.path as op
+from subprocess import call
 
 
 def show_help():
