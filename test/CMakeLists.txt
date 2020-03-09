@@ -64,7 +64,7 @@ endif()
 #message(FATAL_ERROR "${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}")
 set(LIS_TEST_DRIVER otbTestDriver
   --add-before-env PYTHONPATH   "${OTB_PYTHONPATH}:${PYTHON_PATH_DIR}:$ENV{PYTHONPATH}"
-  --add-before-env OTB_APPLICATION_PATH $<TARGET_FILE_DIR:otbapp_Smoothing>
+  --add-before-env OTB_APPLICATION_PATH "$<TARGET_FILE_DIR:otbapp_Smoothing>:$<TARGET_FILE_DIR:otbapp_ComputeSnowMask>"
   --add-before-env LD_LIBRARY_PATH $<TARGET_FILE_DIR:OTBCommon>
   --add-before-env PATH    ${PYTHON_SCRIPTS_DIR}:$ENV{PATH}
   )
