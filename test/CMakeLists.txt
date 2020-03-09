@@ -151,7 +151,7 @@ add_lis_json_test(
   -dem "S2-SMALL/SRTM/S2__TEST_AUX_REFDE2_T29RNQ_0001_ALT_R2.TIF")
 
 add_test(NAME s2-small_zip_test
-  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detecter.py
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPTS_DIR}/run_snow_detector.py
   ${OUTPUT_TEST_S2_SMALL_ZIP}/param_test.json
   )
   set_tests_properties(s2-small_zip_test PROPERTIES DEPENDS s2-small_zip_test_json_builder_test)
