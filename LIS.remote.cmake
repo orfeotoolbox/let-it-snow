@@ -22,6 +22,6 @@ otb_fetch_module(LIS
  "This code implements the snow cover extent detection algorithm LIS (Let It Snow)
 for Sentinel-2, Landsat-8 and SPOT4-Take5 data."
 
-  GIT_REPOSITORY https://gitlab.orfeo-toolbox.org/remote_modules/let-it-snow
+  GIT_REPOSITORY https://github.com/orfeotoolbox/let-it-snow
   GIT_TAG 30-remote-module
 )
