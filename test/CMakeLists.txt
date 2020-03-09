@@ -260,7 +260,7 @@ add_test(NAME histo_utils_snow_fraction_test
     )
 
 add_test(NAME compute_snow_mask_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeSnowMask_test.py
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeSnowMask_test.py
     "${BASELINE}/pass1_highcloud.tif"
     "${BASELINE}/pass2_highcloud.tif"
     "${BASELINE}/cloud_pass1_highcloud.tif"
@@ -270,17 +270,17 @@ add_test(NAME compute_snow_mask_test
      )
 
 add_test(NAME compute_cloud_mask_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeCloudMask_test.py
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/otbapp_ComputeCloudMask_test.py
     "${DATA_TEST}/Take5/AOI_test_CESNeige/LEVEL2A/Maroc/SPOT4_HRVIR_XS_20130327_N2A_CMarocD0000B0000_NUA.TIF"
     "1"
     "${OUTPUT_TEST}/cloud_mask_test.tif"
      )
 
 add_test(NAME cloud_removal_step3_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py)
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step3_test.py)
 
 add_test(NAME cloud_removal_step4_test
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py)
+  COMMAND ${LIS_TEST_DRIVER} Execute ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/cloud_removal_step4_test.py)
 
 ADD_EXECUTABLE(itkUnaryCloudMaskImageFilterTest itkUnaryCloudMaskImageFilterTest.cxx  ../src/histo_utils.cxx)
 TARGET_LINK_LIBRARIES(itkUnaryCloudMaskImageFilterTest ${OTBCommon_LIBRARIES} ${OTBImageIO_LIBRARIES} ${OTBApplicationEngine_LIBRARIES} ${OTBITK_LIBRARIES})
